@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 11;
+  --background-end-rgb: 10, 10, 11;
+  --selendra-500: #0db0a4;
+  --selendra-600: #0a9389;
+  --selendra-700: #087670;
+  --font-sans: var(--font-montserrat), system-ui, sans-serif;
+  --font-mono: var(--font-mono), 'Roboto Mono', monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-white antialiased;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background-secondary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border-hover;
+  }
+}
+
+@layer components {
+  /* Card styles */
+  .card {
+    @apply bg-background-card border border-border rounded-xl p-4 transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply hover:border-border-hover hover:bg-background-hover;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-selendra-500 hover:bg-selendra-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-background-tertiary hover:bg-background-hover text-white font-medium px-4 py-2 rounded-lg border border-border transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-background-hover text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  /* Input styles */
+  .input {
+    @apply bg-background-tertiary border border-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-selendra-500 transition-all duration-200;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-accent-green/10 text-accent-green;
+  }
+
+  .badge-error {
+    @apply badge bg-accent-red/10 text-accent-red;
+  }
+
+  .badge-warning {
+    @apply badge bg-accent-yellow/10 text-accent-yellow;
+  }
+
+  .badge-info {
+    @apply badge bg-selendra-500/10 text-selendra-400;
+  }
+
+  /* Table styles */
+  .table-row {
+    @apply border-b border-border last:border-b-0 hover:bg-background-hover transition-colors;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-selendra-gradient;
+  }
+
+  /* Glow effect */
+  .glow {
+    @apply shadow-lg shadow-selendra-500/20;
+  }
+
+  /* Navigation item */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-background-hover transition-all duration-200;
+  }
+
+  .nav-item.active {
+    @apply bg-selendra-500/10 text-selendra-400 border-l-2 border-selendra-500;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Truncate utilities */
+  .truncate-hash {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply backdrop-blur-xl bg-white/5;
+  }
+}
+
+/* Chart.js customization */
+.chartjs-render-monitor {
+  animation: none !important;
+}
+
+/* Custom selection */
+::selection {
+  @apply bg-selendra-500/30;
+}
+
+/* Focus visible */
+:focus-visible {
+  @apply outline-none ring-2 ring-selendra-500 ring-offset-2 ring-offset-background;
+}
