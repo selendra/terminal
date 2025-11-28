@@ -22,6 +22,12 @@ import {
   Landmark,
   Zap,
   Code,
+  BarChart3,
+  Diamond,
+  BookOpen,
+  Fuel,
+  TrendingUp,
+  PieChart,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -61,10 +67,20 @@ const navigation: NavGroup[] = [
         href: "/accounts",
         icon: <Users className="h-5 w-5" />,
       },
+    ],
+  },
+  {
+    title: "Assets",
+    items: [
       {
         name: "Tokens",
         href: "/tokens",
         icon: <Coins className="h-5 w-5" />,
+      },
+      {
+        name: "NFTs",
+        href: "/tokens?tab=erc721",
+        icon: <Diamond className="h-5 w-5" />,
       },
       {
         name: "Contracts",
@@ -99,6 +115,27 @@ const navigation: NavGroup[] = [
     ],
   },
   {
+    title: "Analytics",
+    items: [
+      {
+        name: "Gas Tracker",
+        href: "/gas",
+        icon: <Fuel className="h-5 w-5" />,
+      },
+      {
+        name: "Charts",
+        href: "/charts",
+        icon: <BarChart3 className="h-5 w-5" />,
+        badge: "New",
+      },
+      {
+        name: "Top Stats",
+        href: "/stats",
+        icon: <TrendingUp className="h-5 w-5" />,
+      },
+    ],
+  },
+  {
     title: "DeFi",
     items: [
       {
@@ -112,15 +149,26 @@ const navigation: NavGroup[] = [
         href: "/defi",
         icon: <Activity className="h-5 w-5" />,
       },
+    ],
+  },
+  {
+    title: "Developers",
+    items: [
       {
-        name: "Gas Tracker",
-        href: "/gas",
-        icon: <Zap className="h-5 w-5" />,
+        name: "Developer Portal",
+        href: "/developers",
+        icon: <Code className="h-5 w-5" />,
+        badge: "New",
       },
       {
-        name: "API",
+        name: "API Docs",
         href: "/api-docs",
-        icon: <Code className="h-5 w-5" />,
+        icon: <BookOpen className="h-5 w-5" />,
+      },
+      {
+        name: "Contract Verify",
+        href: "/contracts/verify",
+        icon: <Shield className="h-5 w-5" />,
       },
     ],
   },
@@ -149,8 +197,8 @@ export function Sidebar() {
               className="rounded-lg"
             />
             <div className="flex flex-col">
-              <span className="font-bold text-white">Selendra</span>
-              <span className="text-xs text-gray-500">Terminal</span>
+              <span className="font-bold text-foreground">Selendra</span>
+              <span className="text-xs text-foreground-secondary">Terminal</span>
             </div>
           </Link>
         )}
@@ -170,7 +218,7 @@ export function Sidebar() {
         {navigation.map((group) => (
           <div key={group.title} className="mb-6">
             {!isCollapsed && (
-              <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <h3 className="px-4 mb-2 text-xs font-semibold text-foreground-secondary uppercase tracking-wider">
                 {group.title}
               </h3>
             )}
@@ -211,7 +259,7 @@ export function Sidebar() {
       {/* Collapse button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="flex items-center justify-center h-12 border-t border-border text-gray-500 hover:text-white hover:bg-background-hover transition-colors"
+        className="flex items-center justify-center h-12 border-t border-border text-foreground-secondary hover:text-foreground hover:bg-background-hover transition-colors"
       >
         {isCollapsed ? (
           <ChevronRight className="h-5 w-5" />

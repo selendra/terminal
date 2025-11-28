@@ -1,219 +1,205 @@
 # Selendra Terminal
 
-The ultimate super dApp for Selendra blockchain - featuring a comprehensive blockchain explorer with dual VM (EVM + WASM) support, wallet integration, staking, governance, and cross-chain bridge.
+> **The Unified Dual-VM Blockchain Explorer & Portal**
 
-![Selendra Terminal](./docs/preview.png)
+A comprehensive interface for Selendra's Substrate + EVM ecosystem. One application for exploring, transacting, staking, and governing.
 
-## Features
+![Selendra Terminal](https://img.shields.io/badge/Selendra-Terminal-0db0a4?style=for-the-badge)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square)
 
-### 🔍 Blockchain Explorer
+---
 
-- **Dual VM Support**: Explore both EVM and Substrate (WASM) transactions
-- **Block Explorer**: View latest blocks with detailed information
-- **Transaction Viewer**: Track transactions with decoded input data
-- **Account Details**: View balances, token holdings, and transaction history
-- **Token Tracker**: Explore all tokens on Selendra network
-- **Smart Contracts**: Browse and interact with verified contracts
+## Overview
 
-### 💰 DeFi Features
+Selendra Terminal replaces multiple fragmented tools with a **single unified interface**:
 
-- **Staking**: Stake SEL tokens with validators
-- **Governance**: Participate in network governance through proposals
-- **Bridge**: Cross-chain asset transfers (Ethereum, BSC, Polygon, etc.)
-- **DeFi Dashboard**: Track TVL, yields, and protocol metrics
+- ✅ **Block Explorer** - Substrate + EVM blocks, transactions, accounts
+- ✅ **Wallet Portal** - Multi-wallet connection, transfers, signing
+- ✅ **Staking** - Nominate validators, manage stake, claim rewards
+- ✅ **Governance** - Vote on referenda, submit proposals
+- ✅ **Developer Tools** - Extrinsics, chain state, contract interaction
 
-### 🔧 Developer Tools
+### Key Feature: Unified Dual-VM
 
-- **API Documentation**: REST API for building applications
-- **Gas Tracker**: Real-time gas fee estimates
-- **Contract Verification**: Verify and publish smart contract source code
+Selendra runs both **Substrate** and **EVM** simultaneously. Terminal provides:
 
-## Tech Stack
+- 🔗 **Linked Addresses** - SS58 ↔ 0x mapping via unified-accounts pallet
+- 📊 **Merged Views** - Transactions from both VMs in one timeline
+- 🏷️ **VM Badges** - Clear indicators for Substrate vs EVM data
+- ⚙️ **User Preference** - Choose your preferred address format
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4.0
-- **State Management**: React Context + Hooks
-- **Blockchain SDK**: @selendrajs/sdk
-- **Charts**: Recharts
-- **Icons**: Lucide React
+---
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- Git
+- Node.js 20+
+- pnpm (recommended) or npm
 
 ### Installation
 
-1. Clone the repository:
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+### Using Docker
 
 ```bash
-cd ~/projects/selendra-biz/selendra/devtools/terminal
+# Development with local node
+docker compose -f docker-compose.local.yml up -d
+
+# Production
+docker compose up -d
 ```
 
-2. Install dependencies:
+---
 
-```bash
-npm install
+## Documentation
+
+| Document                        | Description                            |
+| ------------------------------- | -------------------------------------- |
+| [📐 Design](./docs/design.md)   | UI/UX design, architecture, user flows |
+| [🔧 Tech Stack](./docs/tech.md) | Technology choices, configuration      |
+| [📋 Tasks](./docs/tasks.md)     | Development task list by phase         |
+| [🗺️ Roadmap](./docs/roadmap.md) | Feature roadmap, release timeline      |
+
+---
+
+## Architecture
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                     SELENDRA TERMINAL                           │
+├────────────────────────────────────────────────────────────────┤
+│  PRESENTATION        UNIFICATION         DATA LAYER            │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐       │
+│  │ Explorer     │   │ Address      │   │ Substrate    │       │
+│  │ Staking      │──▶│ Resolver     │──▶│ @polkadot/api│       │
+│  │ Governance   │   │ Transaction  │   │              │       │
+│  │ Developer    │   │ Normalizer   │   │ EVM          │       │
+│  └──────────────┘   └──────────────┘   │ ethers.js    │       │
+│                                        └──────────────┘       │
+├────────────────────────────────────────────────────────────────┤
+│  BLOCKCHAIN: Selendra (Substrate + Frontier EVM)               │
+│  Consensus: AlephBFT │ Block Time: ~1s │ Finality: Instant    │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-3. Create environment file:
+---
 
-```bash
-cp .env.example .env.local
-```
+## Network Configuration
 
-4. Configure environment variables:
+### Selendra Mainnet
 
-```env
-NEXT_PUBLIC_SELENDRA_RPC=wss://rpc.selendra.org
-NEXT_PUBLIC_SELENDRA_EVM_RPC=https://evm.selendra.org
-NEXT_PUBLIC_EXPLORER_API=https://api.selendra.org
-```
+| Property      | Value                          |
+| ------------- | ------------------------------ |
+| Chain ID      | 1961                           |
+| SS58 Prefix   | 42                             |
+| Token         | SEL (18 decimals)              |
+| Substrate RPC | `wss://rpc.selendra.org`       |
+| EVM RPC       | `https://rpc-evm.selendra.org` |
 
-5. Start the development server:
+### Testnet
 
-```bash
-npm run dev
-```
+| Property      | Value                                  |
+| ------------- | -------------------------------------- |
+| Chain ID      | 1953                                   |
+| Substrate RPC | `wss://rpc-testnet.selendra.org`       |
+| EVM RPC       | `https://rpc-evm-testnet.selendra.org` |
 
-6. Open [http://localhost:3000](http://localhost:3000)
+---
+
+## Tech Stack
+
+| Category      | Technology                          |
+| ------------- | ----------------------------------- |
+| **Framework** | Next.js 16 (Turbopack)              |
+| **UI**        | React 19, TypeScript 5.9            |
+| **Styling**   | Tailwind CSS 3.4, CSS Variables     |
+| **Substrate** | @polkadot/api, @selendrajs/sdk      |
+| **EVM**       | ethers.js 6.15                      |
+| **State**     | React Context, Zustand, React Query |
+
+---
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── address/           # Account details pages
-│   ├── api-docs/          # API documentation
-│   ├── blocks/            # Block explorer
-│   ├── bridge/            # Cross-chain bridge
-│   ├── contracts/         # Smart contracts
-│   ├── governance/        # Governance proposals
-│   ├── staking/           # Staking interface
-│   ├── tokens/            # Token tracker
-│   ├── transactions/      # Transaction explorer
-│   └── tx/               # Transaction details
+├── app/                    # Next.js App Router
+│   ├── (main)/            # Main layout routes
+│   │   ├── blocks/        # Block explorer
+│   │   ├── transactions/  # Transaction explorer
+│   │   ├── accounts/      # Account explorer
+│   │   ├── staking/       # Staking UI
+│   │   ├── governance/    # Governance UI
+│   │   ├── contracts/     # Contract explorer
+│   │   └── developers/    # Developer tools
+│   └── api/               # API routes
 ├── components/
-│   ├── api/              # API documentation components
-│   ├── bridge/           # Bridge components
-│   ├── contracts/        # Contract explorer components
-│   ├── dashboard/        # Dashboard widgets
-│   ├── explorer/         # Explorer components
-│   ├── governance/       # Governance components
-│   ├── layout/           # Layout components (Sidebar, Header)
-│   ├── providers/        # React Context providers
-│   ├── staking/          # Staking components
-│   └── tokens/           # Token explorer components
-├── hooks/                # Custom React hooks
-├── lib/                  # Utilities and SDK integration
-│   └── selendra/         # Selendra SDK integration
-└── types/                # TypeScript type definitions
+│   ├── common/            # Shared components
+│   ├── layout/            # Layout components
+│   ├── providers/         # Context providers
+│   └── [feature]/         # Feature components
+├── lib/
+│   ├── blockchain/        # Chain utilities
+│   ├── hooks/             # Custom hooks
+│   └── utils/             # Helpers
+└── styles/
+    └── globals.css        # Theme variables
 ```
 
-## SDK Integration
+---
 
-This project uses `@selendrajs/sdk` for blockchain interactions:
+## Environment Variables
 
-```typescript
-import { Selendra } from "@/lib/selendra/client";
-
-// Initialize client
-const selendra = new Selendra({
-  rpcUrl: process.env.NEXT_PUBLIC_SELENDRA_RPC,
-  evmRpcUrl: process.env.NEXT_PUBLIC_SELENDRA_EVM_RPC,
-});
-
-// Get account balance
-const balance = await selendra.getBalance(address);
-
-// Send transaction
-const tx = await selendra.transfer(to, amount);
+```bash
+# .env.local
+NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc.selendra.org
+NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
+NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc-evm.selendra.org
+NEXT_PUBLIC_CHAIN_ID=1961
+NEXT_PUBLIC_TOKEN_SYMBOL=SEL
+NEXT_PUBLIC_TOKEN_DECIMALS=18
 ```
 
-## API Endpoints
-
-The Terminal provides a REST API for developers:
-
-### Accounts
-
-- `GET /api/v1/account/{address}` - Get account information
-- `GET /api/v1/account/{address}/transactions` - Get account transactions
-- `GET /api/v1/account/{address}/tokens` - Get token balances
-
-### Blocks
-
-- `GET /api/v1/block/{number}` - Get block by number
-- `GET /api/v1/blocks` - List recent blocks
-
-### Transactions
-
-- `GET /api/v1/tx/{hash}` - Get transaction details
-- `GET /api/v1/transactions` - List transactions
-
-### Tokens
-
-- `GET /api/v1/token/{address}` - Get token information
-- `GET /api/v1/tokens` - List all tokens
-
-### Stats
-
-- `GET /api/v1/stats` - Network statistics
-- `GET /api/v1/stats/price` - SEL price information
-
-## Wallet Support
-
-Supported wallets:
-
-- MetaMask (EVM)
-- Selendra Wallet (Native)
-- Talisman (Substrate)
-- SubWallet (Substrate)
-- WalletConnect
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/my-feature`
-5. Submit a pull request
+---
 
 ## Scripts
 
 ```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-
-# Testing
-npm run test         # Run tests
-npm run test:watch   # Run tests in watch mode
-
-# Linting
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix linting issues
-
-# Type checking
-npm run typecheck    # Run TypeScript compiler
+pnpm dev          # Start development server
+pnpm build        # Production build
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm type-check   # TypeScript check
 ```
 
-## Environment Variables
+---
 
-| Variable                       | Description                     | Default                       |
-| ------------------------------ | ------------------------------- | ----------------------------- |
-| `NEXT_PUBLIC_SELENDRA_RPC`     | Selendra WebSocket RPC endpoint | `wss://rpc.selendra.org`      |
-| `NEXT_PUBLIC_SELENDRA_EVM_RPC` | Selendra EVM HTTP RPC endpoint  | `https://evm.selendra.org`    |
-| `NEXT_PUBLIC_EXPLORER_API`     | Explorer API endpoint           | `https://api.selendra.org`    |
-| `NEXT_PUBLIC_BRIDGE_API`       | Bridge service API              | `https://bridge.selendra.org` |
+## Contributing
+
+1. Read the [Design Document](./docs/design.md)
+2. Check [Tasks](./docs/tasks.md) for available work
+3. Follow the coding standards (ESLint, Prettier)
+4. Submit PR with clear description
+
+---
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+---
 
 ## Links
 
@@ -221,4 +207,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 - [Documentation](https://docs.selendra.org)
 - [GitHub](https://github.com/selendra)
 - [Discord](https://discord.gg/selendra)
-- [Twitter](https://twitter.com/selaborative)

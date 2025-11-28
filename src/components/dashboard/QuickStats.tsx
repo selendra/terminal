@@ -48,7 +48,7 @@ export function QuickStats() {
 
   return (
     <div className="card h-full">
-      <h2 className="text-lg font-semibold text-white mb-4">Quick Stats</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">Quick Stats</h2>
       <div className="space-y-3">
         {stats.map((stat) => (
           <Link
@@ -59,23 +59,23 @@ export function QuickStats() {
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${stat.color}`}>{stat.icon}</div>
               <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <p className="text-lg font-semibold text-white">{stat.value}</p>
+                <p className="text-sm text-foreground-secondary">{stat.title}</p>
+                <p className="text-lg font-semibold text-foreground">{stat.value}</p>
               </div>
             </div>
-            <ArrowUpRight className="h-4 w-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight className="h-4 w-4 text-foreground-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
         ))}
       </div>
 
       {/* Network Health */}
       <div className="mt-6 pt-4 border-t border-border">
-        <h3 className="text-sm font-medium text-white mb-3">Network Health</h3>
+        <h3 className="text-sm font-medium text-foreground mb-3">Network Health</h3>
         <div className="space-y-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-500">Staking Rate</span>
-              <span className="text-xs text-white">72%</span>
+              <span className="text-xs text-foreground-secondary">Staking Rate</span>
+              <span className="text-xs text-foreground">72%</span>
             </div>
             <div className="h-1.5 bg-background-hover rounded-full overflow-hidden">
               <div
@@ -86,8 +86,8 @@ export function QuickStats() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-500">Network Load</span>
-              <span className="text-xs text-white">34%</span>
+              <span className="text-xs text-foreground-secondary">Network Load</span>
+              <span className="text-xs text-foreground">34%</span>
             </div>
             <div className="h-1.5 bg-background-hover rounded-full overflow-hidden">
               <div
@@ -98,8 +98,8 @@ export function QuickStats() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-500">Validator Performance</span>
-              <span className="text-xs text-white">98.5%</span>
+              <span className="text-xs text-foreground-secondary">Validator Performance</span>
+              <span className="text-xs text-foreground">98.5%</span>
             </div>
             <div className="h-1.5 bg-background-hover rounded-full overflow-hidden">
               <div

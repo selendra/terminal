@@ -141,18 +141,18 @@ export function TransactionHistory() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-selendra-400" />
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-foreground">
             Transaction History (14 Days)
           </h2>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded bg-purple-500" />
-            <span className="text-sm text-gray-400">Substrate</span>
+            <span className="text-sm text-foreground-secondary">Substrate</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded bg-orange-500" />
-            <span className="text-sm text-gray-400">EVM</span>
+            <span className="text-sm text-foreground-secondary">EVM</span>
           </div>
         </div>
       </div>
@@ -160,26 +160,26 @@ export function TransactionHistory() {
       {/* Stats row */}
       <div className="flex items-center gap-8 mb-4">
         <div>
-          <span className="text-xs text-gray-500">Total Transactions</span>
-          <p className="text-lg font-semibold text-white">
+          <span className="text-xs text-foreground-secondary">Total Transactions</span>
+          <p className="text-lg font-semibold text-foreground">
             {(totalSubstrate + totalEvm).toLocaleString()}
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">Substrate Txns</span>
+          <span className="text-xs text-foreground-secondary">Substrate Txns</span>
           <p className="text-lg font-semibold text-purple-400">
             {totalSubstrate.toLocaleString()}
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">EVM Txns</span>
+          <span className="text-xs text-foreground-secondary">EVM Txns</span>
           <p className="text-lg font-semibold text-orange-400">
             {totalEvm.toLocaleString()}
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">Avg Daily</span>
-          <p className="text-lg font-semibold text-white">
+          <span className="text-xs text-foreground-secondary">Avg Daily</span>
+          <p className="text-lg font-semibold text-foreground">
             {averageDaily.toLocaleString()}
           </p>
         </div>
@@ -205,16 +205,16 @@ export function TransactionHistory() {
               transform: "translateX(-50%)",
             }}
           >
-            <p className="text-xs text-gray-500 mb-1">{txData[hoveredBar].date}</p>
+            <p className="text-xs text-foreground-secondary mb-1">{txData[hoveredBar].date}</p>
             <div className="flex items-center gap-2 mb-1">
               <div className="h-2 w-2 rounded bg-purple-500" />
-              <span className="text-sm text-white">
+              <span className="text-sm text-foreground">
                 {txData[hoveredBar].substrate.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded bg-orange-500" />
-              <span className="text-sm text-white">
+              <span className="text-sm text-foreground">
                 {txData[hoveredBar].evm.toLocaleString()}
               </span>
             </div>

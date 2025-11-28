@@ -7,7 +7,7 @@ import {
   Copy,
   CheckCircle,
   Clock,
-  Cube,
+  Box,
   Activity,
   Coins,
   Users,
@@ -171,7 +171,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-selendra-600 to-selendra-400 rounded-2xl flex items-center justify-center">
-            <Cube className="w-7 h-7" />
+            <Box className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 {block.vmType === "evm" ? "EVM" : "Substrate"}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-gray-400 text-sm mt-1">
+            <div className="flex items-center gap-2 text-foreground-secondary text-sm mt-1">
               <Clock className="w-4 h-4" />
               {formatTimestamp(block.timestamp)} ({block.timestamp.toLocaleString()})
             </div>
@@ -202,13 +202,13 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
         <div className="flex items-center gap-2">
           <Link
             href={`/blocks/${block.number - 1}`}
-            className="p-2 bg-background-secondary hover:bg-background-hover border border-gray-700 rounded-lg transition-colors"
+            className="p-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <Link
             href={`/blocks/${block.number + 1}`}
-            className="p-2 bg-background-secondary hover:bg-background-hover border border-gray-700 rounded-lg transition-colors"
+            className="p-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
           </Link>
@@ -217,46 +217,46 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Activity className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Transactions</p>
+              <p className="text-sm text-foreground-secondary">Transactions</p>
               <p className="text-xl font-bold">{block.transactionCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
               <Coins className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Block Reward</p>
+              <p className="text-sm text-foreground-secondary">Block Reward</p>
               <p className="text-xl font-bold">{block.reward}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
               <Flame className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Gas Used</p>
+              <p className="text-sm text-foreground-secondary">Gas Used</p>
               <p className="text-xl font-bold">{gasUsedPercent.toFixed(1)}%</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <Database className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Size</p>
+              <p className="text-sm text-foreground-secondary">Size</p>
               <p className="text-xl font-bold">{(block.size / 1024).toFixed(2)} KB</p>
             </div>
           </div>
@@ -264,7 +264,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800">
+      <div className="border-b border-border">
         <div className="flex gap-4">
           {(["overview", "transactions", "logs"] as const).map((tab) => (
             <button
@@ -273,7 +273,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
                   ? "text-selendra-400 border-selendra-400"
-                  : "text-gray-400 border-transparent hover:text-white"
+                  : "text-foreground-secondary border-transparent hover:text-foreground"
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -285,11 +285,11 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
       {/* Tab Content */}
       {activeTab === "overview" && (
-        <div className="bg-background-card border border-gray-800 rounded-xl overflow-hidden">
-          <div className="divide-y divide-gray-800">
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+          <div className="divide-y divide-border">
             {/* Block Hash */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Hash className="w-4 h-4" />
                 Block Hash
               </div>
@@ -297,7 +297,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 <code className="font-mono text-sm break-all">{block.hash}</code>
                 <button
                   onClick={() => copyToClipboard(block.hash, "hash")}
-                  className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                  className="text-foreground-secondary hover:text-foreground transition-colors flex-shrink-0"
                 >
                   {copied === "hash" ? (
                     <CheckCircle className="w-4 h-4 text-green-400" />
@@ -310,7 +310,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
             {/* Parent Hash */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Hash className="w-4 h-4" />
                 Parent Hash
               </div>
@@ -323,7 +323,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 </Link>
                 <button
                   onClick={() => copyToClipboard(block.parentHash, "parent")}
-                  className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                  className="text-foreground-secondary hover:text-foreground transition-colors flex-shrink-0"
                 >
                   {copied === "parent" ? (
                     <CheckCircle className="w-4 h-4 text-green-400" />
@@ -336,18 +336,18 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
             {/* State Root */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Database className="w-4 h-4" />
                 State Root
               </div>
               <div className="md:col-span-3">
-                <code className="font-mono text-sm text-gray-300 break-all">{block.stateRoot}</code>
+                <code className="font-mono text-sm text-foreground-secondary break-all">{block.stateRoot}</code>
               </div>
             </div>
 
             {/* Validator */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Users className="w-4 h-4" />
                 Validated By
               </div>
@@ -358,7 +358,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 >
                   <span>{block.validatorName || block.validator}</span>
                   {block.validatorName && (
-                    <span className="text-gray-500 font-mono text-sm">
+                    <span className="text-foreground-secondary font-mono text-sm">
                       ({block.validator.slice(0, 10)}...{block.validator.slice(-8)})
                     </span>
                   )}
@@ -368,7 +368,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
             {/* Gas Used */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Flame className="w-4 h-4" />
                 Gas Used
               </div>
@@ -381,7 +381,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                       style={{ width: `${gasUsedPercent}%` }}
                     />
                   </div>
-                  <span className="text-gray-400">({gasUsedPercent.toFixed(2)}%)</span>
+                  <span className="text-foreground-secondary">({gasUsedPercent.toFixed(2)}%)</span>
                 </div>
               </div>
             </div>
@@ -389,7 +389,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
             {/* Base Fee */}
             {block.baseFeePerGas && (
               <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-                <div className="flex items-center gap-2 text-gray-400">
+                <div className="flex items-center gap-2 text-foreground-secondary">
                   <Coins className="w-4 h-4" />
                   Base Fee
                 </div>
@@ -401,7 +401,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
 
             {/* Transactions */}
             <div className="grid grid-cols-1 md:grid-cols-4 p-4">
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-foreground-secondary">
                 <Activity className="w-4 h-4" />
                 Transactions
               </div>
@@ -419,27 +419,27 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
       )}
 
       {activeTab === "transactions" && (
-        <div className="bg-background-card border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-background-secondary border-b border-gray-800">
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                <tr className="bg-background-secondary border-b border-border">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                     Txn Hash
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                     Type
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                     From
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                     To
                   </th>
-                  <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">
+                  <th className="text-right px-4 py-3 text-sm font-medium text-foreground-secondary">
                     Value
                   </th>
-                  <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">
+                  <th className="text-right px-4 py-3 text-sm font-medium text-foreground-secondary">
                     Fee
                   </th>
                 </tr>
@@ -448,7 +448,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 {transactions.map((tx) => (
                   <tr
                     key={tx.hash}
-                    className="border-b border-gray-800 hover:bg-background-hover transition-colors"
+                    className="border-b border-border hover:bg-background-hover transition-colors"
                   >
                     <td className="px-4 py-4">
                       <Link
@@ -478,7 +478,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                     <td className="px-4 py-4">
                       <Link
                         href={`/address/${tx.from}`}
-                        className="text-gray-400 hover:text-white font-mono text-sm"
+                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
                       >
                         {tx.from}
                       </Link>
@@ -486,7 +486,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                     <td className="px-4 py-4">
                       <Link
                         href={`/address/${tx.to}`}
-                        className="text-gray-400 hover:text-white font-mono text-sm"
+                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
                       >
                         {tx.to}
                       </Link>
@@ -494,7 +494,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                     <td className="px-4 py-4 text-right font-mono text-sm">
                       {tx.value}
                     </td>
-                    <td className="px-4 py-4 text-right text-gray-400 text-sm">
+                    <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
                       {tx.fee}
                     </td>
                   </tr>
@@ -506,10 +506,10 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
       )}
 
       {activeTab === "logs" && (
-        <div className="bg-background-card border border-gray-800 rounded-xl p-8 text-center">
-          <FileCode className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <p className="text-gray-400">Event logs will be displayed here</p>
-          <p className="text-sm text-gray-500 mt-2">
+        <div className="bg-background-card border border-border rounded-xl p-8 text-center">
+          <FileCode className="w-12 h-12 mx-auto text-foreground-secondary mb-4" />
+          <p className="text-foreground-secondary">Event logs will be displayed here</p>
+          <p className="text-sm text-foreground-secondary mt-2">
             Shows events emitted by smart contracts in this block
           </p>
         </div>

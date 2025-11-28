@@ -1,7 +1,10 @@
-'use client';
-
+import { MainLayout } from '@/components/layout/MainLayout';
 import GasTracker from '@/components/gas/GasTracker';
 
 export default function GasPage() {
-  return <GasTracker />;
+  return (
+    <MainLayout>
+      <GasTracker />
+    </MainLayout>
+  );
 }

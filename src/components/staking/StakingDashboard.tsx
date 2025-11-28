@@ -144,17 +144,17 @@ export function StakingDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
             <Landmark className="h-6 w-6 text-selendra-400" />
             Staking
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-foreground-secondary mt-1">
             Stake SEL and earn rewards while securing the network
           </p>
         </div>
 
         {!walletConnected && (
-          <button onClick={connectSubstrateWallet} className="btn-primary">
+          <button onClick={() => connectSubstrateWallet()} className="btn-primary">
             Connect Wallet to Stake
           </button>
         )}
@@ -165,9 +165,9 @@ export function StakingDashboard() {
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Wallet className="h-4 w-4 text-selendra-400" />
-            <span className="text-sm text-gray-500">Total Staked</span>
+            <span className="text-sm text-foreground-secondary">Total Staked</span>
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {stakingStats.totalStaked} SEL
           </p>
           <p className="text-xs text-accent-green mt-1">
@@ -178,23 +178,23 @@ export function StakingDashboard() {
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-accent-green" />
-            <span className="text-sm text-gray-500">Est. APY</span>
+            <span className="text-sm text-foreground-secondary">Est. APY</span>
           </div>
           <p className="text-xl font-bold text-accent-green">
             {stakingStats.rewardRate}%
           </p>
-          <p className="text-xs text-gray-500 mt-1">Annual reward rate</p>
+          <p className="text-xs text-foreground-secondary mt-1">Annual reward rate</p>
         </div>
 
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-purple-400" />
-            <span className="text-sm text-gray-500">Validators</span>
+            <span className="text-sm text-foreground-secondary">Validators</span>
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {stakingStats.activeValidators}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-foreground-secondary mt-1">
             +{stakingStats.waitingValidators} waiting
           </p>
         </div>
@@ -202,12 +202,12 @@ export function StakingDashboard() {
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-4 w-4 text-yellow-400" />
-            <span className="text-sm text-gray-500">Unbonding Period</span>
+            <span className="text-sm text-foreground-secondary">Unbonding Period</span>
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {stakingStats.unbondingPeriod} days
           </p>
-          <p className="text-xs text-gray-500 mt-1">Min: {stakingStats.minStake} SEL</p>
+          <p className="text-xs text-foreground-secondary mt-1">Min: {stakingStats.minStake} SEL</p>
         </div>
       </div>
 
@@ -221,7 +221,7 @@ export function StakingDashboard() {
               "px-4 py-2 text-sm font-medium rounded-md transition-colors capitalize",
               activeTab === tab
                 ? "bg-selendra-500/20 text-selendra-400"
-                : "text-gray-500 hover:text-white"
+                : "text-foreground-secondary hover:text-foreground"
             )}
           >
             {tab}
@@ -234,7 +234,7 @@ export function StakingDashboard() {
         <div className="grid grid-cols-2 gap-6">
           {/* Stake Form */}
           <div className="card">
-            <h2 className="text-lg font-semibold text-white mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Stake your SEL
             </h2>
 
@@ -243,8 +243,8 @@ export function StakingDashboard() {
                 {/* Balance */}
                 <div className="p-3 rounded-lg bg-background-hover">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Available Balance</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm text-foreground-secondary">Available Balance</span>
+                    <span className="text-sm font-medium text-foreground">
                       {substrateBalance?.formatted || "0"} SEL
                     </span>
                   </div>
@@ -252,7 +252,7 @@ export function StakingDashboard() {
 
                 {/* Amount Input */}
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">
+                  <label className="block text-sm text-foreground-secondary mb-2">
                     Amount to Stake
                   </label>
                   <div className="relative">
@@ -273,36 +273,36 @@ export function StakingDashboard() {
                       MAX
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-foreground-secondary mt-1">
                     Minimum: 1,000 SEL
                   </p>
                 </div>
 
                 {/* Selected Validator */}
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">
+                  <label className="block text-sm text-foreground-secondary mb-2">
                     Selected Validator
                   </label>
                   {selectedValidator ? (
                     <div className="p-3 rounded-lg bg-background-hover flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {validators.find((v) => v.address === selectedValidator)
                             ?.name || "Unknown"}
                         </p>
-                        <p className="text-xs text-gray-500 font-mono">
+                        <p className="text-xs text-foreground-secondary font-mono">
                           {truncateAddress(selectedValidator)}
                         </p>
                       </div>
                       <button
                         onClick={() => setSelectedValidator(null)}
-                        className="text-xs text-gray-400 hover:text-white"
+                        className="text-xs text-foreground-secondary hover:text-foreground"
                       >
                         Change
                       </button>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 p-3 rounded-lg border border-dashed border-border">
+                    <p className="text-sm text-foreground-secondary p-3 rounded-lg border border-dashed border-border">
                       Select a validator from the list below
                     </p>
                   )}
@@ -317,7 +317,7 @@ export function StakingDashboard() {
                         Estimated Annual Rewards
                       </span>
                     </div>
-                    <p className="text-lg font-bold text-white">
+                    <p className="text-lg font-bold text-foreground">
                       ~{(parseFloat(stakeAmount) * 0.125).toFixed(2)} SEL
                     </p>
                   </div>
@@ -349,12 +349,12 @@ export function StakingDashboard() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Wallet className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">
+                <Wallet className="h-12 w-12 text-foreground-secondary mx-auto mb-4" />
+                <p className="text-foreground-secondary mb-4">
                   Connect your wallet to start staking
                 </p>
                 <button
-                  onClick={connectSubstrateWallet}
+                  onClick={() => connectSubstrateWallet()}
                   className="btn-primary"
                 >
                   Connect Wallet
@@ -365,21 +365,21 @@ export function StakingDashboard() {
 
           {/* Your Stakes */}
           <div className="card">
-            <h2 className="text-lg font-semibold text-white mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Your Stakes
             </h2>
 
             {walletConnected ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">
+                <p className="text-foreground-secondary">
                   You don&apos;t have any active stakes yet.
                 </p>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-foreground-secondary mt-2">
                   Start staking to earn rewards
                 </p>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-foreground-secondary">
                 Connect wallet to view your stakes
               </div>
             )}
@@ -389,7 +389,7 @@ export function StakingDashboard() {
 
       {activeTab === "validators" && (
         <div className="card">
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Active Validators
           </h2>
 
@@ -397,22 +397,22 @@ export function StakingDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-foreground-secondary">
                     Validator
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-foreground-secondary">
                     Total Stake
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-foreground-secondary">
                     Commission
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-foreground-secondary">
                     Nominators
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-foreground-secondary">
                     APY
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-foreground-secondary">
                     Action
                   </th>
                 </tr>
@@ -429,21 +429,21 @@ export function StakingDashboard() {
                   >
                     <td className="py-3 px-4">
                       <div>
-                        <p className="font-medium text-white">
+                        <p className="font-medium text-foreground">
                           {validator.name}
                         </p>
-                        <p className="text-xs text-gray-500 font-mono">
+                        <p className="text-xs text-foreground-secondary font-mono">
                           {truncateAddress(validator.address)}
                         </p>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {validator.totalStake} SEL
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {validator.commission}%
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {validator.nominators}
                     </td>
                     <td className="py-3 px-4">
@@ -472,20 +472,20 @@ export function StakingDashboard() {
 
       {activeTab === "rewards" && (
         <div className="card">
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Staking Rewards
           </h2>
 
           {walletConnected ? (
             <div className="text-center py-12">
-              <TrendingUp className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500">No rewards to claim yet</p>
-              <p className="text-sm text-gray-600 mt-2">
+              <TrendingUp className="h-12 w-12 text-foreground-secondary mx-auto mb-4" />
+              <p className="text-foreground-secondary">No rewards to claim yet</p>
+              <p className="text-sm text-foreground-secondary mt-2">
                 Start staking to earn rewards
               </p>
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-foreground-secondary">
               Connect wallet to view your rewards
             </div>
           )}

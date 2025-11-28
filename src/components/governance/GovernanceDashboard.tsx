@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useWallet } from "@/components/providers/WalletProvider";
+import toast from "react-hot-toast";
 
 interface Proposal {
   id: string;
@@ -120,7 +121,11 @@ const mockProposals: Proposal[] = [
 ];
 
 export const GovernanceDashboard: React.FC = () => {
-  const { isConnected, connect } = useWallet();
+  const { isConnected, connectSubstrateWallet } = useWallet();
+  
+  // Create a connect helper
+  const connect = () => connectSubstrateWallet();
+  
   const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | Proposal["status"]>("all");
@@ -215,61 +220,61 @@ export const GovernanceDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Governance</h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-foreground-secondary mt-1">
             Participate in Selendra network governance
           </p>
         </div>
-        <Link
-          href="/governance/create"
+        <button
+          onClick={() => toast('Proposal creation coming soon!')}
           className="px-4 py-2 bg-selendra-600 hover:bg-selendra-500 rounded-lg transition-colors flex items-center gap-2"
         >
           <FileText className="w-4 h-4" />
           Create Proposal
-        </Link>
+        </button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <Vote className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Active Proposals</p>
+              <p className="text-sm text-foreground-secondary">Active Proposals</p>
               <p className="text-xl font-bold">{stats.activeProposals}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Passed</p>
+              <p className="text-sm text-foreground-secondary">Passed</p>
               <p className="text-xl font-bold">{stats.passedProposals}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Total Voters</p>
+              <p className="text-sm text-foreground-secondary">Total Voters</p>
               <p className="text-xl font-bold">{stats.totalVoters}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
               <Scale className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Your Voting Power</p>
+              <p className="text-sm text-foreground-secondary">Your Voting Power</p>
               <p className="text-xl font-bold">{isConnected ? stats.votingPower : "-"}</p>
             </div>
           </div>
@@ -281,13 +286,13 @@ export const GovernanceDashboard: React.FC = () => {
         <div className="flex flex-1 gap-4 items-center flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-secondary" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search proposals..."
-              className="w-full pl-10 pr-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
             />
           </div>
 
@@ -295,7 +300,7 @@ export const GovernanceDashboard: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-            className="px-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+            className="px-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -309,7 +314,7 @@ export const GovernanceDashboard: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-            className="px-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+            className="px-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
           >
             <option value="all">All Types</option>
             <option value="treasury">Treasury</option>
@@ -325,7 +330,7 @@ export const GovernanceDashboard: React.FC = () => {
         {filteredProposals.map((proposal) => (
           <div
             key={proposal.id}
-            className="bg-background-card border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors"
+            className="bg-background-card border border-border rounded-xl overflow-hidden hover:border-selendra-500/50 transition-colors"
           >
             <div className="p-6">
               <div className="flex items-start justify-between gap-4">
@@ -338,13 +343,13 @@ export const GovernanceDashboard: React.FC = () => {
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(proposal.type)}`}>
                       {proposal.type.charAt(0).toUpperCase() + proposal.type.slice(1)}
                     </span>
-                    <span className="text-gray-500 text-sm">#{proposal.id}</span>
+                    <span className="text-foreground-secondary text-sm">#{proposal.id}</span>
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{proposal.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-4">
+                  <p className="text-foreground-secondary text-sm line-clamp-2 mb-4">
                     {proposal.description}
                   </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 text-sm text-foreground-secondary">
                     <span className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       {proposal.totalVotes.toLocaleString()} votes
@@ -355,7 +360,7 @@ export const GovernanceDashboard: React.FC = () => {
                     </span>
                     <Link
                       href={`/address/${proposal.proposer}`}
-                      className="flex items-center gap-1 hover:text-gray-300"
+                      className="flex items-center gap-1 hover:text-foreground"
                     >
                       Proposer: {proposal.proposer.slice(0, 8)}...
                     </Link>
@@ -373,7 +378,7 @@ export const GovernanceDashboard: React.FC = () => {
 
               {/* Voting Progress */}
               {proposal.totalVotes > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-800">
+                <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <div className="flex items-center gap-4">
                       <span className="text-green-400">
@@ -382,11 +387,11 @@ export const GovernanceDashboard: React.FC = () => {
                       <span className="text-red-400">
                         Against: {((proposal.votesAgainst / proposal.totalVotes) * 100).toFixed(1)}%
                       </span>
-                      <span className="text-gray-400">
+                      <span className="text-foreground-secondary">
                         Abstain: {((proposal.votesAbstain / proposal.totalVotes) * 100).toFixed(1)}%
                       </span>
                     </div>
-                    <span className="text-gray-500">
+                    <span className="text-foreground-secondary">
                       Quorum: {((proposal.totalVotes / proposal.quorum) * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -414,9 +419,9 @@ export const GovernanceDashboard: React.FC = () => {
       {/* Vote Modal */}
       {selectedProposal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background-card border border-gray-800 rounded-2xl max-w-lg w-full p-6">
+          <div className="bg-background-card border border-border rounded-2xl max-w-lg w-full p-6">
             <h3 className="text-xl font-semibold mb-4">Cast Your Vote</h3>
-            <p className="text-gray-400 mb-6">{selectedProposal.title}</p>
+            <p className="text-foreground-secondary mb-6">{selectedProposal.title}</p>
             
             <div className="space-y-3 mb-6">
               <button
@@ -424,7 +429,7 @@ export const GovernanceDashboard: React.FC = () => {
                 className={`w-full p-4 rounded-xl border transition-colors flex items-center gap-3 ${
                   voteType === "for"
                     ? "bg-green-500/20 border-green-500 text-green-400"
-                    : "bg-background-secondary border-gray-700 hover:border-gray-600"
+                    : "bg-background-secondary border-border hover:border-selendra-500/50"
                 }`}
               >
                 <ThumbsUp className="w-5 h-5" />
@@ -435,7 +440,7 @@ export const GovernanceDashboard: React.FC = () => {
                 className={`w-full p-4 rounded-xl border transition-colors flex items-center gap-3 ${
                   voteType === "against"
                     ? "bg-red-500/20 border-red-500 text-red-400"
-                    : "bg-background-secondary border-gray-700 hover:border-gray-600"
+                    : "bg-background-secondary border-border hover:border-selendra-500/50"
                 }`}
               >
                 <ThumbsDown className="w-5 h-5" />
@@ -445,8 +450,8 @@ export const GovernanceDashboard: React.FC = () => {
                 onClick={() => setVoteType("abstain")}
                 className={`w-full p-4 rounded-xl border transition-colors flex items-center gap-3 ${
                   voteType === "abstain"
-                    ? "bg-gray-500/20 border-gray-500 text-gray-400"
-                    : "bg-background-secondary border-gray-700 hover:border-gray-600"
+                    ? "bg-gray-500/20 border-gray-500 text-foreground-secondary"
+                    : "bg-background-secondary border-border hover:border-selendra-500/50"
                 }`}
               >
                 <AlertCircle className="w-5 h-5" />

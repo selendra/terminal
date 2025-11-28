@@ -4,10 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark theme (default) */
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 11;
-  --background-end-rgb: 10, 10, 11;
+  --foreground: 255, 255, 255;
+  --foreground-secondary: 156, 163, 175;
+  --background: 10, 10, 11;
+  --background-secondary: 17, 17, 19;
+  --background-tertiary: 24, 24, 27;
+  --background-card: 26, 26, 29;
+  --background-hover: 37, 37, 41;
+  --border: 39, 39, 42;
+  --border-hover: 63, 63, 70;
   --selendra-500: #0db0a4;
   --selendra-600: #0a9389;
   --selendra-700: #087670;
@@ -15,38 +22,80 @@
   --font-mono: var(--font-mono), 'Roboto Mono', monospace;
 }
 
+/* Light theme */
+.light {
+  --foreground: 17, 24, 39;
+  --foreground-secondary: 107, 114, 128;
+  --background: 255, 255, 255;
+  --background-secondary: 249, 250, 251;
+  --background-tertiary: 243, 244, 246;
+  --background-card: 255, 255, 255;
+  --background-hover: 243, 244, 246;
+  --border: 229, 231, 235;
+  --border-hover: 209, 213, 219;
+}
+
 @layer base {
   body {
-    @apply bg-background text-white antialiased;
+    @apply bg-background text-foreground antialiased;
+    color: rgb(var(--foreground));
+    background-color: rgb(var(--background));
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
+  /* Custom scrollbar - dark */
+  .dark ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-background-secondary;
+  .dark ::-webkit-scrollbar-track {
+    background: rgb(var(--background-secondary));
   }
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border));
+    border-radius: 9999px;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-border-hover;
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--border-hover));
+  }
+
+  /* Custom scrollbar - light */
+  .light ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .light ::-webkit-scrollbar-track {
+    background: rgb(var(--background-secondary));
+  }
+
+  .light ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border));
+    border-radius: 9999px;
+  }
+
+  .light ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--border-hover));
   }
 }
 
 @layer components {
   /* Card styles */
   .card {
-    @apply bg-background-card border border-border rounded-xl p-4 transition-all duration-200;
+    background-color: rgb(var(--background-card));
+    border: 1px solid rgb(var(--border));
+    @apply rounded-xl p-4 transition-all duration-200;
   }
 
-  .card-hover {
-    @apply hover:border-border-hover hover:bg-background-hover;
+  .light .card {
+    @apply shadow-sm;
+  }
+
+  .card-hover:hover {
+    border-color: rgb(var(--border-hover));
+    background-color: rgb(var(--background-hover));
   }
 
   /* Button styles */
@@ -55,16 +104,52 @@
   }
 
   .btn-secondary {
-    @apply bg-background-tertiary hover:bg-background-hover text-white font-medium px-4 py-2 rounded-lg border border-border transition-all duration-200;
+    background-color: rgb(var(--background-tertiary));
+    border: 1px solid rgb(var(--border));
+    @apply hover:opacity-80 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .dark .btn-secondary {
+    @apply text-white;
+  }
+
+  .light .btn-secondary {
+    @apply text-gray-700;
+  }
+
+  .btn-secondary:hover {
+    background-color: rgb(var(--background-hover));
   }
 
   .btn-ghost {
-    @apply hover:bg-background-hover text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
+    @apply font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .dark .btn-ghost {
+    @apply text-gray-300 hover:text-white;
+  }
+
+  .light .btn-ghost {
+    @apply text-gray-600 hover:text-gray-900;
+  }
+
+  .btn-ghost:hover {
+    background-color: rgb(var(--background-hover));
   }
 
   /* Input styles */
   .input {
-    @apply bg-background-tertiary border border-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-selendra-500 transition-all duration-200;
+    background-color: rgb(var(--background-tertiary));
+    border: 1px solid rgb(var(--border));
+    @apply rounded-lg px-4 py-2 placeholder-gray-500 focus:outline-none focus:border-selendra-500 transition-all duration-200;
+  }
+
+  .dark .input {
+    @apply text-white;
+  }
+
+  .light .input {
+    @apply text-gray-900;
   }
 
   /* Badge styles */
@@ -90,7 +175,12 @@
 
   /* Table styles */
   .table-row {
-    @apply border-b border-border last:border-b-0 hover:bg-background-hover transition-colors;
+    border-bottom: 1px solid rgb(var(--border));
+    @apply last:border-b-0 transition-colors;
+  }
+
+  .table-row:hover {
+    background-color: rgb(var(--background-hover));
   }
 
   /* Gradient text */
@@ -105,18 +195,77 @@
 
   /* Navigation item */
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-background-hover transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200;
+  }
+
+  .dark .nav-item {
+    @apply text-gray-400 hover:text-white;
+  }
+
+  .light .nav-item {
+    @apply text-gray-600 hover:text-gray-900;
+  }
+
+  .nav-item:hover {
+    background-color: rgb(var(--background-hover));
   }
 
   .nav-item.active {
-    @apply bg-selendra-500/10 text-selendra-400 border-l-2 border-selendra-500;
+    @apply bg-selendra-500/10 text-selendra-500 border-l-2 border-selendra-500;
   }
 }
 
 @layer utilities {
+  /* Theme-aware text colors */
+  .text-foreground {
+    color: rgb(var(--foreground));
+  }
+
+  .text-foreground-secondary {
+    color: rgb(var(--foreground-secondary));
+  }
+
+  /* Theme-aware background colors */
+  .bg-background {
+    background-color: rgb(var(--background));
+  }
+
+  .bg-background-secondary {
+    background-color: rgb(var(--background-secondary));
+  }
+
+  .bg-background-tertiary {
+    background-color: rgb(var(--background-tertiary));
+  }
+
+  .bg-background-card {
+    background-color: rgb(var(--background-card));
+  }
+
+  .bg-background-hover {
+    background-color: rgb(var(--background-hover));
+  }
+
+  /* Theme-aware border colors */
+  .border-border {
+    border-color: rgb(var(--border));
+  }
+
+  .border-border-hover {
+    border-color: rgb(var(--border-hover));
+  }
+
   /* Animation utilities */
   .animate-in {
     animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
   }
 
   /* Truncate utilities */
@@ -128,8 +277,35 @@
   }
 
   /* Glass effect */
-  .glass {
+  .dark .glass {
     @apply backdrop-blur-xl bg-white/5;
+  }
+
+  .light .glass {
+    @apply backdrop-blur-xl bg-black/5;
+  }
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -145,5 +321,13 @@
 
 /* Focus visible */
 :focus-visible {
-  @apply outline-none ring-2 ring-selendra-500 ring-offset-2 ring-offset-background;
+  @apply outline-none ring-2 ring-selendra-500 ring-offset-2;
+}
+
+.dark :focus-visible {
+  --tw-ring-offset-color: rgb(var(--background));
+}
+
+.light :focus-visible {
+  --tw-ring-offset-color: rgb(var(--background));
 }

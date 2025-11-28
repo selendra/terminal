@@ -8,7 +8,6 @@ import {
   Zap,
   Users,
   TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { clsx } from "clsx";
@@ -26,11 +25,13 @@ export function NetworkOverview() {
   const {
     isConnected,
     latestSubstrateBlock,
-    latestEvmBlock,
     substrateChainInfo,
     evmChainInfo,
-    networkStats,
   } = useBlockchain();
+
+  // In Selendra, EVM and Substrate share the same block height
+  const currentBlock = latestSubstrateBlock?.number;
+  const blockHash = latestSubstrateBlock?.hash;
 
   const stats: StatCard[] = [
     {
@@ -42,20 +43,20 @@ export function NetworkOverview() {
       subValue: "Market Cap: $24.5M",
     },
     {
-      title: "Substrate Block",
-      value: latestSubstrateBlock?.number?.toLocaleString() || "---",
+      title: "Block Height",
+      value: currentBlock?.toLocaleString() || "---",
       icon: <Blocks className="h-5 w-5" />,
       subValue: `Hash: ${
-        latestSubstrateBlock?.hash
-          ? `${latestSubstrateBlock.hash.slice(0, 10)}...`
+        blockHash
+          ? `${blockHash.slice(0, 10)}...`
           : "---"
       }`,
     },
     {
-      title: "EVM Block",
-      value: latestEvmBlock?.number?.toLocaleString() || "---",
+      title: "EVM Chain ID",
+      value: evmChainInfo?.chainId?.toString() || "1961",
       icon: <Cpu className="h-5 w-5" />,
-      subValue: evmChainInfo ? `Chain ID: ${evmChainInfo.chainId}` : "---",
+      subValue: "Unified EVM + Substrate",
     },
     {
       title: "Block Time",
@@ -98,36 +99,33 @@ export function NetworkOverview() {
       {/* Network status banner */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             Selendra <span className="gradient-text">Terminal</span>
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-foreground-secondary text-sm mt-1">
             The ultimate gateway to Selendra blockchain
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {/* Substrate network badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
+          {/* Unified network badge - Selendra supports both VMs on same chain */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-selendra-500/10 border border-selendra-500/20">
             <div
               className={clsx(
                 "h-2 w-2 rounded-full",
-                isConnected ? "bg-purple-400 animate-pulse" : "bg-gray-500"
+                isConnected ? "bg-selendra-400 animate-pulse" : "bg-foreground-secondary"
               )}
             />
-            <span className="text-xs text-purple-400 font-medium">
-              Substrate: {substrateChainInfo?.name || "Connecting..."}
+            <span className="text-xs text-selendra-400 font-medium">
+              {substrateChainInfo?.name || "Connecting..."}
             </span>
           </div>
-          {/* EVM network badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
-            <div
-              className={clsx(
-                "h-2 w-2 rounded-full",
-                isConnected ? "bg-orange-400 animate-pulse" : "bg-gray-500"
-              )}
-            />
-            <span className="text-xs text-orange-400 font-medium">
-              EVM: {evmChainInfo?.name || "Connecting..."}
+          {/* VM support badges */}
+          <div className="hidden md:flex items-center gap-2">
+            <span className="px-2 py-1 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+              Substrate
+            </span>
+            <span className="px-2 py-1 text-xs rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              EVM
             </span>
           </div>
         </div>
@@ -153,7 +151,7 @@ export function NetworkOverview() {
                       "bg-accent-green/10 text-accent-green",
                     stat.changeType === "negative" &&
                       "bg-accent-red/10 text-accent-red",
-                    stat.changeType === "neutral" && "bg-gray-500/10 text-gray-400"
+                    stat.changeType === "neutral" && "bg-foreground-secondary/10 text-foreground-secondary"
                   )}
                 >
                   {stat.change}
@@ -161,10 +159,10 @@ export function NetworkOverview() {
               )}
             </div>
             <div>
-              <h3 className="text-sm text-gray-500 mb-1">{stat.title}</h3>
-              <p className="text-xl font-bold text-white">{stat.value}</p>
+              <h3 className="text-sm text-foreground-secondary mb-1">{stat.title}</h3>
+              <p className="text-xl font-bold text-foreground">{stat.value}</p>
               {stat.subValue && (
-                <p className="text-xs text-gray-500 mt-1 truncate">
+                <p className="text-xs text-foreground-secondary mt-1 truncate">
                   {stat.subValue}
                 </p>
               )}

@@ -1,0 +1,52 @@
+# Selendra Terminal - Local Development with Local Node
+# This file is for local development/testing with a local Selendra node
+#
+# Usage:
+#   docker-compose -f docker-compose.local.yml up -d
+
+services:
+  # ============================================
+  # Selendra Full Node (Local Development)
+  # ============================================
+  selendra-node:
+    image: image.koompi.org/library/selendra-rpc:latest
+    container_name: selendra-local-node
+    restart: unless-stopped
+    ports:
+      - "9944:9944"   # WebSocket RPC
+      - "9933:9933"   # HTTP RPC
+      - "30333:30333" # P2P
+    volumes:
+      - selendra-local-data:/data
+    environment:
+      - RUST_LOG=info
+    command:
+      - "--chain=selendra"
+      - "--base-path=/data/selendradb"
+      - "--name=selendra-local-explorer"
+      - "--rpc-port=9933"
+      - "--port=30333"
+      - "--rpc-external"
+      - "--rpc-cors=all"
+      - "--rpc-methods=unsafe"
+      - "--rpc-max-connections=1000"
+      - "--db-cache=2048"
+      - "--no-mdns"
+      # For faster sync in local dev, use warp sync
+      - "--sync=warp"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9933"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - selendra-local
+
+volumes:
+  selendra-local-data:
+    driver: local
+
+networks:
+  selendra-local:
+    driver: bridge

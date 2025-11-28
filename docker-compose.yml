@@ -1,0 +1,107 @@
+# Selendra Terminal - Docker Compose Setup
+# Run explorer with a local Selendra full node
+#
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d explorer     # Start only explorer (use external RPC)
+#   docker-compose logs -f            # View logs
+#   docker-compose down               # Stop all services
+#   docker-compose down -v            # Stop and remove volumes
+
+services:
+  # ============================================
+  # Selendra Full Node
+  # ============================================
+  selendra-node:
+    image: image.koompi.org/library/selendra-rpc:latest
+    container_name: selendra-node
+    restart: unless-stopped
+    ports:
+      - "9944:9944"   # WebSocket RPC (Substrate + EVM)
+      - "9933:9933"   # HTTP RPC
+      - "30333:30333" # P2P
+    volumes:
+      - selendra-data:/data
+    environment:
+      - RUST_LOG=info
+    command:
+      - "--chain=selendra"
+      - "--base-path=/data/selendradb"
+      - "--name=selendra-explorer-node"
+      - "--rpc-port=9933"
+      - "--port=30333"
+      - "--rpc-external"
+      - "--rpc-cors=all"
+      - "--rpc-methods=unsafe"
+      - "--rpc-max-connections=1000"
+      - "--db-cache=2048"
+      - "--pool-limit=1024"
+      - "--max-runtime-instances=8"
+      - "--runtime-cache-size=4"
+      - "--no-mdns"
+      # Uncomment for archive node (keeps all historical data)
+      # - "--pruning=archive"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9933"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - selendra-network
+
+  # ============================================
+  # Selendra Terminal Explorer
+  # ============================================
+  explorer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: selendra-explorer
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Local node endpoints (comment out to use public RPC)
+      - NEXT_PUBLIC_SUBSTRATE_RPC_WS=ws://selendra-node:9944
+      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=http://selendra-node:9933
+      - NEXT_PUBLIC_EVM_RPC_HTTP=http://selendra-node:9933
+      # Public RPC fallback (uncomment to use as primary)
+      # - NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc.selendra.org
+      # - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
+      # - NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc.selendra.org
+    depends_on:
+      selendra-node:
+        condition: service_healthy
+    networks:
+      - selendra-network
+
+  # ============================================
+  # Explorer Only (No local node, uses public RPC)
+  # ============================================
+  explorer-standalone:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: selendra-explorer-standalone
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc.selendra.org
+      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
+      - NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc.selendra.org
+    profiles:
+      - standalone
+    networks:
+      - selendra-network
+
+volumes:
+  selendra-data:
+    driver: local
+
+networks:
+  selendra-network:
+    driver: bridge

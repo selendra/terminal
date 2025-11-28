@@ -220,8 +220,8 @@ export default function DeFiDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">DeFi Dashboard</h1>
-          <p className="text-gray-400 mt-1">Track TVL, yields, and DeFi protocols on Selendra</p>
+          <h1 className="text-2xl font-bold text-foreground">DeFi Dashboard</h1>
+          <p className="text-foreground-secondary mt-1">Track TVL, yields, and DeFi protocols on Selendra</p>
         </div>
       </div>
 
@@ -229,12 +229,12 @@ export default function DeFiDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Total Value Locked</span>
+            <span className="text-foreground-secondary text-sm">Total Value Locked</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
               <DollarSign className="h-5 w-5 text-green-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalTvl}</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalTvl}</p>
           <p className={cn('text-sm mt-1 flex items-center gap-1', mockStats.tvlChange24h >= 0 ? 'text-green-400' : 'text-red-400')}>
             {mockStats.tvlChange24h >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {Math.abs(mockStats.tvlChange24h)}% (24h)
@@ -243,12 +243,12 @@ export default function DeFiDashboard() {
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">24h Volume</span>
+            <span className="text-foreground-secondary text-sm">24h Volume</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <BarChart3 className="h-5 w-5 text-blue-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalVolume24h}</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalVolume24h}</p>
           <p className={cn('text-sm mt-1 flex items-center gap-1', mockStats.volumeChange24h >= 0 ? 'text-green-400' : 'text-red-400')}>
             {mockStats.volumeChange24h >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {Math.abs(mockStats.volumeChange24h)}% (24h)
@@ -257,24 +257,24 @@ export default function DeFiDashboard() {
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Total Protocols</span>
+            <span className="text-foreground-secondary text-sm">Total Protocols</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <Droplets className="h-5 w-5 text-purple-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalProtocols}</p>
-          <p className="text-sm text-gray-400 mt-1">Across all categories</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalProtocols}</p>
+          <p className="text-sm text-foreground-secondary mt-1">Across all categories</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Average APY</span>
+            <span className="text-foreground-secondary text-sm">Average APY</span>
             <div className="p-2 bg-yellow-500/20 rounded-lg">
               <Percent className="h-5 w-5 text-yellow-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.averageApy}%</p>
-          <p className="text-sm text-gray-400 mt-1">Across top pools</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.averageApy}%</p>
+          <p className="text-sm text-foreground-secondary mt-1">Across top pools</p>
         </div>
       </div>
 
@@ -290,7 +290,7 @@ export default function DeFiDashboard() {
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 categoryFilter === category.key
                   ? 'bg-selendra-primary text-white'
-                  : 'bg-selendra-card text-gray-400 hover:text-white border border-selendra-border'
+                  : 'bg-selendra-card text-foreground-secondary hover:text-foreground border border-selendra-border'
               )}
             >
               <Icon className="h-4 w-4" />
@@ -308,8 +308,8 @@ export default function DeFiDashboard() {
             className={cn(
               'py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'protocols'
-                ? 'border-selendra-primary text-white'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-selendra-primary text-foreground'
+                : 'border-transparent text-foreground-secondary hover:text-foreground'
             )}
           >
             Protocols
@@ -319,8 +319,8 @@ export default function DeFiDashboard() {
             className={cn(
               'py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'pools'
-                ? 'border-selendra-primary text-white'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-selendra-primary text-foreground'
+                : 'border-transparent text-foreground-secondary hover:text-foreground'
             )}
           >
             Top Pools
@@ -342,7 +342,7 @@ export default function DeFiDashboard() {
                     {protocol.logo}
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold">{protocol.name}</h3>
+                    <h3 className="text-foreground font-semibold">{protocol.name}</h3>
                     {getCategoryBadge(protocol.category)}
                   </div>
                 </div>
@@ -350,7 +350,7 @@ export default function DeFiDashboard() {
                   href={protocol.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-foreground-secondary hover:text-foreground transition-colors"
                 >
                   <ExternalLink className="h-5 w-5" />
                 </a>
@@ -358,9 +358,9 @@ export default function DeFiDashboard() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400 text-sm">TVL</span>
+                  <span className="text-foreground-secondary text-sm">TVL</span>
                   <div className="text-right">
-                    <span className="text-white font-medium">{protocol.tvl}</span>
+                    <span className="text-foreground font-medium">{protocol.tvl}</span>
                     <span
                       className={cn(
                         'ml-2 text-xs',
@@ -374,13 +374,13 @@ export default function DeFiDashboard() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400 text-sm">24h Volume</span>
-                  <span className="text-white font-medium">{protocol.volume24h}</span>
+                  <span className="text-foreground-secondary text-sm">24h Volume</span>
+                  <span className="text-foreground font-medium">{protocol.volume24h}</span>
                 </div>
 
                 {protocol.apy && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Top APY</span>
+                    <span className="text-foreground-secondary text-sm">Top APY</span>
                     <span className="text-green-400 font-medium">{protocol.apy}%</span>
                   </div>
                 )}
@@ -389,7 +389,7 @@ export default function DeFiDashboard() {
                   {protocol.chains.map((chain) => (
                     <span
                       key={chain}
-                      className="px-2 py-1 bg-selendra-dark rounded text-xs text-gray-300"
+                      className="px-2 py-1 bg-selendra-dark rounded text-xs text-foreground-secondary"
                     >
                       {chain}
                     </span>
@@ -408,21 +408,21 @@ export default function DeFiDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="bg-selendra-dark/50">
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">#</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Pool</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Protocol</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">TVL</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">APY</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">24h Volume</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">24h Fees</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Action</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">#</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Pool</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Protocol</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">TVL</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">APY</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">24h Volume</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">24h Fees</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-selendra-border">
                 {mockPools.map((pool, index) => (
                   <tr key={pool.id} className="hover:bg-selendra-dark/30 transition-colors">
                     <td className="py-4 px-6">
-                      <span className="text-gray-500">{index + 1}</span>
+                      <span className="text-foreground-secondary">{index + 1}</span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -434,23 +434,23 @@ export default function DeFiDashboard() {
                             {pool.token1.symbol.charAt(0)}
                           </div>
                         </div>
-                        <span className="text-white font-medium">{pool.pair}</span>
+                        <span className="text-foreground font-medium">{pool.pair}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-300">{pool.protocol}</span>
+                      <span className="text-foreground-secondary">{pool.protocol}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-white font-medium">{pool.tvl}</span>
+                      <span className="text-foreground font-medium">{pool.tvl}</span>
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-green-400 font-medium">{pool.apy}%</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-300">{pool.volume24h}</span>
+                      <span className="text-foreground-secondary">{pool.volume24h}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-300">{pool.fees24h}</span>
+                      <span className="text-foreground-secondary">{pool.fees24h}</span>
                     </td>
                     <td className="py-4 px-6">
                       <button className="px-3 py-1.5 bg-selendra-primary text-white text-sm rounded-lg hover:bg-selendra-primary/90 transition-colors">
@@ -472,8 +472,8 @@ export default function DeFiDashboard() {
             <Info className="h-5 w-5 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-white font-medium mb-1">DeFi on Selendra</h3>
-            <p className="text-gray-400 text-sm">
+            <h3 className="text-foreground font-medium mb-1">DeFi on Selendra</h3>
+            <p className="text-foreground-secondary text-sm">
               Selendra supports both EVM and Substrate-based DeFi protocols. Connect your wallet to start
               earning yield, providing liquidity, or participating in governance. Always DYOR before
               investing in any DeFi protocol.

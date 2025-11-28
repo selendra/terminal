@@ -1,7 +1,10 @@
-'use client';
-
+import { MainLayout } from '@/components/layout/MainLayout';
 import ValidatorsExplorer from '@/components/validators/ValidatorsExplorer';
 
 export default function ValidatorsPage() {
-  return <ValidatorsExplorer />;
+  return (
+    <MainLayout>
+      <ValidatorsExplorer />
+    </MainLayout>
+  );
 }

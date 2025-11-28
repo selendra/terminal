@@ -14,6 +14,40 @@ import { useBlockchain } from "./BlockchainProvider";
 
 export type WalletType = "substrate" | "evm" | "both";
 
+// Selendra network configuration - unified RPC for both Substrate and EVM
+export const SELENDRA_MAINNET = {
+  chainId: "0x7A9", // 1961 in hex
+  chainIdNumber: 1961,
+  chainName: "Selendra Mainnet",
+  nativeCurrency: {
+    name: "Selendra",
+    symbol: "SEL",
+    decimals: 18,
+  },
+  rpcUrls: ["https://rpc.selendra.org"],
+  blockExplorerUrls: ["https://scan.selendra.org"],
+};
+
+export const SELENDRA_TESTNET = {
+  chainId: "0x7A1", // 1953 in hex
+  chainIdNumber: 1953,
+  chainName: "Selendra Testnet",
+  nativeCurrency: {
+    name: "Selendra",
+    symbol: "SEL",
+    decimals: 18,
+  },
+  rpcUrls: ["https://rpc-testnet.selendra.org"],
+  blockExplorerUrls: ["https://testnet.scan.selendra.org"],
+};
+
+// Supported Substrate wallets
+export const SUPPORTED_SUBSTRATE_WALLETS = [
+  { id: "polkadot-js", name: "Polkadot.js", icon: "🔷" },
+  { id: "talisman", name: "Talisman", icon: "🌙" },
+  { id: "subwallet-js", name: "SubWallet", icon: "💳" },
+] as const;
+
 interface SubstrateAccount {
   address: string;
   name?: string;
@@ -46,12 +80,17 @@ interface WalletContextType {
   substrateBalance: Balance | null;
   evmBalance: Balance | null;
 
+  // Network info
+  isOnSelendraNetwork: boolean;
+
   // Methods
-  connectSubstrateWallet: () => Promise<void>;
+  connectSubstrateWallet: (walletId?: string) => Promise<void>;
   connectEvmWallet: () => Promise<void>;
   disconnectWallet: () => void;
   selectSubstrateAccount: (account: SubstrateAccount) => void;
   refreshBalances: () => Promise<void>;
+  switchToSelendraNetwork: (testnet?: boolean) => Promise<boolean>;
+  addSelendraNetwork: (testnet?: boolean) => Promise<boolean>;
 
   // Signing
   signSubstrateMessage: (message: string) => Promise<string | null>;
@@ -86,14 +125,84 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   const isConnected = substrateAccounts.length > 0 || evmAccount !== null;
 
-  // Connect to Polkadot.js extension
-  const connectSubstrateWallet = useCallback(async () => {
+  // Check if connected to Selendra network
+  const isOnSelendraNetwork = evmAccount 
+    ? evmAccount.chainId === SELENDRA_MAINNET.chainIdNumber || 
+      evmAccount.chainId === SELENDRA_TESTNET.chainIdNumber
+    : false;
+
+  // Add Selendra network to MetaMask
+  const addSelendraNetwork = useCallback(async (testnet = false): Promise<boolean> => {
+    if (typeof window === "undefined" || !("ethereum" in window)) {
+      toast.error("MetaMask not detected");
+      return false;
+    }
+
+    const network = testnet ? SELENDRA_TESTNET : SELENDRA_MAINNET;
+    const ethereum = (window as any).ethereum;
+
+    try {
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [{
+          chainId: network.chainId,
+          chainName: network.chainName,
+          nativeCurrency: network.nativeCurrency,
+          rpcUrls: network.rpcUrls,
+          blockExplorerUrls: network.blockExplorerUrls,
+        }],
+      });
+      toast.success(`${network.chainName} added to wallet`);
+      return true;
+    } catch (error: any) {
+      if (error.code === 4001) {
+        toast.error("User rejected network addition");
+      } else {
+        toast.error("Failed to add network");
+      }
+      return false;
+    }
+  }, []);
+
+  // Switch to Selendra network
+  const switchToSelendraNetwork = useCallback(async (testnet = false): Promise<boolean> => {
+    if (typeof window === "undefined" || !("ethereum" in window)) {
+      toast.error("MetaMask not detected");
+      return false;
+    }
+
+    const network = testnet ? SELENDRA_TESTNET : SELENDRA_MAINNET;
+    const ethereum = (window as any).ethereum;
+
+    try {
+      await ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: network.chainId }],
+      });
+      toast.success(`Switched to ${network.chainName}`);
+      return true;
+    } catch (error: any) {
+      // Error 4902 means the chain hasn't been added yet
+      if (error.code === 4902) {
+        return await addSelendraNetwork(testnet);
+      }
+      if (error.code === 4001) {
+        toast.error("User rejected network switch");
+      } else {
+        toast.error("Failed to switch network");
+      }
+      return false;
+    }
+  }, [addSelendraNetwork]);
+
+  // Connect to Polkadot.js extension or specific wallet
+  const connectSubstrateWallet = useCallback(async (walletId?: string) => {
     if (typeof window === "undefined") return;
 
     setIsConnecting(true);
     try {
       // Dynamically import Polkadot extension
-      const { web3Enable, web3Accounts } = await import(
+      const { web3Enable, web3Accounts, web3AccountsSubscribe } = await import(
         "@polkadot/extension-dapp"
       );
 
@@ -105,7 +214,18 @@ export function WalletProvider({ children }: WalletProviderProps) {
         return;
       }
 
-      setPolkadotExtension(extensions[0]);
+      // If specific wallet requested, find it
+      let targetExtension = extensions[0];
+      if (walletId) {
+        const found = extensions.find((ext) => ext.name === walletId);
+        if (!found) {
+          toast.error(`${walletId} wallet not found. Please install it.`);
+          return;
+        }
+        targetExtension = found;
+      }
+
+      setPolkadotExtension(targetExtension);
 
       // Get all accounts
       const accounts = await web3Accounts();
@@ -124,13 +244,27 @@ export function WalletProvider({ children }: WalletProviderProps) {
       setSubstrateAccounts(formattedAccounts);
       setSelectedSubstrateAccount(formattedAccounts[0]);
 
+      // Subscribe to account changes
+      web3AccountsSubscribe((newAccounts) => {
+        const formatted: SubstrateAccount[] = newAccounts.map((acc) => ({
+          address: acc.address,
+          name: acc.meta.name || "Unnamed Account",
+          source: acc.meta.source,
+        }));
+        setSubstrateAccounts(formatted);
+        // If selected account was removed, select first available
+        if (formatted.length > 0 && !formatted.find(a => a.address === selectedSubstrateAccount?.address)) {
+          setSelectedSubstrateAccount(formatted[0]);
+        }
+      });
+
       toast.success(`Connected ${formattedAccounts.length} Substrate account(s)`);
     } catch {
       toast.error("Failed to connect Substrate wallet");
     } finally {
       setIsConnecting(false);
     }
-  }, []);
+  }, [selectedSubstrateAccount]);
 
   // Connect to MetaMask or other EVM wallet
   const connectEvmWallet = useCallback(async () => {
@@ -153,13 +287,33 @@ export function WalletProvider({ children }: WalletProviderProps) {
       }
 
       const network = await provider.getNetwork();
+      const chainIdNumber = Number(network.chainId);
 
       setEvmAccount({
         address: accounts[0],
-        chainId: Number(network.chainId),
+        chainId: chainIdNumber,
       });
 
-      toast.success("EVM wallet connected");
+      // Check if on Selendra network, if not offer to switch
+      if (chainIdNumber !== SELENDRA_MAINNET.chainIdNumber && 
+          chainIdNumber !== SELENDRA_TESTNET.chainIdNumber) {
+        toast((t) => (
+          <div className="flex flex-col gap-2">
+            <span>Not connected to Selendra network</span>
+            <button 
+              onClick={() => {
+                switchToSelendraNetwork();
+                toast.dismiss(t.id);
+              }}
+              className="px-3 py-1 bg-selendra-600 hover:bg-selendra-700 rounded text-sm"
+            >
+              Switch to Selendra
+            </button>
+          </div>
+        ), { duration: 5000 });
+      } else {
+        toast.success("EVM wallet connected");
+      }
 
       // Listen for account changes
       ethereum.on("accountsChanged", (newAccounts: string[]) => {
@@ -175,16 +329,23 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
       // Listen for chain changes
       ethereum.on("chainChanged", (chainId: string) => {
+        const newChainId = parseInt(chainId, 16);
         setEvmAccount((prev) =>
-          prev ? { ...prev, chainId: parseInt(chainId, 16) } : null
+          prev ? { ...prev, chainId: newChainId } : null
         );
+
+        // Notify if switched away from Selendra
+        if (newChainId !== SELENDRA_MAINNET.chainIdNumber && 
+            newChainId !== SELENDRA_TESTNET.chainIdNumber) {
+          toast.error("Switched to non-Selendra network");
+        }
       });
     } catch {
       toast.error("Failed to connect EVM wallet");
     } finally {
       setIsConnecting(false);
     }
-  }, []);
+  }, [switchToSelendraNetwork]);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
@@ -324,11 +485,14 @@ export function WalletProvider({ children }: WalletProviderProps) {
     selectedSubstrateAccount,
     substrateBalance,
     evmBalance,
+    isOnSelendraNetwork,
     connectSubstrateWallet,
     connectEvmWallet,
     disconnectWallet,
     selectSubstrateAccount,
     refreshBalances,
+    switchToSelendraNetwork,
+    addSelendraNetwork,
     signSubstrateMessage,
     signEvmMessage,
   };

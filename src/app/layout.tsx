@@ -47,14 +47,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0a0a0b" />
+        {/* Prevent flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('selendra-terminal-theme');
+                  var resolved = theme === 'light' ? 'light' : 
+                                 theme === 'dark' ? 'dark' :
+                                 window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  document.documentElement.classList.add(resolved);
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${montserrat.variable} ${robotoMono.variable} font-sans`}>
         <Providers>
           {children}
           <Toaster
             position="bottom-right"
             toastOptions={{
-              className: "!bg-background-card !text-white !border !border-border",
+              className: "!bg-background-card !text-foreground !border !border-border",
               duration: 4000,
             }}
           />

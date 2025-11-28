@@ -1,7 +1,10 @@
-'use client';
-
+import { MainLayout } from '@/components/layout/MainLayout';
 import TreasuryDashboard from '@/components/treasury/TreasuryDashboard';
 
 export default function TreasuryPage() {
-  return <TreasuryDashboard />;
+  return (
+    <MainLayout>
+      <TreasuryDashboard />
+    </MainLayout>
+  );
 }

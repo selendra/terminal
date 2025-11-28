@@ -154,13 +154,13 @@ export const TransactionsExplorer: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Transactions</h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-foreground-secondary mt-1">
             Explore all transactions on Selendra Network
           </p>
         </div>
         <button
           onClick={() => setTransactions(generateMockTransactions(100))}
-          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-gray-700 rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -169,46 +169,46 @@ export const TransactionsExplorer: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Activity className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">24h Transactions</p>
+              <p className="text-sm text-foreground-secondary">24h Transactions</p>
               <p className="text-xl font-bold">{stats.total24h}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">TPS</p>
+              <p className="text-sm text-foreground-secondary">TPS</p>
               <p className="text-xl font-bold">{stats.tps}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
               <Flame className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Avg. Fee</p>
+              <p className="text-sm text-foreground-secondary">Avg. Fee</p>
               <p className="text-xl font-bold">{stats.avgFee}</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
               <Clock className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Pending</p>
+              <p className="text-sm text-foreground-secondary">Pending</p>
               <p className="text-xl font-bold">{stats.pending}</p>
             </div>
           </div>
@@ -220,13 +220,13 @@ export const TransactionsExplorer: React.FC = () => {
         <div className="flex flex-1 gap-4 items-center flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-secondary" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by hash, from, or to address..."
-              className="w-full pl-10 pr-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
             />
           </div>
 
@@ -234,7 +234,7 @@ export const TransactionsExplorer: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-            className="px-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+            className="px-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
           >
             <option value="all">All Types</option>
             <option value="transfer">Transfer</option>
@@ -248,7 +248,7 @@ export const TransactionsExplorer: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-            className="px-4 py-2.5 bg-background-secondary border border-gray-700 rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
+            className="px-4 py-2.5 bg-background-secondary border border-border rounded-xl focus:outline-none focus:border-selendra-500 transition-colors"
           >
             <option value="all">All Status</option>
             <option value="success">Success</option>
@@ -265,7 +265,7 @@ export const TransactionsExplorer: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filterVm === vm
                     ? "bg-selendra-600 text-white"
-                    : "bg-background-secondary text-gray-400 hover:text-white"
+                    : "bg-background-secondary text-foreground-secondary hover:text-foreground"
                 }`}
               >
                 {vm === "all" ? "All" : vm.toUpperCase()}
@@ -276,7 +276,7 @@ export const TransactionsExplorer: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-background-card border border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex items-center justify-center">
             <RefreshCw className="w-8 h-8 animate-spin text-selendra-500" />
@@ -286,29 +286,29 @@ export const TransactionsExplorer: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-background-secondary border-b border-gray-800">
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                  <tr className="bg-background-secondary border-b border-border">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Txn Hash
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Block
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                       From
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground-secondary">
                       To
                     </th>
-                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-right px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Value
                     </th>
-                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-right px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Fee
                     </th>
-                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">
+                    <th className="text-right px-4 py-3 text-sm font-medium text-foreground-secondary">
                       Age
                     </th>
                   </tr>
@@ -317,7 +317,7 @@ export const TransactionsExplorer: React.FC = () => {
                   {paginatedTransactions.map((tx) => (
                     <tr
                       key={tx.hash}
-                      className="border-b border-gray-800 hover:bg-background-hover transition-colors"
+                      className="border-b border-border hover:bg-background-hover transition-colors"
                     >
                       <td className="px-4 py-4">
                         <Link
@@ -344,7 +344,7 @@ export const TransactionsExplorer: React.FC = () => {
                       <td className="px-4 py-4">
                         <Link
                           href={`/blocks/${tx.block}`}
-                          className="text-gray-400 hover:text-white"
+                          className="text-foreground-secondary hover:text-foreground"
                         >
                           {tx.block.toLocaleString()}
                         </Link>
@@ -352,7 +352,7 @@ export const TransactionsExplorer: React.FC = () => {
                       <td className="px-4 py-4">
                         <Link
                           href={`/address/${tx.from}`}
-                          className="text-gray-400 hover:text-white font-mono text-sm"
+                          className="text-foreground-secondary hover:text-foreground font-mono text-sm"
                         >
                           {tx.from}
                         </Link>
@@ -360,7 +360,7 @@ export const TransactionsExplorer: React.FC = () => {
                       <td className="px-4 py-4">
                         <Link
                           href={`/address/${tx.to}`}
-                          className="text-gray-400 hover:text-white font-mono text-sm"
+                          className="text-foreground-secondary hover:text-foreground font-mono text-sm"
                         >
                           {tx.to}
                         </Link>
@@ -368,10 +368,10 @@ export const TransactionsExplorer: React.FC = () => {
                       <td className="px-4 py-4 text-right font-mono text-sm">
                         {tx.value}
                       </td>
-                      <td className="px-4 py-4 text-right text-gray-400 text-sm">
+                      <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
                         {tx.fee}
                       </td>
-                      <td className="px-4 py-4 text-right text-gray-400 text-sm">
+                      <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
                         {formatTimestamp(tx.timestamp)}
                       </td>
                     </tr>
@@ -381,8 +381,8 @@ export const TransactionsExplorer: React.FC = () => {
             </div>
 
             {/* Pagination */}
-            <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between">
-              <p className="text-sm text-gray-400">
+            <div className="px-4 py-3 border-t border-border flex items-center justify-between">
+              <p className="text-sm text-foreground-secondary">
                 Showing {(currentPage - 1) * txPerPage + 1} to{" "}
                 {Math.min(currentPage * txPerPage, filteredTransactions.length)} of{" "}
                 {filteredTransactions.length} transactions

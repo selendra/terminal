@@ -204,8 +204,8 @@ export default function TreasuryDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Treasury</h1>
-          <p className="text-gray-400 mt-1">Network treasury and spending proposals</p>
+          <h1 className="text-2xl font-bold text-foreground">Treasury</h1>
+          <p className="text-foreground-secondary mt-1">Network treasury and spending proposals</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-selendra-primary text-white rounded-lg hover:bg-selendra-primary/90 transition-colors">
           <FileText className="h-4 w-4" />
@@ -217,45 +217,45 @@ export default function TreasuryDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Treasury Balance</span>
+            <span className="text-foreground-secondary text-sm">Treasury Balance</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
               <PiggyBank className="h-5 w-5 text-green-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.balance}</p>
-          <p className="text-sm text-gray-400 mt-1">≈ {mockStats.balanceUSD}</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.balance}</p>
+          <p className="text-sm text-foreground-secondary mt-1">≈ {mockStats.balanceUSD}</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Total Spent</span>
+            <span className="text-foreground-secondary text-sm">Total Spent</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <Coins className="h-5 w-5 text-blue-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalSpent}</p>
-          <p className="text-sm text-gray-400 mt-1">{mockStats.approvedProposals} proposals funded</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalSpent}</p>
+          <p className="text-sm text-foreground-secondary mt-1">{mockStats.approvedProposals} proposals funded</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Pending Proposals</span>
+            <span className="text-foreground-secondary text-sm">Pending Proposals</span>
             <div className="p-2 bg-yellow-500/20 rounded-lg">
               <Receipt className="h-5 w-5 text-yellow-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.pendingProposals}</p>
-          <p className="text-sm text-gray-400 mt-1">Awaiting council vote</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.pendingProposals}</p>
+          <p className="text-sm text-foreground-secondary mt-1">Awaiting council vote</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Next Spend Period</span>
+            <span className="text-foreground-secondary text-sm">Next Spend Period</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <Clock className="h-5 w-5 text-purple-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{formatTimeRemaining(mockStats.nextSpendPeriod)}</p>
+          <p className="text-2xl font-bold text-foreground">{formatTimeRemaining(mockStats.nextSpendPeriod)}</p>
           <div className="mt-2">
             <div className="w-full bg-selendra-dark rounded-full h-2">
               <div
@@ -263,19 +263,19 @@ export default function TreasuryDashboard() {
                 style={{ width: `${mockStats.spendPeriodProgress}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">{mockStats.spendPeriodProgress}% of period elapsed</p>
+            <p className="text-xs text-foreground-secondary mt-1">{mockStats.spendPeriodProgress}% of period elapsed</p>
           </div>
         </div>
       </div>
 
       {/* Treasury Distribution */}
       <div className="bg-selendra-card border border-selendra-border rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Treasury Distribution</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Treasury Distribution</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-gray-400">Development</span>
-              <span className="text-white font-medium">45%</span>
+              <span className="text-foreground-secondary">Development</span>
+              <span className="text-foreground font-medium">45%</span>
             </div>
             <div className="w-full bg-selendra-dark rounded-full h-3">
               <div className="bg-blue-500 h-3 rounded-full" style={{ width: '45%' }} />
@@ -283,8 +283,8 @@ export default function TreasuryDashboard() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-gray-400">Marketing</span>
-              <span className="text-white font-medium">25%</span>
+              <span className="text-foreground-secondary">Marketing</span>
+              <span className="text-foreground font-medium">25%</span>
             </div>
             <div className="w-full bg-selendra-dark rounded-full h-3">
               <div className="bg-green-500 h-3 rounded-full" style={{ width: '25%' }} />
@@ -292,8 +292,8 @@ export default function TreasuryDashboard() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-gray-400">Infrastructure</span>
-              <span className="text-white font-medium">30%</span>
+              <span className="text-foreground-secondary">Infrastructure</span>
+              <span className="text-foreground font-medium">30%</span>
             </div>
             <div className="w-full bg-selendra-dark rounded-full h-3">
               <div className="bg-purple-500 h-3 rounded-full" style={{ width: '30%' }} />
@@ -310,8 +310,8 @@ export default function TreasuryDashboard() {
             className={cn(
               'py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'proposals'
-                ? 'border-selendra-primary text-white'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-selendra-primary text-foreground'
+                : 'border-transparent text-foreground-secondary hover:text-foreground'
             )}
           >
             Proposals
@@ -321,8 +321,8 @@ export default function TreasuryDashboard() {
             className={cn(
               'py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'spending'
-                ? 'border-selendra-primary text-white'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-selendra-primary text-foreground'
+                : 'border-transparent text-foreground-secondary hover:text-foreground'
             )}
           >
             Recent Spending
@@ -343,7 +343,7 @@ export default function TreasuryDashboard() {
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   proposalFilter === filter
                     ? 'bg-selendra-primary text-white'
-                    : 'bg-selendra-card text-gray-400 hover:text-white'
+                    : 'bg-selendra-card text-foreground-secondary hover:text-foreground'
                 )}
               >
                 {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -364,28 +364,28 @@ export default function TreasuryDashboard() {
                       <span className="text-selendra-primary font-mono">#{proposal.id}</span>
                       {getStatusBadge(proposal.status)}
                     </div>
-                    <p className="text-white font-medium mb-2">{proposal.description}</p>
+                    <p className="text-foreground font-medium mb-2">{proposal.description}</p>
                     <div className="flex flex-wrap items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Beneficiary:</span>
-                        <span className="text-gray-300 font-mono">
+                        <span className="text-foreground-secondary">Beneficiary:</span>
+                        <span className="text-foreground font-mono">
                           {proposal.beneficiaryName || formatAddress(proposal.beneficiary)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Value:</span>
+                        <span className="text-foreground-secondary">Value:</span>
                         <span className="text-green-400 font-medium">{proposal.value}</span>
-                        <span className="text-gray-500">({proposal.valueUSD})</span>
+                        <span className="text-foreground-secondary">({proposal.valueUSD})</span>
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <ChevronRight className="h-5 w-5 text-foreground-secondary flex-shrink-0" />
                 </div>
 
                 {/* Council Votes */}
                 <div className="mt-4 pt-4 border-t border-selendra-border">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Council Votes</span>
+                    <span className="text-sm text-foreground-secondary">Council Votes</span>
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-green-400 flex items-center gap-1">
                         <CheckCircle className="h-4 w-4" />
@@ -425,11 +425,11 @@ export default function TreasuryDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="bg-selendra-dark/50">
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Proposal</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Beneficiary</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Value</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Block</th>
-                  <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Time</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Proposal</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Beneficiary</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Value</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Block</th>
+                  <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-selendra-border">
@@ -441,20 +441,20 @@ export default function TreasuryDashboard() {
                     <td className="py-4 px-6">
                       <div>
                         {spending.beneficiaryName && (
-                          <p className="text-white font-medium">{spending.beneficiaryName}</p>
+                          <p className="text-foreground font-medium">{spending.beneficiaryName}</p>
                         )}
-                        <p className="text-gray-400 font-mono text-sm">{formatAddress(spending.beneficiary)}</p>
+                        <p className="text-foreground-secondary font-mono text-sm">{formatAddress(spending.beneficiary)}</p>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <p className="text-green-400 font-medium">{spending.value}</p>
-                      <p className="text-gray-500 text-sm">{spending.valueUSD}</p>
+                      <p className="text-foreground-secondary text-sm">{spending.valueUSD}</p>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-300 font-mono">{spending.block.toLocaleString()}</span>
+                      <span className="text-foreground font-mono">{spending.block.toLocaleString()}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-400">{spending.timestamp}</span>
+                      <span className="text-foreground-secondary">{spending.timestamp}</span>
                     </td>
                   </tr>
                 ))}
@@ -471,8 +471,8 @@ export default function TreasuryDashboard() {
             <TrendingDown className="h-5 w-5 text-orange-400" />
           </div>
           <div>
-            <h3 className="text-white font-medium mb-1">Treasury Burn</h3>
-            <p className="text-gray-400 text-sm">
+            <h3 className="text-foreground font-medium mb-1">Treasury Burn</h3>
+            <p className="text-foreground-secondary text-sm">
               At the end of each spend period, any unspent treasury funds are burned. Current burn rate is 1% per period.
               Total burned so far: <span className="text-orange-400 font-medium">{mockStats.burn}</span>
             </p>

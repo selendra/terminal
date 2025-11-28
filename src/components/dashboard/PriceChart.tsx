@@ -162,9 +162,9 @@ export function PriceChart() {
     <div className="card h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-white mb-1">SEL Price</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-1">SEL Price</h2>
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-white">
+            <span className="text-2xl font-bold text-foreground">
               ${currentPrice.toFixed(4)}
             </span>
             <span
@@ -193,7 +193,7 @@ export function PriceChart() {
                 "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
                 timeframe === tf
                   ? "bg-selendra-500/20 text-selendra-400"
-                  : "text-gray-500 hover:text-white hover:bg-background-hover"
+                  : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
               )}
             >
               {tf}
@@ -212,20 +212,20 @@ export function PriceChart() {
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
         <div>
-          <span className="text-xs text-gray-500">Market Cap</span>
-          <p className="text-sm font-medium text-white">$24.5M</p>
+          <span className="text-xs text-foreground-secondary">Market Cap</span>
+          <p className="text-sm font-medium text-foreground">$24.5M</p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">24h Volume</span>
-          <p className="text-sm font-medium text-white">$1.2M</p>
+          <span className="text-xs text-foreground-secondary">24h Volume</span>
+          <p className="text-sm font-medium text-foreground">$1.2M</p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">Circulating Supply</span>
-          <p className="text-sm font-medium text-white">1B SEL</p>
+          <span className="text-xs text-foreground-secondary">Circulating Supply</span>
+          <p className="text-sm font-medium text-foreground">1B SEL</p>
         </div>
         <div>
-          <span className="text-xs text-gray-500">Total Supply</span>
-          <p className="text-sm font-medium text-white">10B SEL</p>
+          <span className="text-xs text-foreground-secondary">Total Supply</span>
+          <p className="text-sm font-medium text-foreground">10B SEL</p>
         </div>
       </div>
     </div>

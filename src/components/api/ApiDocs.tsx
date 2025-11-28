@@ -225,7 +225,7 @@ export const ApiDocs: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">API Documentation</h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-foreground-secondary mt-1">
             Build applications with Selendra Terminal API
           </p>
         </div>
@@ -233,7 +233,7 @@ export const ApiDocs: React.FC = () => {
           href="https://docs.selendra.org/api"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-gray-700 rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors flex items-center gap-2"
         >
           <Book className="w-4 h-4" />
           Full Documentation
@@ -243,46 +243,46 @@ export const ApiDocs: React.FC = () => {
 
       {/* Quick Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Globe className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Base URL</p>
+              <p className="text-sm text-foreground-secondary">Base URL</p>
               <p className="font-mono text-sm">api.selendra.org</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Rate Limit</p>
+              <p className="text-sm text-foreground-secondary">Rate Limit</p>
               <p className="font-mono text-sm">100 req/min</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <Shield className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Auth</p>
+              <p className="text-sm text-foreground-secondary">Auth</p>
               <p className="font-mono text-sm">API Key</p>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-gray-800 rounded-xl p-4">
+        <div className="bg-background-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
               <Code className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">Format</p>
+              <p className="text-sm text-foreground-secondary">Format</p>
               <p className="font-mono text-sm">JSON</p>
             </div>
           </div>
@@ -290,12 +290,12 @@ export const ApiDocs: React.FC = () => {
       </div>
 
       {/* API Key Section */}
-      <div className="bg-background-card border border-gray-800 rounded-xl p-6">
+      <div className="bg-background-card border border-border rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
           <Key className="w-5 h-5 text-selendra-400" />
           <h2 className="text-lg font-semibold">Your API Key</h2>
         </div>
-        <p className="text-gray-400 text-sm mb-4">
+        <p className="text-foreground-secondary text-sm mb-4">
           API keys are required for accessing the Selendra Terminal API. Include your key in the Authorization header.
         </p>
         <div className="flex items-center gap-3">
@@ -305,12 +305,12 @@ export const ApiDocs: React.FC = () => {
               value={apiKey}
               readOnly
               placeholder="Click 'Generate' to create your API key"
-              className="w-full px-4 py-3 bg-background-secondary border border-gray-700 rounded-xl font-mono text-sm"
+              className="w-full px-4 py-3 bg-background-secondary border border-border rounded-xl font-mono text-sm"
             />
             {apiKey && (
               <button
                 onClick={() => copyToClipboard(apiKey, "apikey")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-secondary hover:text-foreground"
               >
                 {copied === "apikey" ? (
                   <CheckCircle className="w-4 h-4 text-green-400" />
@@ -328,7 +328,7 @@ export const ApiDocs: React.FC = () => {
           </button>
         </div>
         <div className="mt-4 p-3 bg-background-secondary rounded-lg">
-          <p className="text-sm text-gray-400 font-mono">
+          <p className="text-sm text-foreground-secondary font-mono">
             Authorization: Bearer {apiKey || "<your-api-key>"}
           </p>
         </div>
@@ -338,7 +338,7 @@ export const ApiDocs: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Categories Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-background-card border border-gray-800 rounded-xl p-4 sticky top-6">
+          <div className="bg-background-card border border-border rounded-xl p-4 sticky top-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Database className="w-4 h-4" />
               Endpoints
@@ -351,7 +351,7 @@ export const ApiDocs: React.FC = () => {
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                     activeCategory === category
                       ? "bg-selendra-600/20 text-selendra-400"
-                      : "text-gray-400 hover:bg-background-hover hover:text-white"
+                      : "text-foreground-secondary hover:bg-background-hover hover:text-foreground"
                   }`}
                 >
                   <span>{category}</span>
@@ -372,10 +372,10 @@ export const ApiDocs: React.FC = () => {
           {endpoints[activeCategory]?.map((endpoint, idx) => (
             <div
               key={idx}
-              className="bg-background-card border border-gray-800 rounded-xl overflow-hidden"
+              className="bg-background-card border border-border rounded-xl overflow-hidden"
             >
               {/* Endpoint Header */}
-              <div className="p-4 border-b border-gray-800 flex items-center gap-3">
+              <div className="p-4 border-b border-border flex items-center gap-3">
                 <span
                   className={`px-2 py-1 rounded text-xs font-bold ${
                     endpoint.method === "GET"
@@ -388,7 +388,7 @@ export const ApiDocs: React.FC = () => {
                 <code className="font-mono text-sm">{endpoint.path}</code>
                 <button
                   onClick={() => copyToClipboard(`https://api.selendra.org${endpoint.path}`, `path-${idx}`)}
-                  className="ml-auto text-gray-400 hover:text-white"
+                  className="ml-auto text-foreground-secondary hover:text-foreground"
                 >
                   {copied === `path-${idx}` ? (
                     <CheckCircle className="w-4 h-4 text-green-400" />
@@ -400,7 +400,7 @@ export const ApiDocs: React.FC = () => {
 
               {/* Endpoint Body */}
               <div className="p-4 space-y-4">
-                <p className="text-gray-400">{endpoint.description}</p>
+                <p className="text-foreground-secondary">{endpoint.description}</p>
 
                 {/* Parameters */}
                 {endpoint.params && endpoint.params.length > 0 && (
@@ -409,26 +409,26 @@ export const ApiDocs: React.FC = () => {
                     <div className="bg-background-secondary rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-gray-700">
-                            <th className="text-left px-3 py-2 text-gray-400 font-medium">Name</th>
-                            <th className="text-left px-3 py-2 text-gray-400 font-medium">Type</th>
-                            <th className="text-left px-3 py-2 text-gray-400 font-medium">Required</th>
-                            <th className="text-left px-3 py-2 text-gray-400 font-medium">Description</th>
+                          <tr className="border-b border-border">
+                            <th className="text-left px-3 py-2 text-foreground-secondary font-medium">Name</th>
+                            <th className="text-left px-3 py-2 text-foreground-secondary font-medium">Type</th>
+                            <th className="text-left px-3 py-2 text-foreground-secondary font-medium">Required</th>
+                            <th className="text-left px-3 py-2 text-foreground-secondary font-medium">Description</th>
                           </tr>
                         </thead>
                         <tbody>
                           {endpoint.params.map((param, pidx) => (
-                            <tr key={pidx} className="border-b border-gray-700 last:border-0">
+                            <tr key={pidx} className="border-b border-border last:border-0">
                               <td className="px-3 py-2 font-mono text-selendra-400">{param.name}</td>
-                              <td className="px-3 py-2 font-mono text-gray-300">{param.type}</td>
+                              <td className="px-3 py-2 font-mono text-foreground">{param.type}</td>
                               <td className="px-3 py-2">
                                 {param.required ? (
                                   <span className="text-red-400">Yes</span>
                                 ) : (
-                                  <span className="text-gray-500">No</span>
+                                  <span className="text-foreground-secondary">No</span>
                                 )}
                               </td>
-                              <td className="px-3 py-2 text-gray-400">{param.description}</td>
+                              <td className="px-3 py-2 text-foreground-secondary">{param.description}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -443,7 +443,7 @@ export const ApiDocs: React.FC = () => {
                     <h4 className="text-sm font-medium">Example Response</h4>
                     <button
                       onClick={() => copyToClipboard(endpoint.example, `example-${idx}`)}
-                      className="text-gray-400 hover:text-white text-sm flex items-center gap-1"
+                      className="text-foreground-secondary hover:text-foreground text-sm flex items-center gap-1"
                     >
                       {copied === `example-${idx}` ? (
                         <>
@@ -459,7 +459,7 @@ export const ApiDocs: React.FC = () => {
                     </button>
                   </div>
                   <pre className="bg-background-secondary rounded-lg p-4 overflow-x-auto">
-                    <code className="text-sm text-gray-300 font-mono">{endpoint.example}</code>
+                    <code className="text-sm text-foreground font-mono">{endpoint.example}</code>
                   </pre>
                 </div>
               </div>
@@ -469,16 +469,16 @@ export const ApiDocs: React.FC = () => {
       </div>
 
       {/* Code Examples */}
-      <div className="bg-background-card border border-gray-800 rounded-xl p-6">
+      <div className="bg-background-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Terminal className="w-5 h-5 text-selendra-400" />
           Quick Start Examples
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h3 className="text-sm font-medium mb-2 text-gray-400">JavaScript / TypeScript</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground-secondary">JavaScript / TypeScript</h3>
             <pre className="bg-background-secondary rounded-lg p-4 overflow-x-auto text-sm">
-              <code className="text-gray-300 font-mono">{`const response = await fetch(
+              <code className="text-foreground font-mono">{`const response = await fetch(
   'https://api.selendra.org/api/v1/account/0x...',
   {
     headers: {
@@ -490,9 +490,9 @@ const data = await response.json();`}</code>
             </pre>
           </div>
           <div>
-            <h3 className="text-sm font-medium mb-2 text-gray-400">cURL</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground-secondary">cURL</h3>
             <pre className="bg-background-secondary rounded-lg p-4 overflow-x-auto text-sm">
-              <code className="text-gray-300 font-mono">{`curl -X GET \\
+              <code className="text-foreground font-mono">{`curl -X GET \\
   'https://api.selendra.org/api/v1/account/0x...' \\
   -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json'`}</code>

@@ -272,8 +272,8 @@ export default function ValidatorsExplorer() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Validators</h1>
-          <p className="text-gray-400 mt-1">Network validators and staking information</p>
+          <h1 className="text-2xl font-bold text-foreground">Validators</h1>
+          <p className="text-foreground-secondary mt-1">Network validators and staking information</p>
         </div>
       </div>
 
@@ -281,12 +281,12 @@ export default function ValidatorsExplorer() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Total Validators</span>
+            <span className="text-foreground-secondary text-sm">Total Validators</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <Users className="h-5 w-5 text-blue-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalValidators}</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalValidators}</p>
           <p className="text-sm text-green-400 mt-1">
             {mockStats.activeValidators} active, {mockStats.waitingValidators} waiting
           </p>
@@ -294,48 +294,48 @@ export default function ValidatorsExplorer() {
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Total Staked</span>
+            <span className="text-foreground-secondary text-sm">Total Staked</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
               <Coins className="h-5 w-5 text-green-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.totalStaked}</p>
-          <p className="text-sm text-gray-400 mt-1">62.5% of total supply</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.totalStaked}</p>
+          <p className="text-sm text-foreground-secondary mt-1">62.5% of total supply</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Average Commission</span>
+            <span className="text-foreground-secondary text-sm">Average Commission</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <TrendingUp className="h-5 w-5 text-purple-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.averageCommission}%</p>
-          <p className="text-sm text-gray-400 mt-1">Range: 0% - 15%</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.averageCommission}%</p>
+          <p className="text-sm text-foreground-secondary mt-1">Range: 0% - 15%</p>
         </div>
 
         <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-sm">Minimum Stake</span>
+            <span className="text-foreground-secondary text-sm">Minimum Stake</span>
             <div className="p-2 bg-orange-500/20 rounded-lg">
               <Shield className="h-5 w-5 text-orange-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-white">{mockStats.minStake}</p>
-          <p className="text-sm text-gray-400 mt-1">To become a validator</p>
+          <p className="text-2xl font-bold text-foreground">{mockStats.minStake}</p>
+          <p className="text-sm text-foreground-secondary mt-1">To become a validator</p>
         </div>
       </div>
 
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground-secondary" />
           <input
             type="text"
             placeholder="Search by name or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-selendra-primary"
+            className="w-full pl-10 pr-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground placeholder:text-foreground-secondary focus:outline-none focus:border-selendra-primary"
           />
         </div>
 
@@ -343,7 +343,7 @@ export default function ValidatorsExplorer() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-white focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
+            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -354,7 +354,7 @@ export default function ValidatorsExplorer() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-white focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
+            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
           >
             <option value="stake">Sort by Stake</option>
             <option value="commission">Sort by Commission</option>
@@ -370,15 +370,15 @@ export default function ValidatorsExplorer() {
           <table className="w-full">
             <thead>
               <tr className="bg-selendra-dark/50">
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm w-8"></th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">#</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Validator</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Total Stake</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Nominators</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Commission</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">APY</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Status</th>
-                <th className="text-left py-4 px-4 text-gray-400 font-medium text-sm">Actions</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm w-8"></th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">#</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Validator</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Total Stake</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Nominators</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Commission</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">APY</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Status</th>
+                <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-selendra-border">
@@ -387,7 +387,7 @@ export default function ValidatorsExplorer() {
                   <td className="py-4 px-4">
                     <button
                       onClick={() => toggleFavorite(validator.id)}
-                      className="text-gray-400 hover:text-yellow-400 transition-colors"
+                      className="text-foreground-secondary hover:text-yellow-400 transition-colors"
                     >
                       {favorites.includes(validator.id) ? (
                         <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -397,7 +397,7 @@ export default function ValidatorsExplorer() {
                     </button>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="text-gray-500">{index + 1}</span>
+                    <span className="text-foreground-secondary">{index + 1}</span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
@@ -408,7 +408,7 @@ export default function ValidatorsExplorer() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">
+                          <span className="text-foreground font-medium">
                             {validator.identity?.display || validator.name || formatAddress(validator.address)}
                           </span>
                           {validator.isOversubscribed && (
@@ -423,16 +423,16 @@ export default function ValidatorsExplorer() {
                             </span>
                           )}
                         </div>
-                        <span className="text-gray-500 text-sm font-mono">{formatAddress(validator.address)}</span>
+                        <span className="text-foreground-secondary text-sm font-mono">{formatAddress(validator.address)}</span>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <p className="text-white font-medium">{validator.totalStake}</p>
-                    <p className="text-gray-500 text-sm">Own: {validator.ownStake}</p>
+                    <p className="text-foreground font-medium">{validator.totalStake}</p>
+                    <p className="text-foreground-secondary text-sm">Own: {validator.ownStake}</p>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="text-gray-300">{validator.nominators}</span>
+                    <span className="text-foreground-secondary">{validator.nominators}</span>
                   </td>
                   <td className="py-4 px-4">
                     <span
@@ -448,7 +448,7 @@ export default function ValidatorsExplorer() {
                     {validator.apy > 0 ? (
                       <span className="text-green-400 font-medium">{validator.apy}%</span>
                     ) : (
-                      <span className="text-gray-500">-</span>
+                      <span className="text-foreground-secondary">-</span>
                     )}
                   </td>
                   <td className="py-4 px-4">{getStatusBadge(validator.status)}</td>
@@ -457,7 +457,7 @@ export default function ValidatorsExplorer() {
                       <button className="px-3 py-1.5 bg-selendra-primary text-white text-sm rounded-lg hover:bg-selendra-primary/90 transition-colors">
                         Nominate
                       </button>
-                      <button className="p-1.5 text-gray-400 hover:text-white transition-colors">
+                      <button className="p-1.5 text-foreground-secondary hover:text-foreground transition-colors">
                         <ExternalLink className="h-4 w-4" />
                       </button>
                     </div>
@@ -471,27 +471,27 @@ export default function ValidatorsExplorer() {
 
       {/* Legend */}
       <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
-        <h3 className="text-white font-medium mb-4">Legend</h3>
+        <h3 className="text-foreground font-medium mb-4">Legend</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-green-500"></span>
-            <span className="text-gray-400">Active - Currently validating</span>
+            <span className="text-foreground-secondary">Active - Currently validating</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-            <span className="text-gray-400">Waiting - In election queue</span>
+            <span className="text-foreground-secondary">Waiting - In election queue</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-gray-500"></span>
-            <span className="text-gray-400">Inactive - Not participating</span>
+            <span className="text-foreground-secondary">Inactive - Not participating</span>
           </div>
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-400" />
-            <span className="text-gray-400">Slashed - Has been penalized</span>
+            <span className="text-foreground-secondary">Slashed - Has been penalized</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded">Oversubscribed</span>
-            <span className="text-gray-400">Too many nominators</span>
+            <span className="text-foreground-secondary">Too many nominators</span>
           </div>
         </div>
       </div>

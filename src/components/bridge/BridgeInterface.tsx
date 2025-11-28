@@ -190,7 +190,22 @@ const mockTransactions: BridgeTransaction[] = [
 ];
 
 export const BridgeInterface: React.FC = () => {
-  const { isConnected, address, connect } = useWallet();
+  const { 
+    isConnected, 
+    selectedSubstrateAccount, 
+    evmAccount, 
+    connectEvmWallet,
+    connectSubstrateWallet 
+  } = useWallet();
+  
+  // Get address from whichever account is connected
+  const address = selectedSubstrateAccount?.address || evmAccount?.address || null;
+  
+  const connect = () => {
+    // Default to connecting EVM wallet for bridge
+    connectEvmWallet();
+  };
+  
   const [fromNetwork, setFromNetwork] = useState<Network>(networks[0]);
   const [toNetwork, setToNetwork] = useState<Network>(networks[2]);
   const [selectedToken, setSelectedToken] = useState<Token>(tokens[0]);
@@ -282,25 +297,25 @@ export const BridgeInterface: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Bridge</h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-foreground-secondary mt-1">
             Transfer assets between Selendra and other networks
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-green-400" />
-          <span className="text-sm text-gray-400">Secured by Selendra</span>
+          <span className="text-sm text-foreground-secondary">Secured by Selendra</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bridge Card */}
         <div className="lg:col-span-2">
-          <div className="bg-background-card border border-gray-800 rounded-xl p-6">
+          <div className="bg-background-card border border-border rounded-xl p-6">
             {/* From Network */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">From</span>
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-foreground-secondary">From</span>
+                <span className="text-sm text-foreground-secondary">
                   Balance: {selectedToken.balance} {selectedToken.symbol}
                 </span>
               </div>
@@ -315,11 +330,11 @@ export const BridgeInterface: React.FC = () => {
                     >
                       <span className="text-2xl">{fromNetwork.logo}</span>
                       <span className="font-medium">{fromNetwork.name}</span>
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                      <ArrowUpDown className="w-4 h-4 text-foreground-secondary" />
                     </button>
 
                     {showFromDropdown && (
-                      <div className="absolute top-full left-0 mt-2 w-56 bg-background-secondary border border-gray-700 rounded-xl shadow-xl z-20">
+                      <div className="absolute top-full left-0 mt-2 w-56 bg-background-secondary border border-border rounded-xl shadow-xl z-20">
                         {networks
                           .filter((n) => n.id !== toNetwork.id)
                           .map((network) => (
@@ -334,7 +349,7 @@ export const BridgeInterface: React.FC = () => {
                               <span className="text-2xl">{network.logo}</span>
                               <div className="text-left">
                                 <p className="font-medium">{network.name}</p>
-                                <p className="text-xs text-gray-400 capitalize">
+                                <p className="text-xs text-foreground-secondary capitalize">
                                   {network.type}
                                 </p>
                               </div>
@@ -352,11 +367,11 @@ export const BridgeInterface: React.FC = () => {
                     >
                       <span className="text-xl">{selectedToken.logo}</span>
                       <span className="font-medium">{selectedToken.symbol}</span>
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                      <ArrowUpDown className="w-4 h-4 text-foreground-secondary" />
                     </button>
 
                     {showTokenDropdown && (
-                      <div className="absolute top-full right-0 mt-2 w-56 bg-background-secondary border border-gray-700 rounded-xl shadow-xl z-20">
+                      <div className="absolute top-full right-0 mt-2 w-56 bg-background-secondary border border-border rounded-xl shadow-xl z-20">
                         {tokens.map((token) => (
                           <button
                             key={token.symbol}
@@ -370,10 +385,10 @@ export const BridgeInterface: React.FC = () => {
                               <span className="text-xl">{token.logo}</span>
                               <div className="text-left">
                                 <p className="font-medium">{token.symbol}</p>
-                                <p className="text-xs text-gray-400">{token.name}</p>
+                                <p className="text-xs text-foreground-secondary">{token.name}</p>
                               </div>
                             </div>
-                            <span className="text-sm text-gray-400">
+                            <span className="text-sm text-foreground-secondary">
                               {token.balance}
                             </span>
                           </button>
@@ -390,7 +405,7 @@ export const BridgeInterface: React.FC = () => {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="flex-1 bg-transparent text-3xl font-medium placeholder-gray-600 outline-none"
+                    className="flex-1 bg-transparent text-3xl font-medium placeholder-foreground-secondary outline-none"
                   />
                   <button
                     onClick={() => setAmount(selectedToken.balance.replace(/,/g, ""))}
@@ -415,7 +430,7 @@ export const BridgeInterface: React.FC = () => {
             {/* To Network */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">To</span>
+                <span className="text-sm text-foreground-secondary">To</span>
               </div>
 
               <div className="bg-background-secondary rounded-xl p-4">
@@ -428,11 +443,11 @@ export const BridgeInterface: React.FC = () => {
                     >
                       <span className="text-2xl">{toNetwork.logo}</span>
                       <span className="font-medium">{toNetwork.name}</span>
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                      <ArrowUpDown className="w-4 h-4 text-foreground-secondary" />
                     </button>
 
                     {showToDropdown && (
-                      <div className="absolute top-full left-0 mt-2 w-56 bg-background-secondary border border-gray-700 rounded-xl shadow-xl z-20">
+                      <div className="absolute top-full left-0 mt-2 w-56 bg-background-secondary border border-border rounded-xl shadow-xl z-20">
                         {networks
                           .filter((n) => n.id !== fromNetwork.id)
                           .map((network) => (
@@ -447,7 +462,7 @@ export const BridgeInterface: React.FC = () => {
                               <span className="text-2xl">{network.logo}</span>
                               <div className="text-left">
                                 <p className="font-medium">{network.name}</p>
-                                <p className="text-xs text-gray-400 capitalize">
+                                <p className="text-xs text-foreground-secondary capitalize">
                                   {network.type}
                                 </p>
                               </div>
@@ -464,7 +479,7 @@ export const BridgeInterface: React.FC = () => {
                 </div>
 
                 {/* Receive Amount */}
-                <div className="text-3xl font-medium text-gray-400">
+                <div className="text-3xl font-medium text-foreground-secondary">
                   {receiveAmount}
                 </div>
               </div>
@@ -473,7 +488,7 @@ export const BridgeInterface: React.FC = () => {
             {/* Bridge Details */}
             <div className="mt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400 flex items-center gap-1">
+                <span className="text-foreground-secondary flex items-center gap-1">
                   <Info className="w-4 h-4" />
                   Bridge Fee
                 </span>
@@ -482,20 +497,20 @@ export const BridgeInterface: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400 flex items-center gap-1">
+                <span className="text-foreground-secondary flex items-center gap-1">
                   <Clock className="w-4 h-4" />
                   Estimated Time
                 </span>
                 <span>{estimatedTime}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Min Amount</span>
+                <span className="text-foreground-secondary">Min Amount</span>
                 <span>
                   {selectedToken.minBridge} {selectedToken.symbol}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Max Amount</span>
+                <span className="text-foreground-secondary">Max Amount</span>
                 <span>
                   {selectedToken.maxBridge} {selectedToken.symbol}
                 </span>
@@ -506,7 +521,7 @@ export const BridgeInterface: React.FC = () => {
             <button
               onClick={handleBridge}
               disabled={!amount || parseFloat(amount) <= 0 || isBridging}
-              className="w-full mt-6 py-4 bg-gradient-to-r from-selendra-600 to-selendra-500 hover:from-selendra-500 hover:to-selendra-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+              className="w-full mt-6 py-4 bg-gradient-to-r from-selendra-600 to-selendra-500 hover:from-selendra-500 hover:to-selendra-400 disabled:from-background-tertiary disabled:to-background-tertiary disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
             >
               {isBridging ? (
                 <>
@@ -531,14 +546,14 @@ export const BridgeInterface: React.FC = () => {
         {/* Right Sidebar */}
         <div className="space-y-6">
           {/* Bridge Info */}
-          <div className="bg-background-card border border-gray-800 rounded-xl p-6">
+          <div className="bg-background-card border border-border rounded-xl p-6">
             <h3 className="font-semibold mb-4">Bridge Information</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-green-400 mt-0.5" />
                 <div>
                   <p className="font-medium text-sm">Secure & Audited</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-foreground-secondary">
                     Smart contracts audited by leading security firms
                   </p>
                 </div>
@@ -547,7 +562,7 @@ export const BridgeInterface: React.FC = () => {
                 <Clock className="w-5 h-5 text-blue-400 mt-0.5" />
                 <div>
                   <p className="font-medium text-sm">Fast Transfers</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-foreground-secondary">
                     Most transfers complete in 5-10 minutes
                   </p>
                 </div>
@@ -556,7 +571,7 @@ export const BridgeInterface: React.FC = () => {
                 <Wallet className="w-5 h-5 text-purple-400 mt-0.5" />
                 <div>
                   <p className="font-medium text-sm">Low Fees</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-foreground-secondary">
                     Competitive fees starting at 0.05%
                   </p>
                 </div>
@@ -565,7 +580,7 @@ export const BridgeInterface: React.FC = () => {
           </div>
 
           {/* Supported Routes */}
-          <div className="bg-background-card border border-gray-800 rounded-xl p-6">
+          <div className="bg-background-card border border-border rounded-xl p-6">
             <h3 className="font-semibold mb-4">Popular Routes</h3>
             <div className="space-y-3">
               {[
@@ -580,10 +595,10 @@ export const BridgeInterface: React.FC = () => {
                 >
                   <div className="flex items-center gap-2">
                     <span>{route.from}</span>
-                    <ArrowRight className="w-3 h-3 text-gray-500" />
+                    <ArrowRight className="w-3 h-3 text-foreground-secondary" />
                     <span>{route.to}</span>
                   </div>
-                  <span className="text-gray-400">{route.volume}</span>
+                  <span className="text-foreground-secondary">{route.volume}</span>
                 </div>
               ))}
             </div>
@@ -592,8 +607,8 @@ export const BridgeInterface: React.FC = () => {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-background-card border border-gray-800 rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <h3 className="font-semibold">Your Bridge Transactions</h3>
           <button className="text-sm text-selendra-400 hover:text-selendra-300 flex items-center gap-1">
             View All
@@ -602,12 +617,12 @@ export const BridgeInterface: React.FC = () => {
         </div>
 
         {transactions.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
+          <div className="p-8 text-center text-foreground-secondary">
             <p>No bridge transactions yet</p>
             <p className="text-sm mt-1">Your bridge history will appear here</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-800">
+          <div className="divide-y divide-border">
             {transactions.map((tx) => (
               <div
                 key={tx.id}
@@ -621,10 +636,10 @@ export const BridgeInterface: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{tx.fromNetwork}</span>
-                        <ArrowRight className="w-4 h-4 text-gray-500" />
+                        <ArrowRight className="w-4 h-4 text-foreground-secondary" />
                         <span className="font-medium">{tx.toNetwork}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <div className="flex items-center gap-2 text-sm text-foreground-secondary">
                         <span>
                           {tx.amount} {tx.token}
                         </span>
@@ -643,7 +658,7 @@ export const BridgeInterface: React.FC = () => {
                       {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                     </span>
                     <button className="p-2 hover:bg-background-secondary rounded-lg transition-colors">
-                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                      <ExternalLink className="w-4 h-4 text-foreground-secondary" />
                     </button>
                   </div>
                 </div>

@@ -23,15 +23,25 @@ const config: Config = {
           800: "#065a56",
           900: "#043d3b",
         },
-        // Background colors
+        // Theme-aware background colors (using CSS variables)
         background: {
-          DEFAULT: "#0a0a0b",
-          secondary: "#111113",
-          tertiary: "#18181b",
-          card: "#1a1a1d",
-          hover: "#252529",
+          DEFAULT: "rgb(var(--background))",
+          secondary: "rgb(var(--background-secondary))",
+          tertiary: "rgb(var(--background-tertiary))",
+          card: "rgb(var(--background-card))",
+          hover: "rgb(var(--background-hover))",
         },
-        // Accent colors
+        // Theme-aware foreground colors
+        foreground: {
+          DEFAULT: "rgb(var(--foreground))",
+          secondary: "rgb(var(--foreground-secondary))",
+        },
+        // Theme-aware border colors
+        border: {
+          DEFAULT: "rgb(var(--border))",
+          hover: "rgb(var(--border-hover))",
+        },
+        // Accent colors (same in both themes)
         accent: {
           green: "#10b981",
           red: "#ef4444",
@@ -39,11 +49,6 @@ const config: Config = {
           purple: "#8b5cf6",
           blue: "#3b82f6",
           teal: "#0db0a4",
-        },
-        // Border colors
-        border: {
-          DEFAULT: "#27272a",
-          hover: "#3f3f46",
         },
       },
       fontFamily: {

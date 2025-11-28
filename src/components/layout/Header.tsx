@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Bell, ChevronDown, Wallet, RefreshCw, Copy, ExternalLink, Check } from "lucide-react";
+import { Menu, Bell, ChevronDown, Wallet, RefreshCw, Copy, ExternalLink, Check } from "lucide-react";
 import { useBlockchain, NETWORKS, NetworkType } from "@/components/providers/BlockchainProvider";
 import { useWallet } from "@/components/providers/WalletProvider";
+import { SearchBar } from "@/components/common/SearchBar";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { clsx } from "clsx";
 import toast from "react-hot-toast";
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const {
     isConnected,
     isConnecting,
@@ -30,42 +36,7 @@ export function Header() {
 
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    // Detect search type and navigate
-    const query = searchQuery.trim();
-
-    // Block number
-    if (/^\d+$/.test(query)) {
-      window.location.href = `/blocks/${query}`;
-      return;
-    }
-
-    // Transaction hash (0x...)
-    if (/^0x[a-fA-F0-9]{64}$/.test(query)) {
-      window.location.href = `/transactions/${query}`;
-      return;
-    }
-
-    // EVM address
-    if (/^0x[a-fA-F0-9]{40}$/.test(query)) {
-      window.location.href = `/accounts/${query}`;
-      return;
-    }
-
-    // Substrate address (starts with 5)
-    if (/^5[a-zA-Z0-9]{47}$/.test(query)) {
-      window.location.href = `/accounts/${query}`;
-      return;
-    }
-
-    toast.error("Invalid search query");
-  };
 
   const copyAddress = async (address: string) => {
     await navigator.clipboard.writeText(address);
@@ -79,38 +50,45 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-background-secondary px-6 flex items-center justify-between">
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-xl">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search by Address / Txn Hash / Block / Token"
-            className="input w-full pl-10 pr-4"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </form>
+    <header className="h-16 border-b border-border bg-background-secondary px-4 md:px-6 flex items-center justify-between gap-4">
+      {/* Mobile menu button */}
+      <button
+        onClick={onMenuClick}
+        className="md:hidden p-2 rounded-lg text-foreground-secondary hover:text-foreground hover:bg-background-hover transition-colors"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Search bar with autocomplete */}
+      <SearchBar className="flex-1 max-w-xl hidden sm:block" />
 
       {/* Right side actions */}
-      <div className="flex items-center gap-4">
-        {/* Network status */}
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Network status - hidden on small screens */}
+        <div className="hidden lg:flex items-center gap-2">
           <div
             className={clsx(
               "h-2 w-2 rounded-full",
               isConnected ? "bg-accent-green animate-pulse" : "bg-accent-red"
             )}
           />
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-foreground-secondary">
             {isConnecting
               ? "Connecting..."
               : isConnected
               ? `Block #${latestSubstrateBlock?.number?.toLocaleString() || "..."}`
               : "Disconnected"}
           </span>
+        </div>
+
+        {/* Mobile: Just show connection indicator */}
+        <div className="lg:hidden">
+          <div
+            className={clsx(
+              "h-2 w-2 rounded-full",
+              isConnected ? "bg-accent-green animate-pulse" : "bg-accent-red"
+            )}
+          />
         </div>
 
         {/* Refresh button */}
@@ -122,14 +100,20 @@ export function Header() {
           <RefreshCw className="h-4 w-4" />
         </button>
 
+        {/* Theme toggle */}
+        <ThemeToggle variant="dropdown" />
+
         {/* Network selector */}
         <div className="relative">
           <button
             onClick={() => setShowNetworkDropdown(!showNetworkDropdown)}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary flex items-center gap-2 px-2 md:px-4"
           >
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium hidden sm:inline">
               {NETWORKS[currentNetwork].name}
+            </span>
+            <span className="text-sm font-medium sm:hidden">
+              {currentNetwork === "mainnet" ? "Main" : "Test"}
             </span>
             <ChevronDown className="h-4 w-4" />
           </button>
@@ -147,7 +131,7 @@ export function Header() {
                     "w-full px-4 py-2 text-left text-sm hover:bg-background-hover transition-colors first:rounded-t-lg last:rounded-b-lg",
                     currentNetwork === network
                       ? "text-selendra-400 bg-selendra-500/10"
-                      : "text-gray-300"
+                      : "text-foreground-secondary"
                   )}
                 >
                   {NETWORKS[network].name}
@@ -157,8 +141,8 @@ export function Header() {
           )}
         </div>
 
-        {/* Notifications */}
-        <button className="btn-ghost p-2 rounded-lg relative">
+        {/* Notifications - hidden on small screens */}
+        <button className="hidden sm:block btn-ghost p-2 rounded-lg relative">
           <Bell className="h-4 w-4" />
           <span className="absolute top-1 right-1 h-2 w-2 bg-accent-red rounded-full" />
         </button>
@@ -168,10 +152,10 @@ export function Header() {
           {!walletConnected ? (
             <button
               onClick={() => setShowWalletDropdown(!showWalletDropdown)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center gap-2 px-2 md:px-4"
             >
               <Wallet className="h-4 w-4" />
-              <span>Connect Wallet</span>
+              <span className="hidden sm:inline">Connect Wallet</span>
             </button>
           ) : (
             <button
@@ -194,7 +178,7 @@ export function Header() {
             <div className="absolute right-0 mt-2 w-72 bg-background-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
               {!walletConnected ? (
                 <div className="p-4 space-y-3">
-                  <h4 className="text-sm font-medium text-white mb-3">
+                  <h4 className="text-sm font-medium text-foreground mb-3">
                     Connect Wallet
                   </h4>
                   <button
@@ -209,7 +193,7 @@ export function Header() {
                     </div>
                     <div className="text-left">
                       <div className="font-medium">Polkadot.js</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-foreground-secondary">
                         Substrate wallet
                       </div>
                     </div>
@@ -226,7 +210,7 @@ export function Header() {
                     </div>
                     <div className="text-left">
                       <div className="font-medium">MetaMask</div>
-                      <div className="text-xs text-gray-500">EVM wallet</div>
+                      <div className="text-xs text-foreground-secondary">EVM wallet</div>
                     </div>
                   </button>
                 </div>
@@ -236,7 +220,7 @@ export function Header() {
                   {selectedSubstrateAccount && (
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">
+                        <span className="text-xs text-foreground-secondary uppercase tracking-wider">
                           Substrate Account
                         </span>
                         <span className="badge badge-info">
@@ -244,14 +228,14 @@ export function Header() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono text-gray-300">
+                        <span className="text-sm font-mono text-foreground-secondary">
                           {truncateAddress(selectedSubstrateAccount.address)}
                         </span>
                         <button
                           onClick={() =>
                             copyAddress(selectedSubstrateAccount.address)
                           }
-                          className="text-gray-500 hover:text-white"
+                          className="text-foreground-secondary hover:text-foreground"
                         >
                           {copied ? (
                             <Check className="h-3 w-3" />
@@ -261,7 +245,7 @@ export function Header() {
                         </button>
                         <a
                           href={`/accounts/${selectedSubstrateAccount.address}`}
-                          className="text-gray-500 hover:text-white"
+                          className="text-foreground-secondary hover:text-foreground"
                         >
                           <ExternalLink className="h-3 w-3" />
                         </a>
@@ -273,7 +257,7 @@ export function Header() {
                   {evmAccount && (
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">
+                        <span className="text-xs text-foreground-secondary uppercase tracking-wider">
                           EVM Account
                         </span>
                         <span className="badge badge-info">
@@ -281,12 +265,12 @@ export function Header() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono text-gray-300">
+                        <span className="text-sm font-mono text-foreground-secondary">
                           {truncateAddress(evmAccount.address)}
                         </span>
                         <button
                           onClick={() => copyAddress(evmAccount.address)}
-                          className="text-gray-500 hover:text-white"
+                          className="text-foreground-secondary hover:text-foreground"
                         >
                           {copied ? (
                             <Check className="h-3 w-3" />
@@ -296,7 +280,7 @@ export function Header() {
                         </button>
                         <a
                           href={`/accounts/${evmAccount.address}`}
-                          className="text-gray-500 hover:text-white"
+                          className="text-foreground-secondary hover:text-foreground"
                         >
                           <ExternalLink className="h-3 w-3" />
                         </a>
