@@ -12,7 +12,7 @@ export function ConnectionStatus({
   className,
   showNetworkName = true,
 }: ConnectionStatusProps) {
-  const { isConnected, isConnecting, useMockData, currentNetwork } =
+  const { isConnected, isConnecting, connectionSource, currentNetwork } =
     useBlockchain();
 
   const network = NETWORKS[currentNetwork];
@@ -37,12 +37,13 @@ export function ConnectionStatus({
       };
     }
 
-    if (useMockData) {
+    // Show connection source (local node vs public RPC)
+    if (connectionSource === "local") {
       return {
-        color: "bg-yellow-500",
-        pulseColor: "bg-yellow-400",
-        label: "Mock Data",
-        description: "Using simulated data",
+        color: "bg-green-500",
+        pulseColor: "bg-green-400",
+        label: "Local",
+        description: "Connected to local node",
       };
     }
 
@@ -50,7 +51,7 @@ export function ConnectionStatus({
       color: "bg-green-500",
       pulseColor: "bg-green-400",
       label: "Live",
-      description: "Connected to network",
+      description: "Connected to public RPC",
     };
   };
 
@@ -66,7 +67,7 @@ export function ConnectionStatus({
     >
       {/* Status indicator dot with pulse animation */}
       <span className="relative flex h-3 w-3">
-        {isConnected && !useMockData && (
+        {isConnected && (
           <span
             className={cn(
               "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",

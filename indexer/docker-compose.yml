@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database for SubQuery
+  postgres:
+    image: postgres:16-alpine
+    container_name: selendra-indexer-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: subquery
+      POSTGRES_PASSWORD: subquery
+      POSTGRES_DB: subquery
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U subquery"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SubQuery Node - indexes blockchain data
+  subquery-node:
+    image: subquerynetwork/subql-node-substrate:latest
+    container_name: selendra-indexer-node
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_USER: subquery
+      DB_PASS: subquery
+      DB_DATABASE: subquery
+      DB_HOST: postgres
+      DB_PORT: 5432
+    volumes:
+      - ./:/app
+    command:
+      - -f=/app
+      - --db-schema=app
+      - --workers=4
+      - --batch-size=30
+      - --log-level=info
+      - --disable-historical=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # SubQuery Query Service - GraphQL API
+  graphql-engine:
+    image: subquerynetwork/subql-query:latest
+    container_name: selendra-indexer-query
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      subquery-node:
+        condition: service_started
+    environment:
+      DB_USER: subquery
+      DB_PASS: subquery
+      DB_DATABASE: subquery
+      DB_HOST: postgres
+      DB_PORT: 5432
+    command:
+      - --name=selendra-unified-indexer
+      - --playground
+      - --indexer=http://subquery-node:3000
+
+volumes:
+  postgres_data:

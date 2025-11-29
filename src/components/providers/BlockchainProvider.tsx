@@ -9,7 +9,6 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { sleep } from "@/lib/utils";
 
 // Selendra Chain Constants
 export const SELENDRA_CONSTANTS = {
@@ -20,52 +19,82 @@ export const SELENDRA_CONSTANTS = {
   TESTNET_EVM_CHAIN_ID: 1953,
 } as const;
 
-// Get RPC endpoints from environment variables or use defaults
-// This allows configuration via Docker or .env files
+// Public RPC endpoints (always available as fallback)
+const PUBLIC_RPC = {
+  mainnet: {
+    substrateWs: "wss://rpc.selendra.org",
+    substrateHttp: "https://rpc.selendra.org",
+    evmHttp: "https://rpc.selendra.org",
+  },
+  testnet: {
+    substrateWs: "wss://rpc-testnet.selendra.org",
+    substrateHttp: "https://rpc-testnet.selendra.org",
+    evmHttp: "https://rpc-testnet.selendra.org",
+  },
+} as const;
+
+// Get RPC endpoints from environment variables
+// Priority: Local node (Docker) → Public RPC (fallback)
 const getEndpoints = () => {
-  const substrateWs = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_WS || "wss://rpc.selendra.org";
-  const substrateHttp = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_HTTP || "https://rpc.selendra.org";
-  const evmHttp = process.env.NEXT_PUBLIC_EVM_RPC_HTTP || "https://rpc.selendra.org";
+  // Primary endpoints (typically local Docker node)
+  const primarySubstrateWs = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_WS;
+  const primarySubstrateHttp = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_HTTP;
+  const primaryEvmHttp = process.env.NEXT_PUBLIC_EVM_RPC_HTTP;
+
+  // Testnet primary endpoints
+  const primarySubstrateWsTestnet = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_WS_TESTNET;
+  const primarySubstrateHttpTestnet = process.env.NEXT_PUBLIC_SUBSTRATE_RPC_HTTP_TESTNET;
+  const primaryEvmHttpTestnet = process.env.NEXT_PUBLIC_EVM_RPC_HTTP_TESTNET;
 
   return {
     mainnet: {
-      substrate: substrateWs,
-      substrateHttp: substrateHttp,
-      evm: evmHttp,
+      // Primary endpoints (local node if configured, otherwise public)
+      primary: {
+        substrate: primarySubstrateWs || PUBLIC_RPC.mainnet.substrateWs,
+        substrateHttp: primarySubstrateHttp || PUBLIC_RPC.mainnet.substrateHttp,
+        evm: primaryEvmHttp || PUBLIC_RPC.mainnet.evmHttp,
+      },
+      // Fallback to public RPC (only if primary is different)
+      fallback: primarySubstrateWs ? {
+        substrate: PUBLIC_RPC.mainnet.substrateWs,
+        substrateHttp: PUBLIC_RPC.mainnet.substrateHttp,
+        evm: PUBLIC_RPC.mainnet.evmHttp,
+      } : null,
     },
     testnet: {
-      substrate: process.env.NEXT_PUBLIC_SUBSTRATE_RPC_WS_TESTNET || "wss://rpc-testnet.selendra.org",
-      substrateHttp: process.env.NEXT_PUBLIC_SUBSTRATE_RPC_HTTP_TESTNET || "https://rpc-testnet.selendra.org",
-      evm: process.env.NEXT_PUBLIC_EVM_RPC_HTTP_TESTNET || "https://rpc-testnet.selendra.org",
-    }
+      primary: {
+        substrate: primarySubstrateWsTestnet || PUBLIC_RPC.testnet.substrateWs,
+        substrateHttp: primarySubstrateHttpTestnet || PUBLIC_RPC.testnet.substrateHttp,
+        evm: primaryEvmHttpTestnet || PUBLIC_RPC.testnet.evmHttp,
+      },
+      fallback: primarySubstrateWsTestnet ? {
+        substrate: PUBLIC_RPC.testnet.substrateWs,
+        substrateHttp: PUBLIC_RPC.testnet.substrateHttp,
+        evm: PUBLIC_RPC.testnet.evmHttp,
+      } : null,
+    },
   };
 };
 
 const ENDPOINTS = getEndpoints();
+
+// RPC endpoint configuration type
+interface RpcEndpoints {
+  substrate: string;
+  substrateHttp: string;
+  evm: string;
+}
 
 // Network configuration - Selendra uses unified RPC for both Substrate and EVM
 // Both VMs share the same block height (unified architecture)
 export const NETWORKS = {
   mainnet: {
     name: "Selendra Mainnet",
-    substrate: {
-      endpoint: ENDPOINTS.mainnet.substrate,
-    },
-    evm: {
-      // Use HTTPS version of same RPC for EVM calls
-      endpoint: ENDPOINTS.mainnet.evm,
-      chainId: 1961,
-    },
+    chainId: 1961,
   },
   testnet: {
     name: "Selendra Testnet",
-    substrate: {
-      endpoint: ENDPOINTS.testnet.substrate,
-    },
-    evm: {
-      endpoint: ENDPOINTS.testnet.evm,
-      chainId: 1953,
-    },
+    chainId: 1953,
   },
 } as const;
 
@@ -102,6 +131,9 @@ interface NetworkStats {
   validators?: number;
 }
 
+// Connection source tracking
+type ConnectionSource = "local" | "public" | null;
+
 interface BlockchainContextType {
   // SDK instances (typed as any to avoid import issues)
   substrateSDK: SelendraSDKType | null;
@@ -111,7 +143,7 @@ interface BlockchainContextType {
   isConnecting: boolean;
   isConnected: boolean;
   error: string | null;
-  useMockData: boolean;
+  connectionSource: ConnectionSource; // Which RPC we're connected to
 
   // Network
   currentNetwork: NetworkType;
@@ -123,6 +155,9 @@ interface BlockchainContextType {
   latestSubstrateBlock: BlockInfo | null;
   latestEvmBlock: BlockInfo | null;
   networkStats: NetworkStats | null;
+
+  // Active endpoints (for debugging/display)
+  activeEndpoints: RpcEndpoints | null;
 
   // Methods
   connect: () => Promise<void>;
@@ -151,8 +186,8 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentNetwork, setCurrentNetwork] = useState<NetworkType>("mainnet");
-  const [useMockData, setUseMockData] = useState(true);
-  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const [connectionSource, setConnectionSource] = useState<ConnectionSource>(null);
+  const [activeEndpoints, setActiveEndpoints] = useState<RpcEndpoints | null>(null);
 
   // Ref to track if a reconnection is in progress
   const isReconnectingRef = useRef(false);
@@ -163,59 +198,11 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
   const [latestEvmBlock, setLatestEvmBlock] = useState<BlockInfo | null>(null);
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
 
-  // Initialize with mock data to avoid SDK connection errors
-  // TODO: REPLACE THIS MOCK DATA WITH REAL BLOCKCHAIN DATA
-  // This function is called when connection fails or during initial load if configured.
-  const initializeMockData = useCallback(() => {
-    const network = NETWORKS[currentNetwork];
-
-    setSubstrateChainInfo({
-      name: "Selendra",
-      version: "1.0.0",
-      ss58Format: 42,
-    });
-
-    setLatestSubstrateBlock({
-      number: 1234567,
-      hash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-      timestamp: Date.now(),
-      parentHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-      stateRoot: "0x1111111111111111111111111111111111111111111111111111111111111111",
-      extrinsicsRoot: "0x2222222222222222222222222222222222222222222222222222222222222222",
-    });
-
-    setEvmChainInfo({
-      name: `Selendra EVM (${currentNetwork})`,
-      version: "1.0.0",
-      chainId: network.evm.chainId,
-    });
-
-    setLatestEvmBlock({
-      number: 987654,
-      hash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-      timestamp: Date.now(),
-      gasLimit: "36000000",
-      gasUsed: "15000000",
-    });
-
-    // Selendra specs: 1s blocks, 2000+ TPS, 4 validators (Phase 1)
-    setNetworkStats({
-      totalTransactions: 15420000,
-      averageBlockTime: 1,
-      tps: 2000,
-      validators: 4,
-    });
-
-    setUseMockData(true);
-    setIsConnected(true);
-    setIsConnecting(false);
-  }, [currentNetwork]);
-
   // Check if RPC is available before attempting SDK connection
   const checkRpcAvailability = useCallback(async (endpoint: string): Promise<boolean> => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -225,128 +212,180 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
       });
 
       clearTimeout(timeoutId);
-      return response.ok;
+      
+      if (!response.ok) return false;
+      
+      // Verify we got a valid response
+      const data = await response.json();
+      return data.result !== undefined;
     } catch {
       return false;
     }
   }, []);
 
   /**
-   * Connect with retry logic and exponential backoff
-   * @param maxRetries - Maximum number of retry attempts (default: 3)
-   * @param baseDelay - Base delay in milliseconds for exponential backoff (default: 1000ms)
-   * @returns Promise that resolves to true if connection succeeded, false if fell back to mock data
+   * Try to connect to a specific set of RPC endpoints
+   * @returns Promise that resolves to true if connection succeeded
    */
-  const connectWithRetry = useCallback(
-    async (maxRetries = 3, baseDelay = 1000): Promise<boolean> => {
+  const tryConnectToEndpoints = useCallback(
+    async (endpoints: RpcEndpoints, source: ConnectionSource): Promise<boolean> => {
       const network = NETWORKS[currentNetwork];
+      
+      try {
+        // First check if EVM RPC is available
+        const evmAvailable = await checkRpcAvailability(endpoints.evm);
+        if (!evmAvailable) {
+          console.log(`[BlockchainProvider] ${source} EVM RPC not available: ${endpoints.evm}`);
+          return false;
+        }
 
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          // Check if EVM RPC is available
-          const evmAvailable = await checkRpcAvailability(network.evm.endpoint);
+        console.log(`[BlockchainProvider] Connecting to ${source} RPC: ${endpoints.evm}`);
 
-          if (!evmAvailable) {
-            if (attempt < maxRetries - 1) {
-              // Wait with exponential backoff before next attempt
-              const delay = baseDelay * Math.pow(2, attempt);
-              await sleep(delay);
-              continue;
-            }
-            // All retries exhausted
-            return false;
+        // Import SDK
+        const { SelendraSDK, ChainType } = await import("@selendrajs/sdk");
+
+        // Connect to EVM first since we verified it's available
+        const evSdk = new SelendraSDK({
+          endpoint: endpoints.evm,
+          chainType: ChainType.EVM,
+        });
+
+        await evSdk.connect();
+        setEvmSDK(evSdk);
+
+        // Get EVM chain info
+        const provider = evSdk.getEvmProvider();
+        if (provider) {
+          const netInfo = await provider.getNetwork();
+          const chainId = Number(netInfo.chainId);
+          
+          // Verify chain ID matches expected network
+          if (chainId !== network.chainId) {
+            console.warn(`[BlockchainProvider] Chain ID mismatch: expected ${network.chainId}, got ${chainId}`);
           }
-
-          // RPC is available - try to connect with SDK
-          const { SelendraSDK, ChainType } = await import("@selendrajs/sdk");
-
-          // Try EVM first since we already verified it's available
-          const evSdk = new SelendraSDK({
-            endpoint: network.evm.endpoint,
-            chainType: ChainType.EVM,
+          
+          setEvmChainInfo({
+            name: `Selendra EVM (${currentNetwork})`,
+            version: "1.0.0",
+            chainId,
           });
 
-          await evSdk.connect();
-          setEvmSDK(evSdk);
-          setUseMockData(false);
+          // Get latest EVM block
+          const evmBlock = await evSdk.getCurrentBlock();
+          setLatestEvmBlock(evmBlock);
+        }
 
-          // Get EVM chain info
-          const provider = evSdk.getEvmProvider();
-          if (provider) {
-            const netInfo = await provider.getNetwork();
-            setEvmChainInfo({
-              name: `Selendra EVM (${currentNetwork})`,
-              version: "1.0.0",
-              chainId: Number(netInfo.chainId),
-            });
+        // Try Substrate connection
+        try {
+          const subSdk = new SelendraSDK({
+            endpoint: endpoints.substrate,
+            chainType: ChainType.Substrate,
+            network: currentNetwork === "mainnet" ? "selendra" : "selendra-testnet",
+          });
 
-            // Get latest EVM block
-            const evmBlock = await evSdk.getCurrentBlock();
-            setLatestEvmBlock(evmBlock);
-          }
+          await subSdk.connect();
+          setSubstrateSDK(subSdk);
 
-          // Try Substrate connection (optional - won't fail if unavailable)
-          try {
-            const subSdk = new SelendraSDK({
-              endpoint: network.substrate.endpoint,
-              chainType: ChainType.Substrate,
-              network: currentNetwork === "mainnet" ? "selendra" : "selendra-testnet",
-            });
-
-            await subSdk.connect();
-            setSubstrateSDK(subSdk);
-
-            const api = subSdk.getApi();
-            if (api) {
-              const [chain, version] = await Promise.all([
-                api.rpc.system.chain(),
-                api.rpc.system.version(),
-              ]);
-              setSubstrateChainInfo({
-                name: chain.toString(),
-                version: version.toString(),
-                ss58Format: api.registry.chainSS58 || SELENDRA_CONSTANTS.SS58_PREFIX,
-              });
-
-              const block = await subSdk.getCurrentBlock();
-              setLatestSubstrateBlock(block);
-            }
-          } catch {
-            // Substrate not available - use mock data for Substrate
+          const api = subSdk.getApi();
+          if (api) {
+            const [chain, version] = await Promise.all([
+              api.rpc.system.chain(),
+              api.rpc.system.version(),
+            ]);
             setSubstrateChainInfo({
-              name: "Selendra",
-              version: "1.0.0",
-              ss58Format: SELENDRA_CONSTANTS.SS58_PREFIX,
+              name: chain.toString(),
+              version: version.toString(),
+              ss58Format: api.registry.chainSS58 || SELENDRA_CONSTANTS.SS58_PREFIX,
             });
-            setLatestSubstrateBlock({
-              number: 1234567,
-              hash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-              timestamp: Date.now(),
-            });
-          }
 
-          // Selendra specs: 1s blocks, 2000+ TPS, 4 validators (Phase 1)
+            const block = await subSdk.getCurrentBlock();
+            setLatestSubstrateBlock(block);
+
+            // Get validator count from chain state
+            try {
+              const validators = await api.query.session.validators();
+              const validatorCount = Array.isArray(validators) ? validators.length : 4;
+              
+              setNetworkStats({
+                totalTransactions: 0, // Will be updated via indexer
+                averageBlockTime: SELENDRA_CONSTANTS.BLOCK_TIME_MS / 1000,
+                tps: 0, // Will be calculated from real data
+                validators: validatorCount,
+              });
+            } catch {
+              setNetworkStats({
+                totalTransactions: 0,
+                averageBlockTime: SELENDRA_CONSTANTS.BLOCK_TIME_MS / 1000,
+                tps: 0,
+                validators: 4, // Default Selendra validators
+              });
+            }
+          }
+        } catch (subError) {
+          console.warn(`[BlockchainProvider] Substrate connection failed, EVM-only mode:`, subError);
+          // EVM connected but Substrate failed - still usable
+          setSubstrateChainInfo({
+            name: "Selendra",
+            version: "unknown",
+            ss58Format: SELENDRA_CONSTANTS.SS58_PREFIX,
+          });
           setNetworkStats({
-            totalTransactions: 15420000,
+            totalTransactions: 0,
             averageBlockTime: SELENDRA_CONSTANTS.BLOCK_TIME_MS / 1000,
-            tps: 2000,
+            tps: 0,
             validators: 4,
           });
+        }
 
+        // Success - update connection state
+        setConnectionSource(source);
+        setActiveEndpoints(endpoints);
+        console.log(`[BlockchainProvider] Successfully connected to ${source} RPC`);
+        return true;
+      } catch (err) {
+        console.error(`[BlockchainProvider] Failed to connect to ${source} RPC:`, err);
+        return false;
+      }
+    },
+    [currentNetwork, checkRpcAvailability]
+  );
+
+  /**
+   * Connect with hybrid fallback: Local Node → Public RPC
+   * Tries local Docker node first, falls back to public RPC if unavailable
+   */
+  const connectWithFallback = useCallback(
+    async (): Promise<boolean> => {
+      const networkEndpoints = ENDPOINTS[currentNetwork];
+
+      // Try primary endpoints first (local Docker node if configured)
+      console.log(`[BlockchainProvider] Attempting primary connection...`);
+      const primarySuccess = await tryConnectToEndpoints(
+        networkEndpoints.primary,
+        networkEndpoints.fallback ? "local" : "public"
+      );
+
+      if (primarySuccess) {
+        return true;
+      }
+
+      // If primary failed and we have fallback (public RPC), try that
+      if (networkEndpoints.fallback) {
+        console.log(`[BlockchainProvider] Primary failed, trying public RPC fallback...`);
+        const fallbackSuccess = await tryConnectToEndpoints(
+          networkEndpoints.fallback,
+          "public"
+        );
+
+        if (fallbackSuccess) {
           return true;
-        } catch {
-          if (attempt < maxRetries - 1) {
-            // Wait with exponential backoff before next attempt
-            const delay = baseDelay * Math.pow(2, attempt);
-            await sleep(delay);
-          }
         }
       }
 
-      // All retries exhausted
+      // All connection attempts failed
       return false;
     },
-    [currentNetwork, checkRpcAvailability]
+    [currentNetwork, tryConnectToEndpoints]
   );
 
   const connect = useCallback(async () => {
@@ -354,28 +393,28 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
 
     setIsConnecting(true);
     setError(null);
-    setReconnectAttempt(0);
 
-    // Try to connect with retry logic
-    const connectionSucceeded = await connectWithRetry(3, 1000);
+    // Try to connect with fallback logic
+    const connectionSucceeded = await connectWithFallback();
 
     if (connectionSucceeded) {
       setIsConnected(true);
       setIsConnecting(false);
     } else {
-      // Fall back to mock data after all retries exhausted
-      initializeMockData();
+      // All connection attempts failed
+      setIsConnecting(false);
+      setError("Unable to connect to Selendra network. Please check your connection and try again.");
     }
-  }, [isConnecting, isConnected, connectWithRetry, initializeMockData]);
+  }, [isConnecting, isConnected, connectWithFallback]);
 
   /**
    * Attempt to reconnect after a disconnection
+   * Uses the same hybrid fallback logic
    */
   const attemptReconnect = useCallback(async () => {
     if (isReconnectingRef.current) return;
 
     isReconnectingRef.current = true;
-    setReconnectAttempt((prev) => prev + 1);
 
     // Clean up existing connections
     try {
@@ -392,24 +431,25 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
     }
 
     setIsConnected(false);
+    setConnectionSource(null);
+    setActiveEndpoints(null);
     setIsConnecting(true);
     setError("Connection lost. Attempting to reconnect...");
 
-    // Try to reconnect with retry logic
-    const reconnectionSucceeded = await connectWithRetry(3, 1000);
+    // Try to reconnect with fallback logic
+    const reconnectionSucceeded = await connectWithFallback();
 
     if (reconnectionSucceeded) {
       setIsConnected(true);
       setIsConnecting(false);
       setError(null);
     } else {
-      // Fall back to mock data
-      initializeMockData();
-      setError("Could not reconnect to network. Using mock data.");
+      setIsConnecting(false);
+      setError("Unable to reconnect to Selendra network. Please check your connection.");
     }
 
     isReconnectingRef.current = false;
-  }, [substrateSDK, evmSDK, connectWithRetry, initializeMockData]);
+  }, [substrateSDK, evmSDK, connectWithFallback]);
 
   const disconnect = useCallback(async () => {
     try {
@@ -422,6 +462,8 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
         setEvmSDK(null);
       }
       setIsConnected(false);
+      setConnectionSource(null);
+      setActiveEndpoints(null);
       setSubstrateChainInfo(null);
       setEvmChainInfo(null);
       setLatestSubstrateBlock(null);
@@ -485,7 +527,7 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
   const latestBlockRef = useRef<BlockInfo | null>(null);
 
   useEffect(() => {
-    if (!isConnected || !substrateSDK || useMockData) return;
+    if (!isConnected || !substrateSDK) return;
 
     const api = substrateSDK.getApi();
     if (!api) return;
@@ -556,7 +598,7 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
       }
       clearInterval(updateInterval);
     };
-  }, [isConnected, substrateSDK, useMockData, attemptReconnect]);
+  }, [isConnected, substrateSDK, attemptReconnect]);
 
   const value: BlockchainContextType = {
     substrateSDK,
@@ -564,7 +606,7 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
     isConnecting,
     isConnected,
     error,
-    useMockData,
+    connectionSource,
     currentNetwork,
     setNetwork,
     substrateChainInfo,
@@ -572,6 +614,7 @@ export function BlockchainProvider({ children }: BlockchainProviderProps) {
     latestSubstrateBlock,
     latestEvmBlock,
     networkStats,
+    activeEndpoints,
     connect,
     disconnect,
     refreshData,

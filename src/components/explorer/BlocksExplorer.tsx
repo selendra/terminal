@@ -8,11 +8,9 @@ import {
   ChevronRight,
   Loader2,
   ExternalLink,
-  RefreshCw,
-  AlertCircle,
 } from "lucide-react";
 import { useBlockchain } from "@/components/providers/BlockchainProvider";
-import { truncateHash, formatDistanceToNow } from "@/lib/utils";
+import { truncateHash } from "@/lib/utils";
 import { clsx } from "clsx";
 
 interface BlockData {
@@ -25,48 +23,8 @@ interface BlockData {
   type: "substrate" | "evm";
 }
 
-// Mock block data generator for demo mode
-function generateMockBlocks(
-  startBlock: number,
-  count: number,
-  type: "substrate" | "evm" | "all"
-): BlockData[] {
-  const blocks: BlockData[] = [];
-  const now = Date.now();
-
-  for (let i = 0; i < count; i++) {
-    const blockNumber = startBlock - i;
-    if (blockNumber < 0) break;
-
-    // Generate blocks based on filter
-    const blockType: "substrate" | "evm" =
-      type === "all"
-        ? Math.random() > 0.3
-          ? "substrate"
-          : "evm"
-        : type === "evm"
-        ? "evm"
-        : "substrate";
-
-    blocks.push({
-      number: blockNumber,
-      hash: `0x${Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("")}`,
-      parentHash: `0x${Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("")}`,
-      extrinsicsCount: Math.floor(Math.random() * 20) + 1,
-      timestamp: now - i * 1000, // 1 second per block
-      type: blockType,
-    });
-  }
-
-  return blocks;
-}
-
 export function BlocksExplorer() {
-  const { substrateSDK, evmSDK, isConnected, useMockData, latestSubstrateBlock, latestEvmBlock } =
+  const { substrateSDK, evmSDK, isConnected, latestSubstrateBlock, latestEvmBlock } =
     useBlockchain();
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,8 +33,10 @@ export function BlocksExplorer() {
   const [totalBlocks, setTotalBlocks] = useState(0);
   const [vmFilter, setVmFilter] = useState<"all" | "substrate" | "evm">("all");
 
-  // Track if this is the initial load
-  const isInitialLoad = useRef(true);
+  // Track if this is the initial load - don't show loading spinner on updates
+  const hasLoadedOnce = useRef(false);
+  const isFetching = useRef(false);
+  const lastFetchedBlock = useRef<number>(0);
 
   const blocksPerPage = 25;
 
@@ -184,98 +144,106 @@ export function BlocksExplorer() {
     [evmSDK]
   );
 
-  // Main fetch function
-  const fetchBlocks = useCallback(async () => {
+  // Main fetch function - does not depend on latest block numbers
+  // to prevent recreation on every block update
+  const fetchBlocks = useCallback(async (
+    latestSubstrate: number,
+    latestEvm: number,
+    showLoading: boolean = false
+  ) => {
     if (!isConnected) return;
+    if (isFetching.current) return; // Prevent concurrent fetches
 
-    setIsLoading(true);
+    isFetching.current = true;
+
+    // Only show loading spinner on initial load
+    if (showLoading) {
+      setIsLoading(true);
+    }
     setFetchError(null);
 
     try {
-      // Determine which data source to use
-      if (useMockData) {
-        // Use mock data
-        const latestNumber = latestSubstrateBlock?.number || 1000000;
-        setTotalBlocks(latestNumber);
+      // Fetch real data based on filter
+      let blocksData: BlockData[] = [];
+      let total = 0;
 
-        const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
-        const mockBlocks = generateMockBlocks(startBlock, blocksPerPage, vmFilter);
-        setBlocks(mockBlocks);
-      } else {
-        // Fetch real data based on filter
-        let blocksData: BlockData[] = [];
-        let total = 0;
+      if (vmFilter === "substrate" || vmFilter === "all") {
+        const latestNumber = latestSubstrate;
+        total = Math.max(total, latestNumber);
 
-        if (vmFilter === "substrate" || vmFilter === "all") {
-          const latestNumber = latestSubstrateBlock?.number || 0;
-          total = Math.max(total, latestNumber);
-
-          if (latestNumber > 0) {
-            const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
-            const substrateBlocks = await fetchSubstrateBlocks(
-              startBlock,
-              vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
-            );
-            blocksData = [...blocksData, ...substrateBlocks];
-          }
+        if (latestNumber > 0) {
+          const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
+          const substrateBlocks = await fetchSubstrateBlocks(
+            startBlock,
+            vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
+          );
+          blocksData = [...blocksData, ...substrateBlocks];
         }
-
-        if (vmFilter === "evm" || vmFilter === "all") {
-          const latestNumber = latestEvmBlock?.number || 0;
-          total = Math.max(total, latestNumber);
-
-          if (latestNumber > 0) {
-            const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
-            const evmBlocks = await fetchEvmBlocks(
-              startBlock,
-              vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
-            );
-            blocksData = [...blocksData, ...evmBlocks];
-          }
-        }
-
-        // Sort by block number descending
-        blocksData.sort((a, b) => b.number - a.number);
-
-        // Limit to blocksPerPage
-        blocksData = blocksData.slice(0, blocksPerPage);
-
-        setTotalBlocks(total);
-        setBlocks(blocksData);
       }
+
+      if (vmFilter === "evm" || vmFilter === "all") {
+        const latestNumber = latestEvm;
+        total = Math.max(total, latestNumber);
+
+        if (latestNumber > 0) {
+          const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
+          const evmBlocks = await fetchEvmBlocks(
+            startBlock,
+            vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
+          );
+          blocksData = [...blocksData, ...evmBlocks];
+        }
+      }
+
+      // Sort by block number descending
+      blocksData.sort((a, b) => b.number - a.number);
+
+      // Limit to blocksPerPage
+      blocksData = blocksData.slice(0, blocksPerPage);
+
+      setTotalBlocks(total);
+      setBlocks(blocksData);
+      hasLoadedOnce.current = true;
+      lastFetchedBlock.current = Math.max(latestSubstrate, latestEvm);
     } catch (err) {
       setFetchError("Failed to fetch blocks. Please try again.");
       console.error("Block fetch error:", err);
     } finally {
       setIsLoading(false);
-      isInitialLoad.current = false;
+      isFetching.current = false;
     }
   }, [
     isConnected,
-    useMockData,
-    latestSubstrateBlock,
-    latestEvmBlock,
     currentPage,
     vmFilter,
     fetchSubstrateBlocks,
     fetchEvmBlocks,
   ]);
 
-  // Fetch blocks when dependencies change
+  // Initial load and page/filter changes - show loading state
   useEffect(() => {
-    fetchBlocks();
-  }, [fetchBlocks]);
+    const latestSubstrate = latestSubstrateBlock?.number || 0;
+    const latestEvm = latestEvmBlock?.number || 0;
+    
+    // Show loading on first load or when page/filter changes
+    if (!hasLoadedOnce.current || currentPage !== 1) {
+      fetchBlocks(latestSubstrate, latestEvm, true);
+    }
+  }, [currentPage, vmFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh blocks when new blocks arrive (but not on every render)
+  // Silently update when new blocks arrive (no loading spinner)
   useEffect(() => {
-    if (isInitialLoad.current) return;
-    if (currentPage !== 1) return; // Only auto-refresh on first page
+    if (!hasLoadedOnce.current) return; // Wait for initial load
+    if (currentPage !== 1) return; // Only auto-update on first page
 
-    const refreshTimeout = setTimeout(() => {
-      fetchBlocks();
-    }, 5000); // Refresh every 5 seconds
+    const latestSubstrate = latestSubstrateBlock?.number || 0;
+    const latestEvm = latestEvmBlock?.number || 0;
+    const currentLatest = Math.max(latestSubstrate, latestEvm);
 
-    return () => clearTimeout(refreshTimeout);
+    // Only fetch if new blocks are available
+    if (currentLatest > lastFetchedBlock.current) {
+      fetchBlocks(latestSubstrate, latestEvm, false);
+    }
   }, [latestSubstrateBlock?.number, latestEvmBlock?.number, currentPage, fetchBlocks]);
 
   const totalPages = Math.ceil(totalBlocks / blocksPerPage);
@@ -363,11 +331,17 @@ export function BlocksExplorer() {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
+              {isLoading && blocks.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-selendra-500 mx-auto mb-2" />
                     <p className="text-foreground-secondary">Loading blocks...</p>
+                  </td>
+                </tr>
+              ) : fetchError ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center">
+                    <p className="text-red-400">{fetchError}</p>
                   </td>
                 </tr>
               ) : blocks.length > 0 ? (

@@ -42,8 +42,8 @@ One unified experience for **exploration, wallet operations, staking, governance
 | Feature                  | Description                                 | Status |
 | ------------------------ | ------------------------------------------- | ------ |
 | **Unified Blocks**       | Single timeline of Substrate + EVM blocks   | ⏳     |
-| **Unified Transactions** | Merged extrinsic + EVM tx list with filters | ⏳     |
-| **Unified Accounts**     | SS58 ↔ 0x address linking                   | ⏳     |
+| **Unified Transactions** | Merged extrinsic + EVM tx list with filters | 🔄     |
+| **Unified Accounts**     | SS58 ↔ 0x address linking                   | 🔄     |
 | **Unified Contracts**    | ink! + Solidity contracts in one view       | ⏳     |
 | **Unified Tokens**       | ERC-20/PSP-22, ERC-721/PSP-34 with tabs     | ⏳     |
 
@@ -58,16 +58,24 @@ One unified experience for **exploration, wallet operations, staking, governance
 | Wallet Connection    | MetaMask, Polkadot.js, Talisman  | ✅     |
 | Theme System         | Light/dark/system                | ✅     |
 | Docker Setup         | Local node + production          | ✅     |
+| AddressDisplay       | Format toggle, copy, resolve     | ✅     |
+| VMBadge              | Substrate/EVM indicator          | ✅     |
+| StatusBadge          | Transaction status indicators    | ✅     |
+| User Preferences     | Zustand store with persistence   | ✅     |
+| Address Resolver     | SS58 ↔ 0x conversion             | ✅     |
 
 ### v1.0 Deliverables
 
-- [ ] AddressDisplay component with format toggle
-- [ ] VMBadge component (Substrate/EVM indicator)
-- [ ] User setting for preferred address format
+- [x] AddressDisplay component with format toggle
+- [x] VMBadge component (Substrate/EVM indicator)
+- [x] StatusBadge component (transaction status)
+- [x] User setting for preferred address format
+- [x] Address resolver service
+- [x] Unified transaction list component
+- [x] Unified account view component
 - [ ] SubQuery indexer setup
-- [ ] Unified transaction list
-- [ ] Unified account view
 - [ ] Historical data support
+- [ ] Real data integration (replace mock data)
 
 ### Timeline: 6-8 weeks
 

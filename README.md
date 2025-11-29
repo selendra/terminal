@@ -4,10 +4,11 @@
 
 A comprehensive interface for Selendra's Substrate + EVM ecosystem. One application for exploring, transacting, staking, and governing.
 
+![Version](https://img.shields.io/badge/version-1.0.0--beta.1-blue?style=for-the-badge)
 ![Selendra Terminal](https://img.shields.io/badge/Selendra-Terminal-0db0a4?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square)
 
 ---
 
@@ -16,10 +17,12 @@ A comprehensive interface for Selendra's Substrate + EVM ecosystem. One applicat
 Selendra Terminal replaces multiple fragmented tools with a **single unified interface**:
 
 - ✅ **Block Explorer** - Substrate + EVM blocks, transactions, accounts
-- ✅ **Wallet Portal** - Multi-wallet connection, transfers, signing
-- ✅ **Staking** - Nominate validators, manage stake, claim rewards
-- ✅ **Governance** - Vote on referenda, submit proposals
-- ✅ **Developer Tools** - Extrinsics, chain state, contract interaction
+- ✅ **Wallet Portal** - Multi-wallet connection (Polkadot.js, Talisman, SubWallet, MetaMask, WalletConnect)
+- ✅ **Staking** - Nominate validators, nomination pools, EVM staking precompile
+- ✅ **Governance** - OpenGov referenda, voting, delegation, treasury proposals
+- ✅ **Identity** - On-chain identity, multisig, proxy accounts, .sel domains (SNS)
+- ✅ **Developer Tools** - Extrinsic builder, chain state, RPC browser, ink! contracts
+- ✅ **DeFi** - Token swaps, liquidity, lending (UI ready)
 
 ### Key Feature: Unified Dual-VM
 
@@ -120,14 +123,15 @@ docker compose up -d
 
 ## Tech Stack
 
-| Category      | Technology                          |
-| ------------- | ----------------------------------- |
-| **Framework** | Next.js 16 (Turbopack)              |
-| **UI**        | React 19, TypeScript 5.9            |
-| **Styling**   | Tailwind CSS 3.4, CSS Variables     |
-| **Substrate** | @polkadot/api, @selendrajs/sdk      |
-| **EVM**       | ethers.js 6.15                      |
-| **State**     | React Context, Zustand, React Query |
+| Category      | Technology                              |
+| ------------- | --------------------------------------- |
+| **Framework** | Next.js 16 (Turbopack)                  |
+| **UI**        | React 19, TypeScript 5.6                |
+| **Styling**   | Tailwind CSS 3.4, CSS Variables         |
+| **Substrate** | @polkadot/api 14.x, @selendrajs/sdk     |
+| **EVM**       | ethers.js 6.13                          |
+| **State**     | React Context, Zustand 5, React Query 5 |
+| **Charts**    | Chart.js 4, react-chartjs-2             |
 
 ---
 
@@ -146,13 +150,23 @@ src/
 │   │   └── developers/    # Developer tools
 │   └── api/               # API routes
 ├── components/
-│   ├── common/            # Shared components
+│   ├── common/            # Shared components (AddressDisplay, VMBadge, etc.)
 │   ├── layout/            # Layout components
-│   ├── providers/         # Context providers
-│   └── [feature]/         # Feature components
+│   ├── providers/         # Context providers (Blockchain, Wallet, Theme)
+│   ├── explorer/          # Explorer components
+│   ├── staking/           # Staking components
+│   ├── governance/        # Governance components
+│   ├── identity/          # Identity & account management
+│   ├── developer/         # Developer tools
+│   ├── defi/              # DeFi components
+│   └── wallet/            # Wallet components
 ├── lib/
-│   ├── blockchain/        # Chain utilities
-│   ├── hooks/             # Custom hooks
+│   ├── staking/           # Staking service
+│   ├── governance/        # Governance service
+│   ├── unified/           # Dual-VM unification layer
+│   ├── sns/               # Selendra Naming Service
+│   ├── hooks/             # Custom React hooks
+│   ├── stores/            # Zustand stores
 │   └── utils/             # Helpers
 └── styles/
     └── globals.css        # Theme variables

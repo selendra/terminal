@@ -1,0 +1,50 @@
+# Selendra chain types configuration
+# This file defines custom types used in the Selendra runtime
+
+typesBundle:
+  spec:
+    selendra:
+      types:
+        # Unified Accounts types
+        UnifiedAddress:
+          _enum:
+            Substrate: "AccountId32"
+            EVM: "H160"
+
+        AccountBinding:
+          substrate_address: "AccountId32"
+          evm_address: "H160"
+
+        # AlephBFT types
+        SessionAuthorityData:
+          authorities: "Vec<(AuthorityId, AuthorityWeight)>"
+          emergency_finalizer: "Option<AuthorityId>"
+
+        AuthorityId: "[u8; 32]"
+        AuthorityWeight: "u64"
+
+        # Staking types
+        ValidatorPrefs:
+          commission: "Perbill"
+          blocked: "bool"
+
+        # EVM types
+        EvmAddress: "H160"
+        EthTransaction:
+          nonce: "U256"
+          gas_price: "U256"
+          gas_limit: "U256"
+          action: "TransactionAction"
+          value: "U256"
+          input: "Bytes"
+          signature: "TransactionSignature"
+
+        TransactionAction:
+          _enum:
+            Call: "H160"
+            Create: "Null"
+
+        TransactionSignature:
+          v: "u64"
+          r: "H256"
+          s: "H256"

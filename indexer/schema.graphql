@@ -1,0 +1,724 @@
+# ============================================
+# SELENDRA UNIFIED INDEXER SCHEMA
+# ============================================
+# This schema provides a unified view of both Substrate and EVM
+# data for the Selendra dual-VM blockchain.
+
+# ============================================
+# CORE ENTITIES
+# ============================================
+
+"""
+Unified account entity that maps both SS58 and 0x addresses.
+Primary key is the SS58 address for Substrate-native accounts,
+or derived SS58 for EVM-only accounts.
+"""
+type Account @entity {
+  "Primary identifier - SS58 address"
+  id: ID!
+
+  "SS58 format address (Substrate native)"
+  substrateAddress: String! @index
+
+  "H160 format address (0x hex, EVM compatible)"
+  evmAddress: String @index
+
+  "Whether this account has claimed unified status"
+  isUnified: Boolean!
+
+  "Current free balance in native token (SEL)"
+  freeBalance: BigInt!
+
+  "Current reserved balance"
+  reservedBalance: BigInt!
+
+  "Nonce for Substrate transactions"
+  substrateNonce: Int!
+
+  "Nonce for EVM transactions"
+  evmNonce: Int!
+
+  "On-chain identity display name"
+  identityDisplay: String
+
+  "On-chain identity email"
+  identityEmail: String
+
+  "On-chain identity web"
+  identityWeb: String
+
+  "On-chain identity Twitter"
+  identityTwitter: String
+
+  "Whether identity is verified by a registrar"
+  identityVerified: Boolean!
+
+  "First seen block number"
+  firstSeenBlock: Int!
+
+  "First seen timestamp"
+  firstSeenAt: Date!
+
+  "Last active block number"
+  lastActiveBlock: Int!
+
+  "Last active timestamp"
+  lastActiveAt: Date!
+
+  "Total transaction count (Substrate + EVM)"
+  transactionCount: Int!
+
+  "Transactions sent from this account"
+  transactionsSent: [Transaction!]! @derivedFrom(field: "from")
+
+  "Transactions received by this account"
+  transactionsReceived: [Transaction!]! @derivedFrom(field: "to")
+
+  "Token balances owned by this account"
+  tokenBalances: [TokenBalance!]! @derivedFrom(field: "account")
+
+  "Staking information"
+  staking: StakingInfo @derivedFrom(field: "account")
+}
+
+"""
+Block entity with aggregated statistics
+"""
+type Block @entity {
+  "Block number as string"
+  id: ID!
+
+  "Block number"
+  number: Int! @index
+
+  "Block hash"
+  hash: String! @index
+
+  "Parent block hash"
+  parentHash: String!
+
+  "State root"
+  stateRoot: String!
+
+  "Extrinsics root"
+  extrinsicsRoot: String!
+
+  "Block timestamp"
+  timestamp: Date! @index
+
+  "Validator/author of this block"
+  validator: Account
+
+  "Count of Substrate extrinsics"
+  extrinsicCount: Int!
+
+  "Count of EVM transactions"
+  evmTransactionCount: Int!
+
+  "Count of events"
+  eventCount: Int!
+
+  "Whether block is finalized"
+  isFinalized: Boolean!
+
+  "Spec version at this block"
+  specVersion: Int!
+
+  "Transactions in this block"
+  transactions: [Transaction!]! @derivedFrom(field: "block")
+}
+
+"""
+Unified transaction type covering both Substrate extrinsics and EVM transactions
+"""
+enum TransactionType {
+  "Native Substrate extrinsic"
+  SUBSTRATE
+  "EVM transaction via Frontier"
+  EVM
+  "EVM transaction wrapped in Substrate extrinsic"
+  EVM_WRAPPED
+}
+
+"""
+Transaction status
+"""
+enum TransactionStatus {
+  "Transaction succeeded"
+  SUCCESS
+  "Transaction failed"
+  FAILED
+  "Transaction is pending (mempool)"
+  PENDING
+}
+
+"""
+Unified transaction entity for both Substrate and EVM
+"""
+type Transaction @entity {
+  "Unique identifier - transaction/extrinsic hash"
+  id: ID!
+
+  "Transaction type"
+  type: TransactionType!
+
+  "Block containing this transaction"
+  block: Block!
+
+  "Block number"
+  blockNumber: Int! @index
+
+  "Position in block (extrinsic index or tx index)"
+  index: Int!
+
+  "Transaction timestamp"
+  timestamp: Date! @index
+
+  "Transaction hash (unique per type)"
+  hash: String! @index
+
+  "Sender account"
+  from: Account!
+
+  "Recipient account (null for contract creation)"
+  to: Account
+
+  "Value transferred in native token"
+  value: BigInt!
+
+  "Transaction fee paid"
+  fee: BigInt!
+
+  "Transaction status"
+  status: TransactionStatus!
+
+  "For Substrate: pallet name"
+  palletName: String
+
+  "For Substrate: method name"
+  methodName: String
+
+  "For EVM: contract method signature"
+  methodSignature: String
+
+  "For EVM: gas used"
+  gasUsed: BigInt
+
+  "For EVM: gas price"
+  gasPrice: BigInt
+
+  "For EVM: gas limit"
+  gasLimit: BigInt
+
+  "For EVM: input data (hex)"
+  inputData: String
+
+  "Error message if failed"
+  errorMessage: String
+
+  "Whether this is a contract creation"
+  isContractCreation: Boolean!
+
+  "Created contract address (if contract creation)"
+  createdContract: Contract
+
+  "Events emitted by this transaction"
+  events: [Event!]! @derivedFrom(field: "transaction")
+
+  "Token transfers in this transaction"
+  tokenTransfers: [TokenTransfer!]! @derivedFrom(field: "transaction")
+}
+
+"""
+Event/log entity
+"""
+type Event @entity {
+  "Unique identifier: blockNumber-eventIndex"
+  id: ID!
+
+  "Transaction that emitted this event"
+  transaction: Transaction!
+
+  "Block number"
+  blockNumber: Int! @index
+
+  "Event index within block"
+  eventIndex: Int!
+
+  "For Substrate: pallet name"
+  palletName: String @index
+
+  "For Substrate: event method"
+  methodName: String @index
+
+  "For EVM: contract address"
+  contractAddress: String @index
+
+  "For EVM: event topics"
+  topics: [String!]
+
+  "Event data (JSON encoded)"
+  data: String
+
+  "Timestamp"
+  timestamp: Date!
+}
+
+# ============================================
+# TOKEN ENTITIES
+# ============================================
+
+"""
+Token standard type
+"""
+enum TokenStandard {
+  "ERC-20 fungible token"
+  ERC20
+  "ERC-721 NFT"
+  ERC721
+  "ERC-1155 multi-token"
+  ERC1155
+  "PSP-22 (ink! fungible token)"
+  PSP22
+  "PSP-34 (ink! NFT)"
+  PSP34
+  "PSP-37 (ink! multi-token)"
+  PSP37
+  "Native token (SEL)"
+  NATIVE
+}
+
+"""
+Token contract entity
+"""
+type Token @entity {
+  "Contract address"
+  id: ID!
+
+  "Token standard"
+  standard: TokenStandard!
+
+  "Token name"
+  name: String
+
+  "Token symbol"
+  symbol: String
+
+  "Decimals (for fungible tokens)"
+  decimals: Int
+
+  "Total supply"
+  totalSupply: BigInt
+
+  "Contract that implements this token"
+  contract: Contract
+
+  "Number of holders"
+  holderCount: Int!
+
+  "Total transfer count"
+  transferCount: Int!
+
+  "Creation timestamp"
+  createdAt: Date!
+
+  "Token balances"
+  balances: [TokenBalance!]! @derivedFrom(field: "token")
+
+  "Token transfers"
+  transfers: [TokenTransfer!]! @derivedFrom(field: "token")
+}
+
+"""
+Token balance for an account
+"""
+type TokenBalance @entity {
+  "Unique ID: accountId-tokenId"
+  id: ID!
+
+  "Account holding the token"
+  account: Account!
+
+  "Token"
+  token: Token!
+
+  "Balance amount (for fungible) or count (for NFT)"
+  balance: BigInt!
+
+  "For NFTs: list of token IDs owned"
+  tokenIds: [String!]
+
+  "Last updated block"
+  lastUpdatedBlock: Int!
+
+  "Last updated timestamp"
+  lastUpdatedAt: Date!
+}
+
+"""
+Token transfer event
+"""
+type TokenTransfer @entity {
+  "Unique ID: transactionHash-logIndex"
+  id: ID!
+
+  "Token being transferred"
+  token: Token!
+
+  "Transaction containing this transfer"
+  transaction: Transaction!
+
+  "Block number"
+  blockNumber: Int! @index
+
+  "Sender"
+  from: Account!
+
+  "Recipient"
+  to: Account!
+
+  "Amount transferred"
+  amount: BigInt!
+
+  "For NFTs: specific token ID"
+  nftTokenId: String
+
+  "Timestamp"
+  timestamp: Date! @index
+}
+
+# ============================================
+# CONTRACT ENTITIES
+# ============================================
+
+"""
+Contract type
+"""
+enum ContractType {
+  "EVM Solidity contract"
+  EVM
+  "ink! WASM contract"
+  INK
+}
+
+"""
+Smart contract entity
+"""
+type Contract @entity {
+  "Contract address"
+  id: ID!
+
+  "Contract type"
+  type: ContractType!
+
+  "Creator account"
+  creator: Account!
+
+  "Creation transaction"
+  creationTransaction: Transaction!
+
+  "Creation block number"
+  creationBlock: Int! @index
+
+  "Creation timestamp"
+  createdAt: Date! @index
+
+  "Contract bytecode hash"
+  codeHash: String
+
+  "Is verified (source code available)"
+  isVerified: Boolean!
+
+  "Contract name (from verification)"
+  name: String
+
+  "Verified source code"
+  sourceCode: String
+
+  "Contract ABI (JSON)"
+  abi: String
+
+  "Compiler version"
+  compilerVersion: String
+
+  "Is proxy contract"
+  isProxy: Boolean!
+
+  "Implementation address (if proxy)"
+  implementation: Contract
+
+  "Associated token (if token contract)"
+  token: Token @derivedFrom(field: "contract")
+
+  "Transaction count interacting with this contract"
+  transactionCount: Int!
+
+  "Last interaction timestamp"
+  lastInteractionAt: Date
+}
+
+# ============================================
+# STAKING ENTITIES
+# ============================================
+
+"""
+Validator/nominator status
+"""
+enum StakingStatus {
+  "Currently active validator"
+  ACTIVE
+  "Waiting to be elected"
+  WAITING
+  "Nominator"
+  NOMINATING
+  "Idle (not staking)"
+  IDLE
+  "Chilled (stopped)"
+  CHILLED
+}
+
+"""
+Staking information for an account
+"""
+type StakingInfo @entity {
+  "Account ID"
+  id: ID!
+
+  "Account"
+  account: Account!
+
+  "Staking status"
+  status: StakingStatus!
+
+  "Total bonded amount"
+  bonded: BigInt!
+
+  "Active stake (in current era)"
+  activeStake: BigInt!
+
+  "For validators: own stake"
+  ownStake: BigInt
+
+  "For validators: total stake from nominators"
+  totalNominatorStake: BigInt
+
+  "For validators: commission percentage (0-100)"
+  commission: Int
+
+  "For validators: nominator count"
+  nominatorCount: Int
+
+  "For nominators: nominated validators"
+  nominations: [String!]
+
+  "Reward destination"
+  rewardDestination: String
+
+  "Is slashed"
+  isSlashed: Boolean!
+
+  "Last reward era"
+  lastRewardEra: Int
+
+  "Total rewards earned"
+  totalRewards: BigInt!
+
+  "Reward history"
+  rewards: [StakingReward!]! @derivedFrom(field: "account")
+}
+
+"""
+Staking reward event
+"""
+type StakingReward @entity {
+  "Unique ID: era-accountId"
+  id: ID!
+
+  "Account receiving reward"
+  account: StakingInfo!
+
+  "Era number"
+  era: Int! @index
+
+  "Reward amount"
+  amount: BigInt!
+
+  "Block number"
+  blockNumber: Int!
+
+  "Timestamp"
+  timestamp: Date! @index
+}
+
+# ============================================
+# GOVERNANCE ENTITIES
+# ============================================
+
+"""
+Proposal status
+"""
+enum ProposalStatus {
+  "Proposal is active for voting"
+  ACTIVE
+  "Proposal passed"
+  PASSED
+  "Proposal rejected"
+  REJECTED
+  "Proposal cancelled"
+  CANCELLED
+  "Proposal executed"
+  EXECUTED
+  "Proposal timed out"
+  TIMEOUT
+}
+
+"""
+Vote type
+"""
+enum VoteType {
+  "Vote in favor"
+  AYE
+  "Vote against"
+  NAY
+  "Abstain"
+  ABSTAIN
+}
+
+"""
+Governance proposal
+"""
+type Proposal @entity {
+  "Proposal index"
+  id: ID!
+
+  "Proposal index number"
+  index: Int! @index
+
+  "Proposer account"
+  proposer: Account!
+
+  "Proposal status"
+  status: ProposalStatus!
+
+  "Proposal title/description"
+  title: String
+
+  "Proposal description"
+  description: String
+
+  "Preimage hash"
+  preimageHash: String
+
+  "Deposit amount"
+  deposit: BigInt!
+
+  "Total AYE votes"
+  ayeVotes: BigInt!
+
+  "Total NAY votes"
+  nayVotes: BigInt!
+
+  "Turnout"
+  turnout: BigInt!
+
+  "Threshold for passing"
+  threshold: String
+
+  "Track (for OpenGov)"
+  track: String
+
+  "Created at block"
+  createdAtBlock: Int!
+
+  "Created timestamp"
+  createdAt: Date! @index
+
+  "Voting end block"
+  votingEndBlock: Int
+
+  "Execution block (if passed)"
+  executionBlock: Int
+
+  "Votes on this proposal"
+  votes: [Vote!]! @derivedFrom(field: "proposal")
+}
+
+"""
+Vote on a proposal
+"""
+type Vote @entity {
+  "Unique ID: proposalId-accountId"
+  id: ID!
+
+  "Proposal being voted on"
+  proposal: Proposal!
+
+  "Voter account"
+  voter: Account!
+
+  "Vote type"
+  voteType: VoteType!
+
+  "Vote weight/balance"
+  balance: BigInt!
+
+  "Conviction multiplier (0-6)"
+  conviction: Int
+
+  "Block number"
+  blockNumber: Int!
+
+  "Timestamp"
+  timestamp: Date!
+}
+
+# ============================================
+# STATISTICS ENTITIES
+# ============================================
+
+"""
+Daily chain statistics
+"""
+type DailyStats @entity {
+  "Date string YYYY-MM-DD"
+  id: ID!
+
+  "Date"
+  date: Date! @index
+
+  "Total blocks produced"
+  blocksProduced: Int!
+
+  "Total Substrate extrinsics"
+  substrateExtrinsics: Int!
+
+  "Total EVM transactions"
+  evmTransactions: Int!
+
+  "Total transactions (combined)"
+  totalTransactions: Int!
+
+  "Total fees collected"
+  feesCollected: BigInt!
+
+  "New accounts created"
+  newAccounts: Int!
+
+  "Active accounts (any transaction)"
+  activeAccounts: Int!
+
+  "New contracts deployed"
+  newContracts: Int!
+
+  "Total value transferred"
+  valueTransferred: BigInt!
+
+  "Staking rewards distributed"
+  stakingRewards: BigInt!
+
+  "Average gas price"
+  avgGasPrice: BigInt
+
+  "Average block time (ms)"
+  avgBlockTime: Int
+}

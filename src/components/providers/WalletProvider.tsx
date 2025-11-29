@@ -95,6 +95,7 @@ interface WalletContextType {
   // Signing
   signSubstrateMessage: (message: string) => Promise<string | null>;
   signEvmMessage: (message: string) => Promise<string | null>;
+  signAndSubmitExtrinsic: (extrinsic: unknown) => Promise<string>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -457,6 +458,52 @@ export function WalletProvider({ children }: WalletProviderProps) {
     [evmAccount]
   );
 
+  // Sign and submit a substrate extrinsic
+  const signAndSubmitExtrinsic = useCallback(
+    async (extrinsic: unknown): Promise<string> => {
+      if (!polkadotExtension || !selectedSubstrateAccount) {
+        throw new Error("No Substrate wallet connected");
+      }
+
+      try {
+        const { web3FromSource } = await import("@polkadot/extension-dapp");
+        const injector = await web3FromSource(selectedSubstrateAccount.source);
+
+        return new Promise((resolve, reject) => {
+          const tx = extrinsic as {
+            signAndSend: (
+              address: string,
+              options: { signer: unknown },
+              callback: (result: {
+                status: { isInBlock: boolean; isFinalized: boolean };
+                txHash: { toHex: () => string };
+                dispatchError?: unknown;
+              }) => void
+            ) => Promise<() => void>;
+          };
+
+          tx.signAndSend(
+            selectedSubstrateAccount.address,
+            { signer: injector.signer },
+            (result) => {
+              if (result.status.isInBlock) {
+                const hash = result.txHash.toHex();
+                toast.success("Transaction in block");
+                resolve(hash);
+              } else if (result.dispatchError) {
+                reject(new Error("Transaction failed"));
+              }
+            }
+          ).catch(reject);
+        });
+      } catch (error) {
+        toast.error("Failed to submit transaction");
+        throw error;
+      }
+    },
+    [polkadotExtension, selectedSubstrateAccount]
+  );
+
   // Auto-refresh balances when account changes
   useEffect(() => {
     if (blockchainConnected && (selectedSubstrateAccount || evmAccount)) {
@@ -495,6 +542,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
     addSelendraNetwork,
     signSubstrateMessage,
     signEvmMessage,
+    signAndSubmitExtrinsic,
   };
 
   return (

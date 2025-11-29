@@ -21,9 +21,13 @@ import {
   Eye,
   EyeOff,
   Copy,
+  Hexagon,
+  Circle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { usePreferences, type AddressFormat } from '@/lib/stores/preferences';
+import { AddressDisplay, VMBadge } from '@/components/common';
 import toast from 'react-hot-toast';
 
 interface NetworkConfig {
@@ -53,6 +57,7 @@ const defaultNetworks: NetworkConfig[] = [
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
+  const { addressFormat, setAddressFormat, resetPreferences } = usePreferences();
   const [activeSection, setActiveSection] = useState('general');
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState('USD');
@@ -502,36 +507,163 @@ export default function Settings() {
 
           {/* Display Settings */}
           {activeSection === 'display' && (
-            <div className="bg-background-card border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Display Options</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-border">
-                  <div>
-                    <p className="text-foreground font-medium">Compact Mode</p>
-                    <p className="text-foreground-secondary text-sm">Show more content with smaller spacing</p>
-                  </div>
-                  <button className="w-12 h-6 rounded-full bg-background-tertiary border border-border transition-colors relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-0.5" />
-                  </button>
+            <div className="space-y-6">
+              {/* Address Format Preferences - Key Unification Feature */}
+              <div className="bg-background-card border border-border rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Address Format</h2>
+                <p className="text-foreground-secondary text-sm mb-4">
+                  Selendra uses unified accounts - every account has both a Substrate (SS58) and EVM (0x) address. 
+                  Choose your preferred display format.
+                </p>
+                
+                <div className="space-y-3">
+                  {[
+                    { 
+                      value: 'substrate' as AddressFormat, 
+                      label: 'Substrate (SS58)', 
+                      desc: 'Display addresses in SS58 format (e.g., seH5WcHC7dXPjg...)',
+                      icon: Hexagon,
+                      color: 'blue'
+                    },
+                    { 
+                      value: 'evm' as AddressFormat, 
+                      label: 'EVM (0x)', 
+                      desc: 'Display addresses in Ethereum format (e.g., 0x7a3cEfC7Ac...)',
+                      icon: Circle,
+                      color: 'purple'
+                    },
+                    { 
+                      value: 'both' as AddressFormat, 
+                      label: 'Both Formats', 
+                      desc: 'Show the original format with option to toggle',
+                      icon: null,
+                      color: 'selendra'
+                    },
+                  ].map(({ value, label, desc, icon: Icon, color }) => (
+                    <button
+                      key={value}
+                      onClick={() => setAddressFormat(value)}
+                      className={cn(
+                        'w-full flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors text-left',
+                        addressFormat === value
+                          ? `border-${color}-500 bg-${color}-500/10`
+                          : 'border-border hover:border-border-hover'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {Icon && (
+                          <div className={cn(
+                            'w-10 h-10 rounded-lg flex items-center justify-center',
+                            `bg-${color}-500/20`
+                          )}>
+                            <Icon className={cn('h-5 w-5', `text-${color}-500`)} />
+                          </div>
+                        )}
+                        {!Icon && (
+                          <div className="w-10 h-10 rounded-lg bg-selendra-500/20 flex items-center justify-center">
+                            <div className="flex gap-1">
+                              <Hexagon className="h-3 w-3 text-blue-500" />
+                              <Circle className="h-3 w-3 text-purple-500" />
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-foreground font-medium">{label}</p>
+                          <p className="text-foreground-secondary text-sm">{desc}</p>
+                        </div>
+                      </div>
+                      {addressFormat === value && (
+                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                          <Check className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between py-3 border-b border-border">
-                  <div>
-                    <p className="text-foreground font-medium">Show Balance in Header</p>
-                    <p className="text-foreground-secondary text-sm">Display your wallet balance in the top bar</p>
+                
+                {/* Preview */}
+                <div className="mt-6 p-4 bg-background-tertiary rounded-lg">
+                  <p className="text-foreground-secondary text-sm mb-3">Preview</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <VMBadge vm="substrate" size="sm" showLabel />
+                      <AddressDisplay 
+                        address="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY" 
+                        size="sm"
+                        showCopy
+                        showToggle
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <VMBadge vm="evm" size="sm" showLabel />
+                      <AddressDisplay 
+                        address="0x7a3cEfC7Ac73291DfFC9dD8eAc5E5D4e7a5F0d1C" 
+                        size="sm"
+                        showCopy
+                        showToggle
+                      />
+                    </div>
                   </div>
-                  <button className="w-12 h-6 rounded-full bg-selendra-500 transition-colors relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-6" />
-                  </button>
                 </div>
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-foreground font-medium">Hide Small Balances</p>
-                    <p className="text-foreground-secondary text-sm">Hide tokens with balance less than $1</p>
+              </div>
+
+              <div className="bg-background-card border border-border rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">Display Options</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div>
+                      <p className="text-foreground font-medium">Compact Mode</p>
+                      <p className="text-foreground-secondary text-sm">Show more content with smaller spacing</p>
+                    </div>
+                    <button className="w-12 h-6 rounded-full bg-background-tertiary border border-border transition-colors relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-0.5" />
+                    </button>
                   </div>
-                  <button className="w-12 h-6 rounded-full bg-background-tertiary border border-border transition-colors relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-0.5" />
-                  </button>
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div>
+                      <p className="text-foreground font-medium">Show Balance in Header</p>
+                      <p className="text-foreground-secondary text-sm">Display your wallet balance in the top bar</p>
+                    </div>
+                    <button className="w-12 h-6 rounded-full bg-selendra-500 transition-colors relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-6" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div>
+                      <p className="text-foreground font-medium">Hide Small Balances</p>
+                      <p className="text-foreground-secondary text-sm">Hide tokens with balance less than $1</p>
+                    </div>
+                    <button className="w-12 h-6 rounded-full bg-background-tertiary border border-border transition-colors relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-0.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-foreground font-medium">Show Technical Details</p>
+                      <p className="text-foreground-secondary text-sm">Display advanced transaction and block information</p>
+                    </div>
+                    <button className="w-12 h-6 rounded-full bg-background-tertiary border border-border transition-colors relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 translate-x-0.5" />
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              {/* Reset Preferences */}
+              <div className="bg-background-card border border-border rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">Reset Preferences</h2>
+                <p className="text-foreground-secondary text-sm mb-4">
+                  Reset all display preferences to their default values.
+                </p>
+                <button
+                  onClick={() => {
+                    resetPreferences();
+                    toast.success('Preferences reset to defaults');
+                  }}
+                  className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                >
+                  Reset All Preferences
+                </button>
               </div>
             </div>
           )}

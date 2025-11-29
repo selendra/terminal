@@ -20,6 +20,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { AddressDisplay } from "@/components/common/AddressDisplay";
+import { VMBadge } from "@/components/common/VMBadge";
+import { StatusBadge, StatusDot } from "@/components/common/StatusBadge";
+
 interface BlockDetailProps {
   blockId: string;
 }
@@ -176,20 +180,11 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">Block #{block.number.toLocaleString()}</h1>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                block.status === "finalized" 
-                  ? "bg-green-500/20 text-green-400" 
-                  : "bg-yellow-500/20 text-yellow-400"
-              }`}>
-                {block.status === "finalized" ? "Finalized" : "Pending"}
-              </span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                block.vmType === "evm" 
-                  ? "bg-orange-500/20 text-orange-400" 
-                  : "bg-cyan-500/20 text-cyan-400"
-              }`}>
-                {block.vmType === "evm" ? "EVM" : "Substrate"}
-              </span>
+              <StatusBadge 
+                status={block.status === "finalized" ? "finalized" : "pending"} 
+                size="md" 
+              />
+              <VMBadge vm={block.vmType} size="md" />
             </div>
             <div className="flex items-center gap-2 text-foreground-secondary text-sm mt-1">
               <Clock className="w-4 h-4" />
@@ -351,18 +346,17 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                 <Users className="w-4 h-4" />
                 Validated By
               </div>
-              <div className="md:col-span-3">
-                <Link
-                  href={`/address/${block.validator}`}
-                  className="flex items-center gap-2 text-selendra-400 hover:text-selendra-300"
-                >
-                  <span>{block.validatorName || block.validator}</span>
-                  {block.validatorName && (
-                    <span className="text-foreground-secondary font-mono text-sm">
-                      ({block.validator.slice(0, 10)}...{block.validator.slice(-8)})
-                    </span>
-                  )}
-                </Link>
+              <div className="md:col-span-3 flex items-center gap-2">
+                {block.validatorName && (
+                  <span className="font-medium">{block.validatorName}</span>
+                )}
+                <AddressDisplay
+                  address={block.validator}
+                  size="md"
+                  showCopy
+                  showToggle
+                  linkToAccount
+                />
               </div>
             </div>
 
@@ -456,13 +450,7 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                         className="flex items-center gap-2 text-selendra-400 hover:text-selendra-300 font-mono text-sm"
                       >
                         {tx.hash.slice(0, 16)}...
-                        {tx.status === "success" ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <span className="text-red-400 text-xs px-1.5 py-0.5 bg-red-400/10 rounded">
-                            Failed
-                          </span>
-                        )}
+                        <StatusDot status={tx.status} size="sm" />
                       </Link>
                     </td>
                     <td className="px-4 py-4">
@@ -476,20 +464,22 @@ export const BlockDetail: React.FC<BlockDetailProps> = ({ blockId }) => {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/address/${tx.from}`}
-                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                      >
-                        {tx.from}
-                      </Link>
+                      <AddressDisplay
+                        address={tx.from}
+                        size="sm"
+                        showCopy={false}
+                        showToggle={false}
+                        linkToAccount
+                      />
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/address/${tx.to}`}
-                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                      >
-                        {tx.to}
-                      </Link>
+                      <AddressDisplay
+                        address={tx.to}
+                        size="sm"
+                        showCopy={false}
+                        showToggle={false}
+                        linkToAccount
+                      />
                     </td>
                     <td className="px-4 py-4 text-right font-mono text-sm">
                       {tx.value}

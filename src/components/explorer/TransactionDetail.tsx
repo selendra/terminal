@@ -24,6 +24,10 @@ import Link from "next/link";
 import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { formatUnits } from "ethers";
 
+import { AddressDisplay } from "@/components/common/AddressDisplay";
+import { VMBadge } from "@/components/common/VMBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+
 interface TransactionDetailProps {
   txHash: string;
 }
@@ -101,7 +105,7 @@ function detectHashType(hash: string): "evm" | "substrate" {
 }
 
 export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) => {
-  const { substrateSDK, evmSDK, isConnected, useMockData, latestSubstrateBlock, latestEvmBlock } = useBlockchain();
+  const { substrateSDK, evmSDK, isConnected, latestSubstrateBlock, latestEvmBlock } = useBlockchain();
   const [transaction, setTransaction] = useState<TransactionInfo | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "logs" | "state">("overview");
   const [copied, setCopied] = useState<string | null>(null);
@@ -113,7 +117,7 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
   const fetchEvmTransaction = useCallback(async (): Promise<TransactionInfo | null> => {
     if (!evmSDK) return null;
     
-    const provider = evmSDK.getProvider();
+    const provider = evmSDK.getEvmProvider();
     if (!provider) return null;
 
     try {
@@ -400,13 +404,7 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">Transaction Details</h1>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                transaction.status === "success" ? "bg-green-500/20 text-green-400" :
-                transaction.status === "failed" ? "bg-red-500/20 text-red-400" :
-                "bg-yellow-500/20 text-yellow-400"
-              }`}>
-                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-              </span>
+              <StatusBadge status={transaction.status} size="md" />
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${typeInfo.color}`}>
                 {typeInfo.label}
               </span>
@@ -442,11 +440,7 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
 
       {/* VM Type Badge */}
       <div className="flex items-center gap-2">
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          transaction.vmType === "evm" ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400"
-        }`}>
-          {transaction.vmType === "evm" ? "EVM Transaction" : "Substrate Extrinsic"}
-        </span>
+        <VMBadge vm={transaction.vmType} size="md" showLabel />
         {transaction.section && transaction.method && (
           <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
             {transaction.section}.{transaction.method}
@@ -515,16 +509,24 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
               <div key={idx} className="flex items-center gap-3 p-3 bg-background-secondary rounded-lg">
                 <div className="flex items-center gap-2">
                   <span className="text-foreground-secondary">From</span>
-                  <Link href={`/address/${transfer.from}`} className="font-mono text-sm text-selendra-400 hover:text-selendra-300">
-                    {transfer.from.slice(0, 8)}...{transfer.from.slice(-6)}
-                  </Link>
+                  <AddressDisplay
+                    address={transfer.from}
+                    size="sm"
+                    showCopy={false}
+                    showToggle={false}
+                    linkToAccount
+                  />
                 </div>
                 <ArrowRight className="w-4 h-4 text-foreground-secondary" />
                 <div className="flex items-center gap-2">
                   <span className="text-foreground-secondary">To</span>
-                  <Link href={`/address/${transfer.to}`} className="font-mono text-sm text-selendra-400 hover:text-selendra-300">
-                    {transfer.to.slice(0, 8)}...{transfer.to.slice(-6)}
-                  </Link>
+                  <AddressDisplay
+                    address={transfer.to}
+                    size="sm"
+                    showCopy={false}
+                    showToggle={false}
+                    linkToAccount
+                  />
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                   <span className="font-medium">{transfer.amount}</span>
@@ -634,19 +636,14 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
                 From
               </div>
               <div className="md:col-span-3 flex items-center gap-2">
-                <Link href={`/address/${transaction.from}`} className="font-mono text-sm text-selendra-400 hover:text-selendra-300">
-                  {transaction.from}
-                </Link>
-                <button
-                  onClick={() => copyToClipboard(transaction.from, "from")}
-                  className="text-foreground-secondary hover:text-foreground transition-colors"
-                >
-                  {copied === "from" ? (
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
+                <AddressDisplay
+                  address={transaction.from}
+                  size="md"
+                  full
+                  showCopy
+                  showToggle
+                  linkToAccount
+                />
               </div>
             </div>
 
@@ -656,19 +653,14 @@ export const TransactionDetail: React.FC<TransactionDetailProps> = ({ txHash }) 
                 To
               </div>
               <div className="md:col-span-3 flex items-center gap-2">
-                <Link href={`/address/${transaction.to}`} className="font-mono text-sm text-selendra-400 hover:text-selendra-300">
-                  {transaction.to}
-                </Link>
-                <button
-                  onClick={() => copyToClipboard(transaction.to, "to")}
-                  className="text-foreground-secondary hover:text-foreground transition-colors"
-                >
-                  {copied === "to" ? (
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
+                <AddressDisplay
+                  address={transaction.to}
+                  size="md"
+                  full
+                  showCopy
+                  showToggle
+                  linkToAccount
+                />
               </div>
             </div>
 

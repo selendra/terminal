@@ -24,6 +24,10 @@ import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { detectAddressType, isEvmAddress, isSubstrateAddress } from "@/lib/address";
 import { formatUnits } from "ethers";
 
+import { AddressDisplay, DualAddressDisplay } from "@/components/common/AddressDisplay";
+import { VMBadge } from "@/components/common/VMBadge";
+import { StatusBadge, StatusDot } from "@/components/common/StatusBadge";
+
 interface AccountDetailProps {
   address: string;
 }
@@ -105,7 +109,7 @@ const mockTokenBalances: TokenBalance[] = [
 const mockTransactions: Transaction[] = [];
 
 export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
-  const { substrateSDK, evmSDK, isConnected, useMockData } = useBlockchain();
+  const { substrateSDK, evmSDK, isConnected } = useBlockchain();
   const [account, setAccount] = useState<AccountInfo | null>(null);
   const [tokens, setTokens] = useState<TokenBalance[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -193,7 +197,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
       // Fetch EVM account data
       if (addressType === "evm" && evmSDK && isConnected) {
         try {
-          const provider = evmSDK.getProvider();
+          const provider = evmSDK.getEvmProvider();
           if (provider) {
             const [balance, nonce, code] = await Promise.all([
               provider.getBalance(address),
@@ -248,7 +252,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
         }
       }
 
-      // Check if it's a known mock contract (Force for UI dev/demo)
+      // If this is a known mock contract, force UI for dev/demo
       const mockContracts = [
         "0x55d398326f99059ff775485246999027b3197955",
         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -265,17 +269,6 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
         if (tokens.length <= 1) {
           setTokens(mockTokenBalances);
         }
-      }
-
-      // If we couldn't get real data and useMockData is true, use mock data
-      if (accountInfo.balanceRaw === BigInt(0) && useMockData) {
-        accountInfo = {
-          ...accountInfo,
-          balance: "1,250.5678 SEL",
-          balanceRaw: BigInt("1250567800000000000000"),
-          transactionCount: 125,
-        };
-        setTokens(mockTokenBalances);
       }
 
       setAccount(accountInfo);
@@ -299,7 +292,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [address, substrateSDK, evmSDK, isConnected, useMockData]);
+  }, [address, substrateSDK, evmSDK, isConnected]);
 
   useEffect(() => {
     fetchAccountData();
@@ -375,27 +368,25 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
                   Verified
                 </span>
               )}
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${account.type === "evm" ? "bg-orange-500/20 text-orange-400" :
-                account.type === "substrate" ? "bg-cyan-500/20 text-cyan-400" :
-                  "bg-purple-500/20 text-purple-400"
-                }`}>
-                {account.type === "unified" ? "Unified" : account.type.toUpperCase()}
-              </span>
+              <VMBadge 
+                vm={account.type === "unified" ? "substrate" : account.type as "evm" | "substrate"} 
+                size="md"
+                showLabel={account.type === "unified"}
+              />
+              {account.type === "unified" && (
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                  Unified
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <code className="text-foreground-secondary text-sm font-mono">
-                {address.slice(0, 10)}...{address.slice(-8)}
-              </code>
-              <button
-                onClick={() => copyToClipboard(address, "address")}
-                className="text-foreground-secondary hover:text-foreground transition-colors"
-              >
-                {copied === "address" ? (
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
+              <AddressDisplay
+                address={address}
+                size="md"
+                showCopy
+                showToggle={account.type === "unified"}
+                showVMBadge={false}
+              />
               <button className="text-foreground-secondary hover:text-foreground transition-colors">
                 <QrCode className="w-4 h-4" />
               </button>
@@ -422,44 +413,11 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
       {account.type === "unified" && (
         <div className="bg-background-card border border-border rounded-xl p-4">
           <h3 className="text-sm font-medium text-foreground-secondary mb-3">Unified Account Addresses</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-3 bg-background-secondary rounded-lg">
-              <div>
-                <p className="text-xs text-orange-400 mb-1">EVM Address</p>
-                <code className="text-sm font-mono">
-                  {account.evmAddress?.slice(0, 18)}...{account.evmAddress?.slice(-8)}
-                </code>
-              </div>
-              <button
-                onClick={() => copyToClipboard(account.evmAddress || "", "evm")}
-                className="text-foreground-secondary hover:text-foreground transition-colors"
-              >
-                {copied === "evm" ? (
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-background-secondary rounded-lg">
-              <div>
-                <p className="text-xs text-cyan-400 mb-1">Substrate Address</p>
-                <code className="text-sm font-mono">
-                  {account.substrateAddress?.slice(0, 18)}...{account.substrateAddress?.slice(-8)}
-                </code>
-              </div>
-              <button
-                onClick={() => copyToClipboard(account.substrateAddress || "", "substrate")}
-                className="text-foreground-secondary hover:text-foreground transition-colors"
-              >
-                {copied === "substrate" ? (
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
+          <DualAddressDisplay
+            substrateAddress={account.substrateAddress}
+            evmAddress={account.evmAddress}
+            size="md"
+          />
         </div>
       )}
 
@@ -608,13 +566,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
                         className="flex items-center gap-2 text-selendra-400 hover:text-selendra-300 font-mono text-sm"
                       >
                         {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
-                        {tx.status === "success" ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : tx.status === "failed" ? (
-                          <span className="text-red-400 text-xs">Failed</span>
-                        ) : (
-                          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
-                        )}
+                        <StatusDot status={tx.status} size="sm" />
                       </Link>
                     </td>
                     <td className="px-4 py-4">
@@ -624,20 +576,22 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ address }) => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/address/${tx.from}`}
-                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                      >
-                        {tx.from}
-                      </Link>
+                      <AddressDisplay
+                        address={tx.from}
+                        size="sm"
+                        showCopy={false}
+                        showToggle={false}
+                        linkToAccount
+                      />
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/address/${tx.to}`}
-                        className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                      >
-                        {tx.to}
-                      </Link>
+                      <AddressDisplay
+                        address={tx.to}
+                        size="sm"
+                        showCopy={false}
+                        showToggle={false}
+                        linkToAccount
+                      />
                     </td>
                     <td className="px-4 py-4 text-right font-mono text-sm">
                       {tx.value}

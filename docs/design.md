@@ -639,22 +639,43 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-selendra-t
 
 ## Component Library
 
-### Core Components
+### Core Components (Implemented ✅)
 
-| Component          | Purpose                                    |
-| ------------------ | ------------------------------------------ |
-| `AddressDisplay`   | Unified address display with format toggle |
-| `VMBadge`          | Substrate/EVM indicator badge              |
-| `StatusBadge`      | Transaction/proposal status                |
-| `DataTable`        | Sortable, paginated data table             |
-| `TabGroup`         | Tab navigation with URL sync               |
-| `SearchBar`        | Universal search with type detection       |
-| `ConnectionStatus` | RPC connection indicator                   |
-| `WalletButton`     | Wallet connection UI                       |
-| `TransactionToast` | Transaction status notifications           |
-| `Skeleton`         | Loading placeholder                        |
-| `EmptyState`       | No data placeholder                        |
-| `ErrorBoundary`    | Error recovery UI                          |
+| Component                | Purpose                                    | Status |
+| ------------------------ | ------------------------------------------ | ------ |
+| `AddressDisplay`         | Unified address display with format toggle | ✅     |
+| `AddressDisplayCompact`  | Minimal address display                    | ✅     |
+| `AddressDisplayFull`     | Full-featured address display              | ✅     |
+| `DualAddressDisplay`     | Shows both SS58 and 0x addresses           | ✅     |
+| `VMBadge`                | Substrate/EVM indicator badge              | ✅     |
+| `VMDot`                  | Minimal VM indicator dot                   | ✅     |
+| `VMLabel`                | Text-only VM indicator                     | ✅     |
+| `StatusBadge`            | Transaction/proposal status                | ✅     |
+| `StatusDot`              | Minimal status indicator                   | ✅     |
+| `TransactionStatusBadge` | Transaction status with context            | ✅     |
+| `SearchBar`              | Universal search with type detection       | ✅     |
+| `ConnectionStatus`       | RPC connection indicator                   | ✅     |
+| `ThemeToggle`            | Theme switcher                             | ✅     |
+
+### Explorer Components (Implemented ✅)
+
+| Component                       | Purpose                        | Status |
+| ------------------------------- | ------------------------------ | ------ |
+| `UnifiedTransactionList`        | Merged Substrate + EVM tx list | ✅     |
+| `UnifiedTransactionListCompact` | Compact tx list for widgets    | ✅     |
+| `UnifiedAccountView`            | Unified account detail view    | ✅     |
+
+### Planned Components (Phase 2+)
+
+| Component          | Purpose                          | Status |
+| ------------------ | -------------------------------- | ------ |
+| `DataTable`        | Sortable, paginated data table   | ⏳     |
+| `TabGroup`         | Tab navigation with URL sync     | ⏳     |
+| `WalletButton`     | Wallet connection UI             | ✅     |
+| `TransactionToast` | Transaction status notifications | ⏳     |
+| `Skeleton`         | Loading placeholder              | ⏳     |
+| `EmptyState`       | No data placeholder              | ⏳     |
+| `ErrorBoundary`    | Error recovery UI                | ⏳     |
 
 ### Form Components
 

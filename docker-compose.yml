@@ -1,5 +1,10 @@
 # Selendra Terminal - Docker Compose Setup
-# Run explorer with a local Selendra full node
+# Run explorer with a local Selendra full node (hybrid architecture)
+#
+# Architecture:
+#   Local Node (primary) → Public RPC (fallback)
+#   The explorer will automatically try the local Docker node first,
+#   and fall back to public RPC (rpc.selendra.org) if unavailable.
 #
 # Usage:
 #   docker-compose up -d              # Start all services
@@ -10,7 +15,7 @@
 
 services:
   # ============================================
-  # Selendra Full Node
+  # Selendra Full Node (Primary RPC)
   # ============================================
   selendra-node:
     image: image.koompi.org/library/selendra-rpc:latest
@@ -51,7 +56,8 @@ services:
       - selendra-network
 
   # ============================================
-  # Selendra Terminal Explorer
+  # Selendra Terminal Explorer (Hybrid Mode)
+  # Primary: Local node | Fallback: Public RPC
   # ============================================
   explorer:
     build:
@@ -63,14 +69,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # Local node endpoints (comment out to use public RPC)
+      # Primary: Local Docker node (container-to-container networking)
       - NEXT_PUBLIC_SUBSTRATE_RPC_WS=ws://selendra-node:9944
       - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=http://selendra-node:9933
       - NEXT_PUBLIC_EVM_RPC_HTTP=http://selendra-node:9933
-      # Public RPC fallback (uncomment to use as primary)
-      # - NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc.selendra.org
-      # - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
-      # - NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc.selendra.org
+      # Fallback: Public RPC is automatically used if local node is unavailable
+      # (configured in BlockchainProvider.tsx)
     depends_on:
       selendra-node:
         condition: service_healthy
@@ -78,7 +82,8 @@ services:
       - selendra-network
 
   # ============================================
-  # Explorer Only (No local node, uses public RPC)
+  # Explorer Only (Public RPC Only - No local node)
+  # Use this if you don't want to run a local node
   # ============================================
   explorer-standalone:
     build:
@@ -90,9 +95,8 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc.selendra.org
-      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
-      - NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc.selendra.org
+      # No local node configured - uses public RPC directly
+      # (BlockchainProvider defaults to rpc.selendra.org)
     profiles:
       - standalone
     networks:

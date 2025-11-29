@@ -1,16 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Search,
-  Filter,
   ArrowUpRight,
-  ArrowDownLeft,
   FileCode,
   CheckCircle,
   XCircle,
   Clock,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -18,70 +15,117 @@ import {
   Coins,
   Flame,
   TrendingUp,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
-interface Transaction {
-  hash: string;
-  block: number;
-  timestamp: Date;
-  from: string;
-  to: string;
-  value: string;
-  fee: string;
-  status: "success" | "failed" | "pending";
-  type: "transfer" | "contract" | "token" | "stake" | "governance";
-  vmType: "evm" | "substrate";
+import { AddressDisplay } from "@/components/common/AddressDisplay";
+import { VMBadge } from "@/components/common/VMBadge";
+import { StatusDot } from "@/components/common/StatusBadge";
+import { useIndexerTransactions } from "@/lib/hooks/useIndexerTransactions";
+import { useIndexerStatus } from "@/lib/hooks/useIndexerStatus";
+import { IndexerTransaction } from "@/lib/api/graphql";
+
+type TransactionType = "transfer" | "contract" | "token" | "stake" | "governance";
+type VmType = "evm" | "substrate";
+
+// Convert indexer transaction to display format
+function getTransactionType(tx: IndexerTransaction): TransactionType {
+  if (tx.section === "staking" || tx.method?.toLowerCase().includes("stake")) {
+    return "stake";
+  }
+  if (tx.section === "democracy" || tx.section === "convictionVoting") {
+    return "governance";
+  }
+  if (tx.method?.toLowerCase().includes("transfer") && tx.section === "assets") {
+    return "token";
+  }
+  if (tx.type === "EVM" && tx.to === null) {
+    return "contract"; // Contract deployment
+  }
+  if (tx.gasUsed && BigInt(tx.gasUsed) > BigInt(21000)) {
+    return "contract"; // Contract interaction
+  }
+  return "transfer";
 }
 
-const generateMockTransactions = (count: number): Transaction[] => {
-  const types: Transaction["type"][] = ["transfer", "contract", "token", "stake", "governance"];
-  const statuses: Transaction["status"][] = ["success", "success", "success", "failed", "pending"];
-  const vmTypes: Transaction["vmType"][] = ["evm", "evm", "evm", "substrate", "substrate"];
+function getVmType(tx: IndexerTransaction): VmType {
+  return tx.type === "EVM" || tx.type === "EVM_WRAPPED" ? "evm" : "substrate";
+}
 
-  return Array.from({ length: count }, (_, i) => ({
-    hash: `0x${Math.random().toString(16).slice(2, 18)}${Math.random().toString(16).slice(2, 18)}`,
-    block: 1234567 - i,
-    timestamp: new Date(Date.now() - i * 15000),
-    from: `0x${Math.random().toString(16).slice(2, 14)}...${Math.random().toString(16).slice(2, 6)}`,
-    to: `0x${Math.random().toString(16).slice(2, 14)}...${Math.random().toString(16).slice(2, 6)}`,
-    value: `${(Math.random() * 1000).toFixed(4)} SEL`,
-    fee: `${(Math.random() * 0.01).toFixed(6)} SEL`,
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    type: types[Math.floor(Math.random() * types.length)],
-    vmType: vmTypes[Math.floor(Math.random() * vmTypes.length)],
-  }));
-};
+function getStatus(tx: IndexerTransaction): "success" | "failed" | "pending" {
+  switch (tx.status) {
+    case "SUCCESS":
+      return "success";
+    case "FAILED":
+      return "failed";
+    default:
+      return "pending";
+  }
+}
+
+function formatValue(value: string): string {
+  try {
+    const val = BigInt(value);
+    const decimals = 18;
+    const whole = val / BigInt(10 ** decimals);
+    const fraction = val % BigInt(10 ** decimals);
+    const fractionStr = fraction.toString().padStart(decimals, "0").slice(0, 4);
+    return `${whole.toLocaleString()}.${fractionStr} SEL`;
+  } catch {
+    return "0 SEL";
+  }
+}
+
+function formatFee(fee: string): string {
+  try {
+    const val = BigInt(fee);
+    const decimals = 18;
+    const whole = val / BigInt(10 ** decimals);
+    const fraction = val % BigInt(10 ** decimals);
+    const fractionStr = fraction.toString().padStart(decimals, "0").slice(0, 6);
+    return `${whole}.${fractionStr} SEL`;
+  } catch {
+    return "0 SEL";
+  }
+}
 
 export const TransactionsExplorer: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | Transaction["type"]>("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | Transaction["status"]>("all");
-  const [filterVm, setFilterVm] = useState<"all" | Transaction["vmType"]>("all");
+  const [filterType, setFilterType] = useState<"all" | TransactionType>("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "success" | "failed" | "pending">("all");
+  const [filterVm, setFilterVm] = useState<"all" | VmType>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
 
   const txPerPage = 20;
 
-  useEffect(() => {
-    // Simulate fetching transactions
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setTransactions(generateMockTransactions(100));
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Fetch transactions from indexer
+  const { data: transactions, isLoading, error, refetch } = useIndexerTransactions({
+    first: 100, // Fetch more to allow filtering
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
 
-  const filteredTransactions = transactions.filter((tx) => {
+  // Fetch indexer status for stats
+  const { data: syncStatus } = useIndexerStatus();
+
+  // Filter transactions
+  const filteredTransactions = (transactions || []).filter((tx) => {
+    const txType = getTransactionType(tx);
+    const vmType = getVmType(tx);
+    const status = getStatus(tx);
+    
     const matchesSearch =
+      !searchQuery ||
       tx.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.to.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || tx.type === filterType;
-    const matchesStatus = filterStatus === "all" || tx.status === filterStatus;
-    const matchesVm = filterVm === "all" || tx.vmType === filterVm;
+      tx.from?.substrateAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.from?.evmAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.to?.substrateAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.to?.evmAddress?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesType = filterType === "all" || txType === filterType;
+    const matchesStatus = filterStatus === "all" || status === filterStatus;
+    const matchesVm = filterVm === "all" || vmType === filterVm;
+    
     return matchesSearch && matchesType && matchesStatus && matchesVm;
   });
 
@@ -92,7 +136,7 @@ export const TransactionsExplorer: React.FC = () => {
 
   const totalPages = Math.ceil(filteredTransactions.length / txPerPage);
 
-  const getTypeIcon = (type: Transaction["type"]) => {
+  const getTypeIcon = (type: TransactionType) => {
     switch (type) {
       case "transfer":
         return <ArrowUpRight className="w-4 h-4 text-green-400" />;
@@ -107,7 +151,7 @@ export const TransactionsExplorer: React.FC = () => {
     }
   };
 
-  const getTypeColor = (type: Transaction["type"]) => {
+  const getTypeColor = (type: TransactionType) => {
     switch (type) {
       case "transfer":
         return "bg-green-500/20 text-green-400";
@@ -122,18 +166,8 @@ export const TransactionsExplorer: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: Transaction["status"]) => {
-    switch (status) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case "failed":
-        return <XCircle className="w-4 h-4 text-red-400" />;
-      case "pending":
-        return <Clock className="w-4 h-4 text-yellow-400" />;
-    }
-  };
-
-  const formatTimestamp = (date: Date) => {
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
@@ -141,11 +175,12 @@ export const TransactionsExplorer: React.FC = () => {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
+  // Calculate stats from actual data
   const stats = {
-    total24h: "125,420",
-    avgFee: "0.0025 SEL",
-    tps: "125.5",
-    pending: "42",
+    total: transactions?.length || 0,
+    pending: transactions?.filter(tx => tx.status === "PENDING").length || 0,
+    indexerBlock: syncStatus?.indexerBlock || 0,
+    lag: syncStatus?.lag || 0,
   };
 
   return (
@@ -159,13 +194,29 @@ export const TransactionsExplorer: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => setTransactions(generateMockTransactions(100))}
-          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors flex items-center gap-2"
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
+
+      {/* Sync Status Banner */}
+      {syncStatus && syncStatus.lag > 100 && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-yellow-500" />
+          <div>
+            <p className="text-sm text-yellow-400">
+              Indexer is syncing: {syncStatus.indexerBlock.toLocaleString()} / {syncStatus.chainBlock.toLocaleString()} blocks
+            </p>
+            <p className="text-xs text-yellow-500/70">
+              Some recent transactions may not be visible yet
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -175,8 +226,8 @@ export const TransactionsExplorer: React.FC = () => {
               <Activity className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-foreground-secondary">24h Transactions</p>
-              <p className="text-xl font-bold">{stats.total24h}</p>
+              <p className="text-sm text-foreground-secondary">Indexed Transactions</p>
+              <p className="text-xl font-bold">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -186,8 +237,8 @@ export const TransactionsExplorer: React.FC = () => {
               <TrendingUp className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-foreground-secondary">TPS</p>
-              <p className="text-xl font-bold">{stats.tps}</p>
+              <p className="text-sm text-foreground-secondary">Indexed Block</p>
+              <p className="text-xl font-bold">{stats.indexerBlock.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -197,8 +248,8 @@ export const TransactionsExplorer: React.FC = () => {
               <Flame className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <p className="text-sm text-foreground-secondary">Avg. Fee</p>
-              <p className="text-xl font-bold">{stats.avgFee}</p>
+              <p className="text-sm text-foreground-secondary">Sync Lag</p>
+              <p className="text-xl font-bold">{stats.lag.toLocaleString()} blocks</p>
             </div>
           </div>
         </div>
@@ -281,6 +332,18 @@ export const TransactionsExplorer: React.FC = () => {
           <div className="p-8 flex items-center justify-center">
             <RefreshCw className="w-8 h-8 animate-spin text-selendra-500" />
           </div>
+        ) : error ? (
+          <div className="p-8 flex flex-col items-center justify-center text-red-400">
+            <XCircle className="w-12 h-12 mb-4 opacity-50" />
+            <p>Failed to load transactions</p>
+            <p className="text-sm text-foreground-secondary mt-1">{error.message}</p>
+          </div>
+        ) : paginatedTransactions.length === 0 ? (
+          <div className="p-8 flex flex-col items-center justify-center text-foreground-secondary">
+            <Activity className="w-12 h-12 mb-4 opacity-50" />
+            <p>No transactions found</p>
+            <p className="text-sm mt-1">The indexer is still syncing historical data</p>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -314,68 +377,86 @@ export const TransactionsExplorer: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedTransactions.map((tx) => (
-                    <tr
-                      key={tx.hash}
-                      className="border-b border-border hover:bg-background-hover transition-colors"
-                    >
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/tx/${tx.hash}`}
-                          className="flex items-center gap-2 text-selendra-400 hover:text-selendra-300 font-mono text-sm"
-                        >
-                          {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
-                          {getStatusIcon(tx.status)}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${getTypeColor(tx.type)}`}>
-                            {getTypeIcon(tx.type)}
-                            {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                            tx.vmType === "evm" ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400"
-                          }`}>
-                            {tx.vmType.toUpperCase()}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/blocks/${tx.block}`}
-                          className="text-foreground-secondary hover:text-foreground"
-                        >
-                          {tx.block.toLocaleString()}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/address/${tx.from}`}
-                          className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                        >
-                          {tx.from}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/address/${tx.to}`}
-                          className="text-foreground-secondary hover:text-foreground font-mono text-sm"
-                        >
-                          {tx.to}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4 text-right font-mono text-sm">
-                        {tx.value}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
-                        {tx.fee}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
-                        {formatTimestamp(tx.timestamp)}
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedTransactions.map((tx) => {
+                    const txType = getTransactionType(tx);
+                    const vmType = getVmType(tx);
+                    const status = getStatus(tx);
+                    const fromAddress = vmType === "evm" 
+                      ? tx.from?.evmAddress || tx.from?.substrateAddress || ""
+                      : tx.from?.substrateAddress || "";
+                    const toAddress = tx.to 
+                      ? (vmType === "evm" 
+                          ? tx.to.evmAddress || tx.to.substrateAddress || ""
+                          : tx.to.substrateAddress || "")
+                      : "";
+                    
+                    return (
+                      <tr
+                        key={tx.hash}
+                        className="border-b border-border hover:bg-background-hover transition-colors"
+                      >
+                        <td className="px-4 py-4">
+                          <Link
+                            href={`/tx/${tx.hash}`}
+                            className="flex items-center gap-2 text-selendra-400 hover:text-selendra-300 font-mono text-sm"
+                          >
+                            {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
+                            <StatusDot status={status} size="sm" />
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${getTypeColor(txType)}`}>
+                              {getTypeIcon(txType)}
+                              {txType.charAt(0).toUpperCase() + txType.slice(1)}
+                            </span>
+                            <VMBadge vm={vmType} size="sm" />
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Link
+                            href={`/blocks/${tx.blockNumber}`}
+                            className="text-foreground-secondary hover:text-foreground"
+                          >
+                            {tx.blockNumber.toLocaleString()}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4">
+                          {fromAddress && (
+                            <AddressDisplay 
+                              address={fromAddress} 
+                              size="sm" 
+                              showCopy={false}
+                              showToggle={false}
+                              linkToAccount
+                            />
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          {toAddress ? (
+                            <AddressDisplay 
+                              address={toAddress} 
+                              size="sm" 
+                              showCopy={false}
+                              showToggle={false}
+                              linkToAccount
+                            />
+                          ) : (
+                            <span className="text-blue-400 text-sm">Contract Creation</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right font-mono text-sm">
+                          {formatValue(tx.value)}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
+                          {formatFee(tx.fee)}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
+                          {formatTimestamp(tx.timestamp)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -422,7 +503,7 @@ export const TransactionsExplorer: React.FC = () => {
                 })}
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || totalPages === 0}
                   className="p-2 rounded-lg bg-background-secondary hover:bg-background-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />

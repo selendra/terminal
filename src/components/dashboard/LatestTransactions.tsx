@@ -19,7 +19,7 @@ interface Transaction {
 }
 
 export function LatestTransactions() {
-  const { substrateSDK, isConnected, latestSubstrateBlock, useMockData } = useBlockchain();
+  const { substrateSDK, isConnected, latestSubstrateBlock } = useBlockchain();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const fetchingRef = React.useRef(false);
@@ -27,34 +27,11 @@ export function LatestTransactions() {
   const lastProcessedBlockRef = useRef<number>(0);
 
   useEffect(() => {
-    console.log("LatestTransactions useEffect triggered", { isConnected, useMockData, latestBlock: latestSubstrateBlock?.number });
+    console.log("LatestTransactions useEffect triggered", { isConnected, latestBlock: latestSubstrateBlock?.number });
 
     if (!isConnected) {
       console.log("Not connected, returning");
       return;
-    }
-
-    // Fallback to mock data if we are not connected OR if we are connected but have no transactions yet
-    // This ensures the UI is never empty
-    if (useMockData || transactions.length === 0) {
-      console.log("Using mock data (fallback or explicit)");
-      if (transactions.length === 0) {
-        console.log("Generating mock transactions");
-        const mockTxs = Array.from({ length: 10 }).map((_, i) => ({
-          hash: `0x${Math.random().toString(16).slice(2, 66)}`,
-          blockNumber: 1234567 - i,
-          from: `5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY`,
-          to: "",
-          method: "balances.transfer",
-          success: Math.random() > 0.1,
-          type: "substrate" as const,
-          timestamp: Date.now() - i * 6000,
-        }));
-        setTransactions(mockTxs);
-        setIsLoading(false);
-      }
-      // If we are using mock data, we don't need to fetch real data
-      if (useMockData) return;
     }
 
     if (!substrateSDK || !latestSubstrateBlock) {
@@ -167,7 +144,7 @@ export function LatestTransactions() {
     };
 
     fetchTransactions();
-  }, [isConnected, substrateSDK, latestSubstrateBlock?.number, useMockData]);
+  }, [isConnected, substrateSDK, latestSubstrateBlock?.number]);
 
   const truncateHash = (hash: string) => `${hash.slice(0, 8)}...${hash.slice(-6)}`;
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
