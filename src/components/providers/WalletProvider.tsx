@@ -127,9 +127,9 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const isConnected = substrateAccounts.length > 0 || evmAccount !== null;
 
   // Check if connected to Selendra network
-  const isOnSelendraNetwork = evmAccount 
-    ? evmAccount.chainId === SELENDRA_MAINNET.chainIdNumber || 
-      evmAccount.chainId === SELENDRA_TESTNET.chainIdNumber
+  const isOnSelendraNetwork = evmAccount
+    ? evmAccount.chainId === SELENDRA_MAINNET.chainIdNumber ||
+    evmAccount.chainId === SELENDRA_TESTNET.chainIdNumber
     : false;
 
   // Add Selendra network to MetaMask
@@ -269,14 +269,37 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   // Connect to MetaMask or other EVM wallet
   const connectEvmWallet = useCallback(async () => {
-    if (typeof window === "undefined" || !("ethereum" in window)) {
+    if (typeof window === "undefined") {
+      toast.error("Window not available");
+      return;
+    }
+
+    const ethereum = (window as any).ethereum;
+
+    if (!ethereum) {
       toast.error("Please install MetaMask or another EVM wallet");
       return;
     }
 
     setIsConnecting(true);
     try {
-      const ethereum = (window as any).ethereum;
+      // First, check if we need to request permissions
+      // This is the proper way to authorize a dApp with MetaMask
+      try {
+        await ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        });
+      } catch (permError: any) {
+        // User rejected or permissions already granted - continue
+        if (permError.code === 4001) {
+          toast.error("Connection rejected by user");
+          setIsConnecting(false);
+          return;
+        }
+        // Other errors are okay, continue with eth_requestAccounts
+      }
+
       const provider = new ethers.BrowserProvider(ethereum);
 
       // Request accounts
@@ -296,12 +319,12 @@ export function WalletProvider({ children }: WalletProviderProps) {
       });
 
       // Check if on Selendra network, if not offer to switch
-      if (chainIdNumber !== SELENDRA_MAINNET.chainIdNumber && 
-          chainIdNumber !== SELENDRA_TESTNET.chainIdNumber) {
+      if (chainIdNumber !== SELENDRA_MAINNET.chainIdNumber &&
+        chainIdNumber !== SELENDRA_TESTNET.chainIdNumber) {
         toast((t) => (
           <div className="flex flex-col gap-2">
             <span>Not connected to Selendra network</span>
-            <button 
+            <button
               onClick={() => {
                 switchToSelendraNetwork();
                 toast.dismiss(t.id);
@@ -336,8 +359,8 @@ export function WalletProvider({ children }: WalletProviderProps) {
         );
 
         // Notify if switched away from Selendra
-        if (newChainId !== SELENDRA_MAINNET.chainIdNumber && 
-            newChainId !== SELENDRA_TESTNET.chainIdNumber) {
+        if (newChainId !== SELENDRA_MAINNET.chainIdNumber &&
+          newChainId !== SELENDRA_TESTNET.chainIdNumber) {
           toast.error("Switched to non-Selendra network");
         }
       });

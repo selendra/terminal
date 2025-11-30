@@ -14,7 +14,6 @@ import {
   Clock,
   Star,
   StarOff,
-  Wallet,
   Send,
   Grid,
   FileText,
@@ -24,12 +23,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
   Filter,
   Download,
-  Image,
-  Layers,
-  Package,
   Globe,
   Twitter,
   MessageCircle,
@@ -37,6 +32,8 @@ import {
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Token, TokenType, TokenStandard } from "./TokensExplorer";
+import { AddToWalletButton } from "./AddToWalletButton";
+import { TokenIcon } from "./TokenIcon";
 
 // Tab types
 type TabType = "overview" | "holders" | "transfers" | "inventory" | "analytics";
@@ -90,30 +87,30 @@ interface TokenDetailViewProps {
 }
 
 // Simple price chart component
-const PriceChart: React.FC<{ data: PricePoint[]; height?: number }> = ({ 
-  data, 
-  height = 200 
+const PriceChart: React.FC<{ data: PricePoint[]; height?: number }> = ({
+  data,
+  height = 200
 }) => {
   if (data.length === 0) return null;
-  
+
   const prices = data.map(d => d.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const range = maxPrice - minPrice || 1;
-  
+
   const points = data.map((d, i) => {
     const x = (i / (data.length - 1)) * 100;
     const y = 100 - ((d.price - minPrice) / range) * 100;
     return `${x},${y}`;
   }).join(' ');
-  
+
   const isPositive = data[data.length - 1].price >= data[0].price;
   const color = isPositive ? "#4ade80" : "#f87171";
-  
+
   // Create filled area path
   const areaPath = `M0,100 L${points} L100,100 Z`;
   const linePath = `M${points}`;
-  
+
   return (
     <div className="relative" style={{ height }}>
       <svg
@@ -320,7 +317,7 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
           {/* Token Info */}
           <div className="flex items-start gap-4">
-            <div className="text-5xl">{token.logo}</div>
+            <TokenIcon symbol={token.symbol} size={64} />
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold">{token.name}</h1>
@@ -337,7 +334,7 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                   </span>
                 )}
               </div>
-              
+
               {/* Address */}
               {token.type !== "native" && (
                 <div className="flex items-center gap-2 mt-2">
@@ -417,9 +414,8 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
           <div className="flex flex-col items-end gap-4">
             <div className="text-right">
               <div className="text-3xl font-bold">{token.price}</div>
-              <div className={`flex items-center justify-end gap-1 mt-1 ${
-                token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"
-              }`}>
+              <div className={`flex items-center justify-end gap-1 mt-1 ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"
+                }`}>
                 {token.priceChange24h >= 0 ? (
                   <TrendingUp className="w-4 h-4" />
                 ) : (
@@ -431,11 +427,10 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFavorite(!favorite)}
-                className={`p-2 rounded-lg transition-colors ${
-                  favorite
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-background-secondary text-foreground-secondary hover:text-foreground"
-                }`}
+                className={`p-2 rounded-lg transition-colors ${favorite
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : "bg-background-secondary text-foreground-secondary hover:text-foreground"
+                  }`}
               >
                 {favorite ? (
                   <Star className="w-5 h-5 fill-yellow-400" />
@@ -443,10 +438,18 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                   <StarOff className="w-5 h-5" />
                 )}
               </button>
-              <button className="px-4 py-2 bg-selendra-600 text-white rounded-lg hover:bg-selendra-700 transition-colors flex items-center gap-2">
-                <Wallet className="w-4 h-4" />
-                Add to Wallet
-              </button>
+              {token.type !== "native" && token.address && (
+                <AddToWalletButton
+                  token={{
+                    address: token.address,
+                    symbol: token.symbol,
+                    decimals: token.decimals || 18,
+                    name: token.name,
+                    logoUrl: typeof token.logo === "string" && token.logo.startsWith("http") ? token.logo : undefined,
+                    type: token.type === "erc721" ? "erc721" : token.type === "erc1155" ? "erc1155" : "erc20",
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -491,11 +494,10 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? "border-selendra-500 text-selendra-400"
-                    : "border-transparent text-foreground-secondary hover:text-foreground hover:border-border"
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === tab.id
+                  ? "border-selendra-500 text-selendra-400"
+                  : "border-transparent text-foreground-secondary hover:text-foreground hover:border-border"
+                  }`}
               >
                 <TabIcon className="w-4 h-4" />
                 {tab.label}
@@ -519,11 +521,10 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                     <button
                       key={tf}
                       onClick={() => setTimeframe(tf)}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${
-                        timeframe === tf
-                          ? "bg-selendra-600 text-white"
-                          : "bg-background-secondary text-foreground-secondary hover:text-foreground"
-                      }`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${timeframe === tf
+                        ? "bg-selendra-600 text-white"
+                        : "bg-background-secondary text-foreground-secondary hover:text-foreground"
+                        }`}
                     >
                       {tf.toUpperCase()}
                     </button>
@@ -613,7 +614,7 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div className="w-20 h-2 bg-background-secondary rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-selendra-500 rounded-full"
                               style={{ width: `${Math.min(holder.percentage, 100)}%` }}
                             />
@@ -777,7 +778,7 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                 {mockNFTItems.length} items
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {mockNFTItems.map((item) => (
                 <Link
@@ -792,13 +793,12 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokenId }) => 
                       className="w-full h-full object-cover"
                     />
                     {item.rarity && (
-                      <span className={`absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-medium ${
-                        item.rarity === "Legendary" ? "bg-yellow-500/20 text-yellow-400" :
+                      <span className={`absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-medium ${item.rarity === "Legendary" ? "bg-yellow-500/20 text-yellow-400" :
                         item.rarity === "Epic" ? "bg-purple-500/20 text-purple-400" :
-                        item.rarity === "Rare" ? "bg-blue-500/20 text-blue-400" :
-                        item.rarity === "Uncommon" ? "bg-green-500/20 text-green-400" :
-                        "bg-gray-500/20 text-gray-400"
-                      }`}>
+                          item.rarity === "Rare" ? "bg-blue-500/20 text-blue-400" :
+                            item.rarity === "Uncommon" ? "bg-green-500/20 text-green-400" :
+                              "bg-gray-500/20 text-gray-400"
+                        }`}>
                         {item.rarity}
                       </span>
                     )}

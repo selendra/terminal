@@ -7,6 +7,7 @@ import { useBlockchain, NETWORKS, NetworkType } from "@/components/providers/Blo
 import { useWallet } from "@/components/providers/WalletProvider";
 import { SearchBar } from "@/components/common/SearchBar";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { WalletConnectModal } from "@/components/wallet/WalletConnectModal";
 import { useBlockSubscription } from "@/lib/hooks/useBlockSubscription";
 import { clsx } from "clsx";
 import toast from "react-hot-toast";
@@ -38,6 +39,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -159,7 +161,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <div className="relative">
             {!walletConnected ? (
               <button
-                onClick={() => setShowWalletDropdown(!showWalletDropdown)}
+                onClick={() => setShowWalletModal(true)}
                 className="btn-primary flex items-center gap-2 px-2 md:px-4"
               >
                 <Wallet className="h-4 w-4" />
@@ -182,136 +184,113 @@ export function Header({ onMenuClick }: HeaderProps) {
               </button>
             )}
 
-            {showWalletDropdown && (
+            {showWalletDropdown && walletConnected && (
               <div className="absolute right-0 mt-2 w-72 bg-background-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
-                {!walletConnected ? (
-                  <div className="p-4 space-y-3">
-                    <h4 className="text-sm font-medium text-foreground mb-3">
-                      Connect Wallet
-                    </h4>
-                    <button
-                      onClick={() => {
-                        connectSubstrateWallet();
-                        setShowWalletDropdown(false);
-                      }}
-                      className="w-full btn-secondary flex items-center gap-3 justify-start"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                        <span className="text-purple-400 font-bold">P</span>
+                <div className="p-4">
+                  {/* Substrate account */}
+                  {selectedSubstrateAccount && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-foreground-secondary uppercase tracking-wider">
+                          Substrate Account
+                        </span>
+                        <span className="badge badge-info">
+                          {substrateBalance?.formatted || "0"} SEL
+                        </span>
                       </div>
-                      <div className="text-left">
-                        <div className="font-medium">Polkadot.js</div>
-                        <div className="text-xs text-foreground-secondary">
-                          Substrate wallet
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-foreground-secondary">
+                          {truncateAddress(selectedSubstrateAccount.address)}
+                        </span>
+                        <button
+                          onClick={() =>
+                            copyAddress(selectedSubstrateAccount.address)
+                          }
+                          className="text-foreground-secondary hover:text-foreground"
+                        >
+                          {copied ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </button>
+                        <a
+                          href={`/accounts/${selectedSubstrateAccount.address}`}
+                          className="text-foreground-secondary hover:text-foreground"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
                       </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        connectEvmWallet();
-                        setShowWalletDropdown(false);
-                      }}
-                      className="w-full btn-secondary flex items-center gap-3 justify-start"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-                        <span className="text-orange-400 font-bold">M</span>
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium">MetaMask</div>
-                        <div className="text-xs text-foreground-secondary">EVM wallet</div>
-                      </div>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-4">
-                    {/* Substrate account */}
-                    {selectedSubstrateAccount && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-foreground-secondary uppercase tracking-wider">
-                            Substrate Account
-                          </span>
-                          <span className="badge badge-info">
-                            {substrateBalance?.formatted || "0"} SEL
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono text-foreground-secondary">
-                            {truncateAddress(selectedSubstrateAccount.address)}
-                          </span>
-                          <button
-                            onClick={() =>
-                              copyAddress(selectedSubstrateAccount.address)
-                            }
-                            className="text-foreground-secondary hover:text-foreground"
-                          >
-                            {copied ? (
-                              <Check className="h-3 w-3" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                          <a
-                            href={`/accounts/${selectedSubstrateAccount.address}`}
-                            className="text-foreground-secondary hover:text-foreground"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* EVM account */}
-                    {evmAccount && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-foreground-secondary uppercase tracking-wider">
-                            EVM Account
-                          </span>
-                          <span className="badge badge-info">
-                            {evmBalance?.formatted || "0"} SEL
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono text-foreground-secondary">
-                            {truncateAddress(evmAccount.address)}
-                          </span>
-                          <button
-                            onClick={() => copyAddress(evmAccount.address)}
-                            className="text-foreground-secondary hover:text-foreground"
-                          >
-                            {copied ? (
-                              <Check className="h-3 w-3" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                          <a
-                            href={`/accounts/${evmAccount.address}`}
-                            className="text-foreground-secondary hover:text-foreground"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
+                  {/* EVM account */}
+                  {evmAccount && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-foreground-secondary uppercase tracking-wider">
+                          EVM Account
+                        </span>
+                        <span className="badge badge-info">
+                          {evmBalance?.formatted || "0"} SEL
+                        </span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-foreground-secondary">
+                          {truncateAddress(evmAccount.address)}
+                        </span>
+                        <button
+                          onClick={() => copyAddress(evmAccount.address)}
+                          className="text-foreground-secondary hover:text-foreground"
+                        >
+                          {copied ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </button>
+                        <a
+                          href={`/accounts/${evmAccount.address}`}
+                          className="text-foreground-secondary hover:text-foreground"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
 
-                    <button
-                      onClick={() => {
-                        disconnectWallet();
-                        setShowWalletDropdown(false);
-                      }}
-                      className="w-full btn-ghost text-accent-red hover:bg-accent-red/10"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                )}
+                  {/* Connect another wallet */}
+                  <button
+                    onClick={() => {
+                      setShowWalletDropdown(false);
+                      setShowWalletModal(true);
+                    }}
+                    className="w-full btn-secondary mb-2"
+                  >
+                    Connect Another Wallet
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      disconnectWallet();
+                      setShowWalletDropdown(false);
+                    }}
+                    className="w-full btn-ghost text-accent-red hover:bg-accent-red/10"
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       </header>
+
+      {/* Wallet Connect Modal */}
+      <WalletConnectModal
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
+      />
 
       {/* Mobile search overlay */}
       {showMobileSearch && (

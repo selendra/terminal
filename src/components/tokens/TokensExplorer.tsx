@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
   TrendingUp,
   TrendingDown,
   Star,
   StarOff,
-  ExternalLink,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -17,19 +16,15 @@ import {
   BarChart3,
   Users,
   ArrowUpRight,
-  Grid,
-  Image,
   Layers,
-  Tag,
-  Clock,
   Diamond,
   Code2,
   Shield,
   Palette,
-  Info,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { TokenIcon } from "./TokenIcon";
 
 // Token types
 export type TokenType = "native" | "erc20" | "erc721" | "erc1155" | "psp22" | "psp34" | "psp37" | "substrate";
@@ -302,9 +297,17 @@ const mockTokens: Token[] = [
 type TabType = "erc20" | "erc721" | "erc1155" | "substrate";
 
 export const TokensExplorer: React.FC = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get initial tab from URL params
+  const urlTab = searchParams.get("tab") as TabType | null;
+  const validTabs: TabType[] = ["erc20", "erc721", "erc1155", "substrate"];
+  const initialTab: TabType = urlTab && validTabs.includes(urlTab) ? urlTab : "erc20";
+
   const [tokens, setTokens] = useState<Token[]>(mockTokens);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>("erc20");
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [filterType, setFilterType] = useState<"all" | "native" | "erc20" | "substrate" | "erc721" | "erc1155">("all");
   const [sortBy, setSortBy] = useState<"rank" | "price" | "change" | "volume" | "holders" | "items">("rank");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -313,15 +316,41 @@ export const TokensExplorer: React.FC = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
 
+  // Sync tab state with URL params on mount and when URL changes
+  useEffect(() => {
+    const tabParam = searchParams.get("tab") as TabType | null;
+    if (tabParam && validTabs.includes(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+      setCurrentPage(1);
+      setFilterType("all");
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setFilterType("all");
+    // Update URL without full page reload
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "erc20") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const newUrl = params.toString() ? `/tokens?${params.toString()}` : "/tokens";
+    router.push(newUrl, { scroll: false });
+  };
+
   const tokensPerPage = 10;
-  
+
   const tabs = [
     { id: "erc20" as TabType, label: "ERC-20 Tokens", icon: Coins, description: "Fungible tokens" },
     { id: "erc721" as TabType, label: "ERC-721 NFTs", icon: Diamond, description: "Non-fungible tokens" },
     { id: "erc1155" as TabType, label: "ERC-1155", icon: Layers, description: "Multi tokens" },
     { id: "substrate" as TabType, label: "PSP Tokens", icon: Code2, description: "ink! tokens" },
   ];
-  
+
   // Filter tokens based on active tab
   const getTabTokenTypes = (tab: TabType): string[] => {
     switch (tab) {
@@ -339,11 +368,11 @@ export const TokensExplorer: React.FC = () => {
         token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
         token.address.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       // Filter by active tab
       const tabTypes = getTabTokenTypes(activeTab);
       const matchesTab = tabTypes.includes(token.type);
-      
+
       const matchesType = filterType === "all" || token.type === filterType;
       const matchesFavorites = !showFavoritesOnly || token.favorite;
       const matchesVerified = !showVerifiedOnly || token.verified;
@@ -417,7 +446,7 @@ export const TokensExplorer: React.FC = () => {
     verifiedTokens: tabTokens.filter((t) => t.verified).length,
     totalItems: tabTokens.reduce((acc, t) => acc + (t.totalItems || 0), 0).toLocaleString(),
   };
-  
+
   // Check if current tab is NFT-related
   const isNFTTab = activeTab === "erc721" || activeTab === "erc1155";
 
@@ -442,24 +471,18 @@ export const TokensExplorer: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setCurrentPage(1);
-                  setFilterType("all");
-                }}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-selendra-500 text-selendra-400"
-                    : "border-transparent text-foreground-secondary hover:text-foreground hover:border-border"
-                }`}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                  ? "border-selendra-500 text-selendra-400"
+                  : "border-transparent text-foreground-secondary hover:text-foreground hover:border-border"
+                  }`}
               >
                 <TabIcon className="w-4 h-4" />
                 <span>{tab.label}</span>
-                <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-                  activeTab === tab.id
-                    ? "bg-selendra-500/20 text-selendra-400"
-                    : "bg-background-secondary text-foreground-secondary"
-                }`}>
+                <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${activeTab === tab.id
+                  ? "bg-selendra-500/20 text-selendra-400"
+                  : "bg-background-secondary text-foreground-secondary"
+                  }`}>
                   {tabCount}
                 </span>
               </button>
@@ -545,7 +568,7 @@ export const TokensExplorer: React.FC = () => {
             <Shield className={`w-4 h-4`} />
             Verified
           </button>
-          
+
           {/* Favorites Toggle */}
           <button
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -655,10 +678,10 @@ export const TokensExplorer: React.FC = () => {
                   </td>
                   <td className="px-4 py-4">
                     <Link
-                      href={`/tokens/${token.id}`}
+                      href={`/tokens/${token.symbol.toLowerCase()}`}
                       className="flex items-center gap-3 hover:text-selendra-400 transition-colors"
                     >
-                      <span className="text-2xl">{token.logo}</span>
+                      <TokenIcon symbol={token.symbol} size={32} />
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{token.name}</span>
@@ -752,7 +775,7 @@ export const TokensExplorer: React.FC = () => {
                   <td className="px-4 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <Link
-                        href={`/tokens/${token.id}`}
+                        href={`/tokens/${token.symbol.toLowerCase()}`}
                         className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
                         title="View Details"
                       >

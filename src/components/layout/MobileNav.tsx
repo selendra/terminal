@@ -76,11 +76,6 @@ const navigation: NavGroup[] = [
         icon: <Coins className="h-5 w-5" />,
       },
       {
-        name: "NFTs",
-        href: "/tokens?tab=erc721",
-        icon: <Diamond className="h-5 w-5" />,
-      },
-      {
         name: "Contracts",
         href: "/contracts",
         icon: <Layers className="h-5 w-5" />,
@@ -128,7 +123,7 @@ const navigation: NavGroup[] = [
       },
       {
         name: "Top Stats",
-        href: "/stats",
+        href: "/statistics",
         icon: <TrendingUp className="h-5 w-5" />,
       },
     ],

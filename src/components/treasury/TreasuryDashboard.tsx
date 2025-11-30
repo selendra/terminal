@@ -215,7 +215,7 @@ export default function TreasuryDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Treasury Balance</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
@@ -226,7 +226,7 @@ export default function TreasuryDashboard() {
           <p className="text-sm text-foreground-secondary mt-1">≈ {mockStats.balanceUSD}</p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Total Spent</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -237,7 +237,7 @@ export default function TreasuryDashboard() {
           <p className="text-sm text-foreground-secondary mt-1">{mockStats.approvedProposals} proposals funded</p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Pending Proposals</span>
             <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -248,7 +248,7 @@ export default function TreasuryDashboard() {
           <p className="text-sm text-foreground-secondary mt-1">Awaiting council vote</p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Next Spend Period</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -257,7 +257,7 @@ export default function TreasuryDashboard() {
           </div>
           <p className="text-2xl font-bold text-foreground">{formatTimeRemaining(mockStats.nextSpendPeriod)}</p>
           <div className="mt-2">
-            <div className="w-full bg-selendra-dark rounded-full h-2">
+            <div className="w-full bg-background-tertiary rounded-full h-2">
               <div
                 className="bg-selendra-primary h-2 rounded-full transition-all"
                 style={{ width: `${mockStats.spendPeriodProgress}%` }}
@@ -269,7 +269,7 @@ export default function TreasuryDashboard() {
       </div>
 
       {/* Treasury Distribution */}
-      <div className="bg-selendra-card border border-selendra-border rounded-xl p-6">
+      <div className="bg-background-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Treasury Distribution</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function TreasuryDashboard() {
               <span className="text-foreground-secondary">Development</span>
               <span className="text-foreground font-medium">45%</span>
             </div>
-            <div className="w-full bg-selendra-dark rounded-full h-3">
+            <div className="w-full bg-background-tertiary rounded-full h-3">
               <div className="bg-blue-500 h-3 rounded-full" style={{ width: '45%' }} />
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function TreasuryDashboard() {
               <span className="text-foreground-secondary">Marketing</span>
               <span className="text-foreground font-medium">25%</span>
             </div>
-            <div className="w-full bg-selendra-dark rounded-full h-3">
+            <div className="w-full bg-background-tertiary rounded-full h-3">
               <div className="bg-green-500 h-3 rounded-full" style={{ width: '25%' }} />
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function TreasuryDashboard() {
               <span className="text-foreground-secondary">Infrastructure</span>
               <span className="text-foreground font-medium">30%</span>
             </div>
-            <div className="w-full bg-selendra-dark rounded-full h-3">
+            <div className="w-full bg-background-tertiary rounded-full h-3">
               <div className="bg-purple-500 h-3 rounded-full" style={{ width: '30%' }} />
             </div>
           </div>
@@ -303,7 +303,7 @@ export default function TreasuryDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-selendra-border">
+      <div className="border-b border-border">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab('proposals')}
@@ -343,7 +343,7 @@ export default function TreasuryDashboard() {
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   proposalFilter === filter
                     ? 'bg-selendra-primary text-white'
-                    : 'bg-selendra-card text-foreground-secondary hover:text-foreground'
+                    : 'bg-background-card text-foreground-secondary hover:text-foreground'
                 )}
               >
                 {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -356,7 +356,7 @@ export default function TreasuryDashboard() {
             {filteredProposals.map((proposal) => (
               <div
                 key={proposal.id}
-                className="bg-selendra-card border border-selendra-border rounded-xl p-5 hover:border-selendra-primary/50 transition-colors cursor-pointer"
+                className="bg-background-card border border-border rounded-xl p-5 hover:border-selendra-primary/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -383,7 +383,7 @@ export default function TreasuryDashboard() {
                 </div>
 
                 {/* Council Votes */}
-                <div className="mt-4 pt-4 border-t border-selendra-border">
+                <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-foreground-secondary">Council Votes</span>
                     <div className="flex items-center gap-4">
@@ -397,7 +397,7 @@ export default function TreasuryDashboard() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 w-full bg-selendra-dark rounded-full h-2 flex overflow-hidden">
+                  <div className="mt-2 w-full bg-background-tertiary rounded-full h-2 flex overflow-hidden">
                     <div
                       className="bg-green-500 h-2"
                       style={{
@@ -420,11 +420,11 @@ export default function TreasuryDashboard() {
 
       {/* Spending Tab */}
       {activeTab === 'spending' && (
-        <div className="bg-selendra-card border border-selendra-border rounded-xl overflow-hidden">
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-selendra-dark/50">
+                <tr className="bg-background-tertiary/50">
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Proposal</th>
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Beneficiary</th>
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Value</th>
@@ -434,7 +434,7 @@ export default function TreasuryDashboard() {
               </thead>
               <tbody className="divide-y divide-selendra-border">
                 {mockSpending.map((spending) => (
-                  <tr key={spending.id} className="hover:bg-selendra-dark/30 transition-colors">
+                  <tr key={spending.id} className="hover:bg-background-tertiary/30 transition-colors">
                     <td className="py-4 px-6">
                       <span className="text-selendra-primary font-mono">#{spending.proposal}</span>
                     </td>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { clsx } from "clsx";
+import { useTokenomics } from "@/lib/hooks/useTokenomics";
 
 interface PricePoint {
   timestamp: number;
@@ -40,6 +41,11 @@ export function PriceChart() {
   const [priceData] = useState<PricePoint[]>(initialPriceData);
   const [timeframe, setTimeframe] = useState<"24H" | "7D" | "30D" | "1Y">("30D");
   const [isClient, setIsClient] = useState(false);
+  
+  // Fetch real tokenomics data
+  const { totalSupply, circulatingSupply, isLoading: supplyLoading } = useTokenomics({
+    refreshInterval: 300000, // 5 minutes
+  });
 
   // Mark when we're on the client
   useEffect(() => {
@@ -221,11 +227,15 @@ export function PriceChart() {
         </div>
         <div>
           <span className="text-xs text-foreground-secondary">Circulating Supply</span>
-          <p className="text-sm font-medium text-foreground">1B SEL</p>
+          <p className="text-sm font-medium text-foreground">
+            {supplyLoading ? "..." : `${circulatingSupply} SEL`}
+          </p>
         </div>
         <div>
           <span className="text-xs text-foreground-secondary">Total Supply</span>
-          <p className="text-sm font-medium text-foreground">10B SEL</p>
+          <p className="text-sm font-medium text-foreground">
+            {supplyLoading ? "..." : `${totalSupply} SEL`}
+          </p>
         </div>
       </div>
     </div>

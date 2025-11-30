@@ -135,12 +135,12 @@ const BlockFillMeter: React.FC<{ percentage: number }> = ({ percentage }) => {
   };
 
   return (
-    <div className="relative w-full h-4 bg-selendra-dark rounded-full overflow-hidden">
+    <div className="relative w-full h-4 bg-background-tertiary rounded-full overflow-hidden">
       <div
         className={`h-full ${getColor()} transition-all duration-500`}
         style={{ width: `${percentage}%` }}
       />
-      <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">
+      <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-foreground drop-shadow-sm">
         {percentage.toFixed(1)}% Full
       </div>
     </div>
@@ -218,7 +218,7 @@ export default function GasTracker() {
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={cn(
-              'p-2 bg-selendra-card border border-selendra-border rounded-lg text-foreground-secondary hover:text-foreground transition-colors',
+              'p-2 bg-background-card border border-border rounded-lg text-foreground-secondary hover:text-foreground transition-colors',
               isRefreshing && 'animate-spin'
             )}
           >
@@ -237,8 +237,8 @@ export default function GasTracker() {
               key={speed}
               onClick={() => setSelectedSpeed(speed as typeof selectedSpeed)}
               className={cn(
-                'bg-selendra-card border rounded-xl p-5 text-left transition-all relative overflow-hidden',
-                isSelected ? `border-2 ${style.border}` : 'border-selendra-border hover:border-selendra-500/50'
+                'bg-background-card border rounded-xl p-5 text-left transition-all relative overflow-hidden',
+                isSelected ? `border-2 ${style.border}` : 'border-border hover:border-selendra-500/50'
               )}
             >
               {speed === 'standard' && (
@@ -266,7 +266,7 @@ export default function GasTracker() {
       {/* Network Stats & Chart Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Network Stats */}
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-6">
+        <div className="bg-background-card border border-border rounded-xl p-6">
           <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-selendra-primary" />
             Network Status
@@ -294,7 +294,7 @@ export default function GasTracker() {
               <span className="text-foreground-secondary">Block Time</span>
               <span className="font-mono text-foreground">{mockNetworkStats.blockTime}</span>
             </div>
-            <div className="pt-2 border-t border-selendra-border">
+            <div className="pt-2 border-t border-border">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-foreground-secondary">Block Gas Usage</span>
               </div>
@@ -304,7 +304,7 @@ export default function GasTracker() {
         </div>
 
         {/* Gas Price Chart */}
-        <div className="lg:col-span-2 bg-selendra-card border border-selendra-border rounded-xl p-6">
+        <div className="lg:col-span-2 bg-background-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-selendra-primary" />
@@ -319,7 +319,7 @@ export default function GasTracker() {
                     'px-3 py-1 rounded text-sm transition-colors',
                     timeframe === tf
                       ? 'bg-selendra-primary text-white'
-                      : 'bg-selendra-dark text-foreground-secondary hover:text-foreground'
+                      : 'bg-background-tertiary text-foreground-secondary hover:text-foreground'
                   )}
                 >
                   {tf}
@@ -384,25 +384,25 @@ export default function GasTracker() {
       </div>
 
       {/* Transaction Cost Estimates */}
-      <div className="bg-selendra-card border border-selendra-border rounded-xl overflow-hidden">
-        <div className="p-6 border-b border-selendra-border flex items-center justify-between">
+      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Transaction Cost Estimates</h2>
             <p className="text-foreground-secondary text-sm mt-1">Based on current gas prices (SEL ≈ $0.30)</p>
           </div>
           <button
             onClick={() => setShowGasCalculator(!showGasCalculator)}
-            className="flex items-center gap-2 px-4 py-2 bg-selendra-dark rounded-lg text-sm hover:bg-selendra-dark/70 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-background-tertiary rounded-lg text-sm hover:bg-background-tertiary/70 transition-colors"
           >
             <Settings className="w-4 h-4" />
             Custom Calculator
             <ChevronDown className={cn('w-4 h-4 transition-transform', showGasCalculator && 'rotate-180')} />
           </button>
         </div>
-        
+
         {/* Custom Gas Calculator */}
         {showGasCalculator && (
-          <div className="p-4 bg-selendra-dark/50 border-b border-selendra-border">
+          <div className="p-4 bg-background-tertiary/50 border-b border-border">
             <div className="flex flex-wrap items-end gap-4">
               <div>
                 <label className="block text-sm text-foreground-secondary mb-1">Gas Limit</label>
@@ -410,7 +410,7 @@ export default function GasTracker() {
                   type="number"
                   value={customGasLimit}
                   onChange={(e) => setCustomGasLimit(e.target.value)}
-                  className="w-40 px-3 py-2 bg-selendra-card border border-selendra-border rounded-lg focus:outline-none focus:border-selendra-primary text-foreground"
+                  className="w-40 px-3 py-2 bg-background-card border border-border rounded-lg focus:outline-none focus:border-selendra-primary text-foreground"
                   placeholder="21000"
                 />
               </div>
@@ -419,7 +419,7 @@ export default function GasTracker() {
                   const { costInSel, costInUSD } = calculateCustomGas(data.price);
                   const style = getSpeedStyle(speed);
                   return (
-                    <div key={speed} className="text-center p-2 bg-selendra-card rounded-lg">
+                    <div key={speed} className="text-center p-2 bg-background-card rounded-lg">
                       <span className={cn('text-sm capitalize', style.text)}>{speed}</span>
                       <p className={cn('font-mono', style.text)}>{costInSel} SEL</p>
                       <p className="text-xs text-foreground-secondary">${costInUSD}</p>
@@ -430,11 +430,11 @@ export default function GasTracker() {
             </div>
           </div>
         )}
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-selendra-dark/50">
+              <tr className="bg-background-tertiary/50">
                 <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Transaction Type</th>
                 <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Gas Limit</th>
                 <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">
@@ -450,7 +450,7 @@ export default function GasTracker() {
             </thead>
             <tbody className="divide-y divide-selendra-border">
               {mockTransactionCosts.map((tx) => (
-                <tr key={tx.type} className="hover:bg-selendra-dark/30 transition-colors">
+                <tr key={tx.type} className="hover:bg-background-tertiary/30 transition-colors">
                   <td className="py-4 px-6">
                     <span className="text-foreground font-medium">{tx.type}</span>
                   </td>
@@ -507,10 +507,10 @@ export default function GasTracker() {
       </div>
 
       {/* Network Comparison */}
-      <div className="bg-selendra-card border border-selendra-border rounded-xl p-6">
+      <div className="bg-background-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Network Gas Comparison</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-selendra-dark rounded-lg">
+          <div className="p-4 bg-background-tertiary rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-selendra-primary flex items-center justify-center text-xs text-white font-bold">
                 S
@@ -520,7 +520,7 @@ export default function GasTracker() {
             <p className="text-2xl font-bold text-green-400">2.5</p>
             <p className="text-xs text-foreground-secondary">Gwei avg</p>
           </div>
-          <div className="p-4 bg-selendra-dark rounded-lg">
+          <div className="p-4 bg-background-tertiary rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs text-white font-bold">
                 E
@@ -530,7 +530,7 @@ export default function GasTracker() {
             <p className="text-2xl font-bold text-yellow-400">25</p>
             <p className="text-xs text-foreground-secondary">Gwei avg</p>
           </div>
-          <div className="p-4 bg-selendra-dark rounded-lg">
+          <div className="p-4 bg-background-tertiary rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center text-xs text-white font-bold">
                 B
@@ -540,7 +540,7 @@ export default function GasTracker() {
             <p className="text-2xl font-bold text-green-400">3</p>
             <p className="text-xs text-foreground-secondary">Gwei avg</p>
           </div>
-          <div className="p-4 bg-selendra-dark rounded-lg">
+          <div className="p-4 bg-background-tertiary rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-xs text-white font-bold">
                 P

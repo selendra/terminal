@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Selendra Token List Schema",
+    "description": "Schema for the Selendra token list JSON file",
+    "type": "object",
+    "required": [
+        "name",
+        "version",
+        "tokens"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the token list"
+        },
+        "version": {
+            "type": "object",
+            "required": [
+                "major",
+                "minor",
+                "patch"
+            ],
+            "properties": {
+                "major": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "minor": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "patch": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the list was last updated"
+        },
+        "tokens": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "chainId",
+                    "address",
+                    "name",
+                    "symbol",
+                    "decimals"
+                ],
+                "properties": {
+                    "chainId": {
+                        "type": "integer",
+                        "description": "Chain ID where token is deployed (1961 for Selendra Mainnet, 1953 for Testnet)"
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "Contract address or 'native' for native token"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Token name"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "description": "Token symbol (ticker)"
+                    },
+                    "decimals": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 18,
+                        "description": "Number of decimals"
+                    },
+                    "logoURI": {
+                        "type": "string",
+                        "description": "Path to token logo (relative or absolute URL)"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Tags for categorization (native, verified, stablecoin, defi, nft, gaming, etc.)"
+                    },
+                    "extensions": {
+                        "type": "object",
+                        "description": "Additional metadata",
+                        "properties": {
+                            "website": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "twitter": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "telegram": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "discord": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "github": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "coingeckoId": {
+                                "type": "string"
+                            },
+                            "coinmarketcapId": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

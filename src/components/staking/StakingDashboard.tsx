@@ -15,6 +15,8 @@ import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { useWallet } from "@/components/providers/WalletProvider";
 import { clsx } from "clsx";
 import toast from "react-hot-toast";
+import { useTokenomics } from "@/lib/hooks/useTokenomics";
+import { SEL_TOKEN_CONFIG } from "@/lib/tokenomics";
 
 interface StakingStats {
   totalStaked: string;
@@ -45,6 +47,11 @@ export function StakingDashboard() {
     substrateBalance,
     connectSubstrateWallet,
   } = useWallet();
+  
+  // Get real tokenomics data
+  const { stakedSupply, stakingRate: realStakingRate, isLoading: tokenomicsLoading } = useTokenomics({
+    refreshInterval: 60000,
+  });
 
   const [activeTab, setActiveTab] = useState<"stake" | "validators" | "rewards">(
     "stake"
@@ -61,6 +68,17 @@ export function StakingDashboard() {
     activeValidators: 4,
     waitingValidators: 20,
   });
+  
+  // Update staking stats when tokenomics data changes
+  useEffect(() => {
+    if (!tokenomicsLoading && stakedSupply) {
+      setStakingStats(prev => ({
+        ...prev,
+        totalStaked: stakedSupply,
+        stakingRate: realStakingRate,
+      }));
+    }
+  }, [stakedSupply, realStakingRate, tokenomicsLoading]);
 
   // Mock validator data
   const [validators] = useState<ValidatorInfo[]>([

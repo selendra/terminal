@@ -71,10 +71,13 @@ export interface IndexerTransaction {
   } | null;
   value: string;
   fee: string;
-  method?: string;
-  section?: string;
+  palletName?: string;
+  methodName?: string;
   gasUsed?: string;
   gasPrice?: string;
+  // Aliases for backward compatibility
+  method?: string;
+  section?: string;
 }
 
 /**
@@ -398,8 +401,8 @@ export class IndexerClient {
             }
             value
             fee
-            method
-            section
+            palletName
+            methodName
             gasUsed
             gasPrice
           }
@@ -409,7 +412,12 @@ export class IndexerClient {
       { first, offset }
     );
 
-    return data.transactions.nodes;
+    // Map palletName/methodName to section/method for backward compatibility
+    return data.transactions.nodes.map(tx => ({
+      ...tx,
+      section: tx.palletName,
+      method: tx.methodName,
+    }));
   }
 
   /**
@@ -440,8 +448,8 @@ export class IndexerClient {
           }
           value
           fee
-          method
-          section
+          palletName
+          methodName
           gasUsed
           gasPrice
         }
@@ -450,7 +458,14 @@ export class IndexerClient {
       { id: hash }
     );
 
-    return data.transaction;
+    if (!data.transaction) return null;
+
+    // Map palletName/methodName to section/method for backward compatibility
+    return {
+      ...data.transaction,
+      section: data.transaction.palletName,
+      method: data.transaction.methodName,
+    };
   }
 
   /**
@@ -533,8 +548,8 @@ export class IndexerClient {
             }
             value
             fee
-            method
-            section
+            palletName
+            methodName
             gasUsed
             gasPrice
           }
@@ -544,7 +559,12 @@ export class IndexerClient {
       { address, first, offset }
     );
 
-    return data.transactions.nodes;
+    // Map palletName/methodName to section/method for backward compatibility
+    return data.transactions.nodes.map(tx => ({
+      ...tx,
+      section: tx.palletName,
+      method: tx.methodName,
+    }));
   }
 
   /**

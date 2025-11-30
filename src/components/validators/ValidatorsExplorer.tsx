@@ -20,6 +20,7 @@ import {
   StarOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTokenomics } from '@/lib/hooks/useTokenomics';
 
 interface Validator {
   id: string;
@@ -210,6 +211,11 @@ export default function ValidatorsExplorer() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'waiting' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'stake' | 'commission' | 'nominators' | 'apy'>('stake');
   const [favorites, setFavorites] = useState<string[]>([]);
+  
+  // Fetch real tokenomics data
+  const { stakedSupply, stakingRate, isLoading: tokenomicsLoading } = useTokenomics({
+    refreshInterval: 60000,
+  });
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
@@ -279,7 +285,7 @@ export default function ValidatorsExplorer() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Total Validators</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -292,18 +298,22 @@ export default function ValidatorsExplorer() {
           </p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Total Staked</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
               <Coins className="h-5 w-5 text-green-400" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{mockStats.totalStaked}</p>
-          <p className="text-sm text-foreground-secondary mt-1">62.5% of total supply</p>
+          <p className="text-2xl font-bold text-foreground">
+            {tokenomicsLoading ? "..." : `${stakedSupply} SEL`}
+          </p>
+          <p className="text-sm text-foreground-secondary mt-1">
+            {tokenomicsLoading ? "..." : `${stakingRate.toFixed(1)}% of total supply`}
+          </p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Average Commission</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -314,7 +324,7 @@ export default function ValidatorsExplorer() {
           <p className="text-sm text-foreground-secondary mt-1">Range: 0% - 15%</p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Minimum Stake</span>
             <div className="p-2 bg-orange-500/20 rounded-lg">
@@ -335,7 +345,7 @@ export default function ValidatorsExplorer() {
             placeholder="Search by name or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground placeholder:text-foreground-secondary focus:outline-none focus:border-selendra-primary"
+            className="w-full pl-10 pr-4 py-3 bg-background-card border border-border rounded-xl text-foreground placeholder:text-foreground-secondary focus:outline-none focus:border-selendra-primary"
           />
         </div>
 
@@ -343,7 +353,7 @@ export default function ValidatorsExplorer() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
+            className="px-4 py-3 bg-background-card border border-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -354,7 +364,7 @@ export default function ValidatorsExplorer() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-4 py-3 bg-selendra-card border border-selendra-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
+            className="px-4 py-3 bg-background-card border border-border rounded-xl text-foreground focus:outline-none focus:border-selendra-primary appearance-none cursor-pointer"
           >
             <option value="stake">Sort by Stake</option>
             <option value="commission">Sort by Commission</option>
@@ -365,11 +375,11 @@ export default function ValidatorsExplorer() {
       </div>
 
       {/* Validators Table */}
-      <div className="bg-selendra-card border border-selendra-border rounded-xl overflow-hidden">
+      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-selendra-dark/50">
+              <tr className="bg-background-tertiary/50">
                 <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm w-8"></th>
                 <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">#</th>
                 <th className="text-left py-4 px-4 text-foreground-secondary font-medium text-sm">Validator</th>
@@ -383,7 +393,7 @@ export default function ValidatorsExplorer() {
             </thead>
             <tbody className="divide-y divide-selendra-border">
               {filteredValidators.map((validator, index) => (
-                <tr key={validator.id} className="hover:bg-selendra-dark/30 transition-colors">
+                <tr key={validator.id} className="hover:bg-background-tertiary/30 transition-colors">
                   <td className="py-4 px-4">
                     <button
                       onClick={() => toggleFavorite(validator.id)}
@@ -470,7 +480,7 @@ export default function ValidatorsExplorer() {
       </div>
 
       {/* Legend */}
-      <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+      <div className="bg-background-card border border-border rounded-xl p-5">
         <h3 className="text-foreground font-medium mb-4">Legend</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center gap-2">

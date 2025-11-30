@@ -66,7 +66,7 @@ export function SyncIndicator({
   }
 
   // Show syncing status with lag
-  const lagText = status.lag > 1000 
+  const lagText = status.lag > 1000
     ? `${Math.round(status.lag / 1000)}k blocks behind`
     : `${status.lag} blocks behind`;
 
@@ -142,7 +142,7 @@ export function SyncStatusDetail({ className = "" }: { className?: string }) {
   if (isLoading) {
     return (
       <div className={`animate-pulse ${className}`}>
-        <div className="h-4 w-32 bg-gray-700 rounded"></div>
+        <div className="h-4 w-32 bg-foreground-secondary/30 rounded"></div>
       </div>
     );
   }
@@ -162,7 +162,7 @@ export function SyncStatusDetail({ className = "" }: { className?: string }) {
           <span className="h-2 w-2 rounded-full bg-yellow-500" />
           <span className="text-yellow-500 font-medium">Indexer Unavailable</span>
         </div>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-foreground-secondary">
           Historical data may be limited. Real-time data from RPC is still available.
         </p>
       </div>
@@ -173,14 +173,12 @@ export function SyncStatusDetail({ className = "" }: { className?: string }) {
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center gap-2">
         <span
-          className={`h-2 w-2 rounded-full ${
-            status.isSynced ? "bg-green-500" : "bg-blue-500 animate-pulse"
-          }`}
+          className={`h-2 w-2 rounded-full ${status.isSynced ? "bg-green-500" : "bg-blue-500 animate-pulse"
+            }`}
         />
         <span
-          className={`font-medium ${
-            status.isSynced ? "text-green-500" : "text-blue-500"
-          }`}
+          className={`font-medium ${status.isSynced ? "text-green-500" : "text-blue-500"
+            }`}
         >
           {status.isSynced ? "Fully Synced" : "Syncing"}
         </span>
@@ -188,21 +186,21 @@ export function SyncStatusDetail({ className = "" }: { className?: string }) {
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-gray-400">Indexer Block:</span>
-          <span className="ml-2 text-white font-mono">
+          <span className="text-foreground-secondary">Indexer Block:</span>
+          <span className="ml-2 text-foreground font-mono">
             {status.indexerBlock.toLocaleString()}
           </span>
         </div>
         <div>
-          <span className="text-gray-400">Chain Block:</span>
-          <span className="ml-2 text-white font-mono">
+          <span className="text-foreground-secondary">Chain Block:</span>
+          <span className="ml-2 text-foreground font-mono">
             {status.chainBlock.toLocaleString()}
           </span>
         </div>
       </div>
 
       {!status.isSynced && (
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-foreground-secondary">
           <span className="text-blue-400">{status.lag.toLocaleString()}</span> blocks
           behind
         </div>

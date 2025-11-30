@@ -227,7 +227,7 @@ export default function DeFiDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Total Value Locked</span>
             <div className="p-2 bg-green-500/20 rounded-lg">
@@ -241,7 +241,7 @@ export default function DeFiDashboard() {
           </p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">24h Volume</span>
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -255,7 +255,7 @@ export default function DeFiDashboard() {
           </p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Total Protocols</span>
             <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -266,7 +266,7 @@ export default function DeFiDashboard() {
           <p className="text-sm text-foreground-secondary mt-1">Across all categories</p>
         </div>
 
-        <div className="bg-selendra-card border border-selendra-border rounded-xl p-5">
+        <div className="bg-background-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-foreground-secondary text-sm">Average APY</span>
             <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -290,7 +290,7 @@ export default function DeFiDashboard() {
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 categoryFilter === category.key
                   ? 'bg-selendra-primary text-white'
-                  : 'bg-selendra-card text-foreground-secondary hover:text-foreground border border-selendra-border'
+                  : 'bg-background-card text-foreground-secondary hover:text-foreground border border-border'
               )}
             >
               <Icon className="h-4 w-4" />
@@ -301,7 +301,7 @@ export default function DeFiDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-selendra-border">
+      <div className="border-b border-border">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab('protocols')}
@@ -334,11 +334,11 @@ export default function DeFiDashboard() {
           {filteredProtocols.map((protocol) => (
             <div
               key={protocol.id}
-              className="bg-selendra-card border border-selendra-border rounded-xl p-5 hover:border-selendra-primary/50 transition-colors"
+              className="bg-background-card border border-border rounded-xl p-5 hover:border-selendra-primary/50 transition-colors"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-selendra-dark flex items-center justify-center text-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-background-tertiary flex items-center justify-center text-2xl">
                     {protocol.logo}
                   </div>
                   <div>
@@ -389,7 +389,7 @@ export default function DeFiDashboard() {
                   {protocol.chains.map((chain) => (
                     <span
                       key={chain}
-                      className="px-2 py-1 bg-selendra-dark rounded text-xs text-foreground-secondary"
+                      className="px-2 py-1 bg-background-tertiary rounded text-xs text-foreground-secondary"
                     >
                       {chain}
                     </span>
@@ -403,11 +403,11 @@ export default function DeFiDashboard() {
 
       {/* Pools Tab */}
       {activeTab === 'pools' && (
-        <div className="bg-selendra-card border border-selendra-border rounded-xl overflow-hidden">
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-selendra-dark/50">
+                <tr className="bg-background-tertiary/50">
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">#</th>
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Pool</th>
                   <th className="text-left py-4 px-6 text-foreground-secondary font-medium text-sm">Protocol</th>
@@ -420,7 +420,7 @@ export default function DeFiDashboard() {
               </thead>
               <tbody className="divide-y divide-selendra-border">
                 {mockPools.map((pool, index) => (
-                  <tr key={pool.id} className="hover:bg-selendra-dark/30 transition-colors">
+                  <tr key={pool.id} className="hover:bg-background-tertiary/30 transition-colors">
                     <td className="py-4 px-6">
                       <span className="text-foreground-secondary">{index + 1}</span>
                     </td>

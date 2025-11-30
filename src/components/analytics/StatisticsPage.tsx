@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import {
   Activity,
@@ -20,6 +20,8 @@ import {
   ArrowDownRight,
   RefreshCw,
 } from "lucide-react";
+import { useTokenomics } from "@/lib/hooks/useTokenomics";
+import { SEL_TOKEN_CONFIG } from "@/lib/tokenomics";
 
 interface StatCardProps {
   title: string;
@@ -228,9 +230,22 @@ const topActiveContracts = [
 
 export function StatisticsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Fetch real tokenomics data
+  const { 
+    totalSupply, 
+    circulatingSupply, 
+    stakedSupply, 
+    stakingRate, 
+    isLoading: tokenomicsLoading,
+    refresh: refreshTokenomics 
+  } = useTokenomics({
+    refreshInterval: 60000,
+  });
 
   const handleRefresh = () => {
     setIsRefreshing(true);
+    refreshTokenomics();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
@@ -412,9 +427,9 @@ export function StatisticsPage() {
           title="Network Health"
           stats={[
             { label: "Active Validators", value: "128" },
-            { label: "Total Staked", value: "45.6M SEL" },
-            { label: "Pending Transactions", value: "1,234" },
-            { label: "Network Peers", value: "2,456" },
+            { label: "Total Staked", value: tokenomicsLoading ? "..." : `${stakedSupply} SEL` },
+            { label: "Staking Rate", value: tokenomicsLoading ? "..." : `${stakingRate.toFixed(1)}%` },
+            { label: "Total Supply", value: tokenomicsLoading ? "..." : `${totalSupply} SEL` },
           ]}
         />
       </div>
@@ -466,7 +481,7 @@ export function StatisticsPage() {
       <div className="text-center text-sm text-foreground-secondary">
         <p>
           Statistics are updated every 15 minutes. Last updated:{" "}
-          <span className="font-medium">
+          <span className="font-medium" suppressHydrationWarning>
             {new Date().toLocaleString()}
           </span>
         </p>

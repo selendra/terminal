@@ -3,6 +3,7 @@ export { AccountPickerModal } from "./AccountPickerModal";
 export { SigningModal } from "./SigningModal";
 export { MyAccounts } from "./MyAccounts";
 export { AddressBook } from "./AddressBook";
+export { WalletConnectModal } from "./WalletConnectModal";
 export {
   WalletConnectProvider,
   WalletConnectConnect,
