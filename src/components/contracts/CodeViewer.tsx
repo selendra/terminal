@@ -62,16 +62,29 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({
     toast.success("Source code downloaded!");
   };
 
-  // Simple syntax highlighting for Solidity
+  // Escape HTML entities to prevent XSS
+  const escapeHtml = (text: string): string => {
+    const htmlEntities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return text.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
+  };
+
+  // Simple syntax highlighting for Solidity (with XSS protection)
   const highlightSolidity = (code: string) => {
     const lines = code.split("\n");
     return lines.map((line, i) => {
-      let highlighted = line
+      // First escape HTML entities to prevent XSS
+      let highlighted = escapeHtml(line)
         // Comments
         .replace(/(\/\/.*)$/gm, '<span class="text-foreground-secondary italic">$1</span>')
         .replace(/(\/\*[\s\S]*?\*\/)/gm, '<span class="text-foreground-secondary italic">$1</span>')
-        // Strings
-        .replace(/(".*?"|'.*?')/g, '<span class="text-green-400">$1</span>')
+        // Strings (using escaped quotes)
+        .replace(/(&quot;.*?&quot;|&#39;.*?&#39;)/g, '<span class="text-green-400">$1</span>')
         // Keywords
         .replace(/\b(pragma|solidity|contract|interface|library|abstract|is|import|from|function|modifier|event|struct|enum|mapping|returns|return|if|else|for|while|do|break|continue|throw|emit|try|catch|revert|require|assert)\b/g, '<span class="text-purple-400">$1</span>')
         // Types
@@ -133,11 +146,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              activeSection === section.id
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeSection === section.id
                 ? "bg-selendra-600 text-white"
                 : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
-            }`}
+              }`}
           >
             <section.icon className="w-4 h-4" />
             {section.label}

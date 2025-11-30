@@ -1,29 +1,36 @@
-# Selendra Terminal - Docker Compose Setup
-# Run explorer with a local Selendra full node (hybrid architecture)
+# Selendra Terminal - Production Docker Compose
+# Full stack: Selendra Node + Indexer + GraphQL API + Explorer
 #
 # Architecture:
-#   Local Node (primary) → Public RPC (fallback)
-#   The explorer will automatically try the local Docker node first,
-#   and fall back to public RPC (rpc.selendra.org) if unavailable.
+#   Selendra Node (archive) → SubQuery Indexer → PostgreSQL → GraphQL API → Explorer
+#
+# Speed Comparison:
+#   Public RPC: ~10 blocks/s + frequent disconnections
+#   Local Node: 3,000-18,000 blocks/s (stable)
 #
 # Usage:
-#   docker-compose up -d              # Start all services
-#   docker-compose up -d explorer     # Start only explorer (use external RPC)
-#   docker-compose logs -f            # View logs
-#   docker-compose down               # Stop all services
-#   docker-compose down -v            # Stop and remove volumes
+#   docker-compose up -d                    # Start full stack
+#   docker-compose --profile standalone up -d  # Explorer only (public RPC)
+#   docker-compose logs -f                  # View logs
+#   docker-compose down                     # Stop all services
+#   docker-compose down -v                  # Stop and remove volumes
+#
+# Initial Sync Strategy (Two-Phase):
+#   Phase 1: Fast sync with modulo 5000 (blocks only) - ~30 mins for 17M blocks
+#   Phase 2: Switch to full handlers for complete transaction indexing
+#   See docs/deployment.md for details
 
 services:
   # ============================================
-  # Selendra Full Node (Primary RPC)
+  # Selendra Full Node (Archive Mode)
+  # Required for fast indexing (~170GB storage)
   # ============================================
   selendra-node:
     image: image.koompi.org/library/selendra-rpc:latest
     container_name: selendra-node
     restart: unless-stopped
     ports:
-      - "9944:9944"   # WebSocket RPC (Substrate + EVM)
-      - "9933:9933"   # HTTP RPC
+      - "9944:9944" # RPC (HTTP + WebSocket)
       - "30333:30333" # P2P
     volumes:
       - selendra-data:/data
@@ -32,22 +39,85 @@ services:
     command:
       - "--chain=selendra"
       - "--base-path=/data/selendradb"
-      - "--name=selendra-explorer-node"
-      - "--rpc-port=9933"
+      - "--name=selendra-terminal-node"
+      - "--rpc-port=9944"
       - "--port=30333"
-      - "--rpc-external"
+      - "--unsafe-rpc-external"
       - "--rpc-cors=all"
       - "--rpc-methods=unsafe"
-      - "--rpc-max-connections=1000"
-      - "--db-cache=2048"
-      - "--pool-limit=1024"
-      - "--max-runtime-instances=8"
-      - "--runtime-cache-size=4"
+      - "--rpc-max-connections=10000"
+      - "--rpc-max-request-size=50"
+      - "--rpc-max-response-size=50"
+      - "--db-cache=4096"
       - "--no-mdns"
-      # Uncomment for archive node (keeps all historical data)
-      # - "--pruning=archive"
+      - "--state-pruning=archive"
+      - "--blocks-pruning=archive"
     healthcheck:
-      test: ["CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9933"]
+      test: [ "CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9944" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    networks:
+      - selendra-network
+
+  # ============================================
+  # PostgreSQL for SubQuery Indexer
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: selendra-indexer-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-subquery}
+      POSTGRES_PASSWORD: ${DB_PASS:-subquery}
+      POSTGRES_DB: ${DB_DATABASE:-subquery}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-subquery}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - selendra-network
+
+  # ============================================
+  # SubQuery Node - Indexes blockchain data
+  # Connects to local Selendra node for fast sync
+  # ============================================
+  subquery-node:
+    image: subquerynetwork/subql-node-substrate:latest
+    container_name: selendra-indexer-node
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      selendra-node:
+        condition: service_healthy
+    environment:
+      DB_USER: ${DB_USER:-subquery}
+      DB_PASS: ${DB_PASS:-subquery}
+      DB_DATABASE: ${DB_DATABASE:-subquery}
+      DB_HOST: postgres
+      DB_PORT: 5432
+    volumes:
+      - ./indexer:/app
+    command:
+      - -f=/app
+      - --db-schema=app
+      - --workers=2
+      - --batch-size=30
+      - --log-level=info
+      - --disable-historical=false
+      - --network-endpoint=http://selendra-node:9944
+      - --timeout=90000
+      - --unfinalized-blocks=true
+      - --store-flush-interval=30
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/ready" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -56,8 +126,36 @@ services:
       - selendra-network
 
   # ============================================
-  # Selendra Terminal Explorer (Hybrid Mode)
-  # Primary: Local node | Fallback: Public RPC
+  # SubQuery Query Service - GraphQL API
+  # ============================================
+  graphql-engine:
+    image: subquerynetwork/subql-query:latest
+    container_name: selendra-indexer-query
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      subquery-node:
+        condition: service_started
+    environment:
+      DB_USER: ${DB_USER:-subquery}
+      DB_PASS: ${DB_PASS:-subquery}
+      DB_DATABASE: ${DB_DATABASE:-subquery}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_SCHEMA: app
+    command:
+      - --name=app
+      - --playground
+      - --indexer=http://subquery-node:3000
+    networks:
+      - selendra-network
+
+  # ============================================
+  # Selendra Terminal Explorer
+  # Connects to local node + GraphQL API
   # ============================================
   explorer:
     build:
@@ -69,21 +167,24 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # Primary: Local Docker node (container-to-container networking)
+      # Local Selendra node (container-to-container networking)
       - NEXT_PUBLIC_SUBSTRATE_RPC_WS=ws://selendra-node:9944
-      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=http://selendra-node:9933
-      - NEXT_PUBLIC_EVM_RPC_HTTP=http://selendra-node:9933
-      # Fallback: Public RPC is automatically used if local node is unavailable
-      # (configured in BlockchainProvider.tsx)
+      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=http://selendra-node:9944
+      - NEXT_PUBLIC_EVM_RPC_HTTP=http://selendra-node:9944
+      # GraphQL API for indexed data
+      - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://graphql-engine:3000/graphql
+      - NEXT_PUBLIC_GRAPHQL_WS=ws://graphql-engine:3000/graphql
     depends_on:
       selendra-node:
         condition: service_healthy
+      graphql-engine:
+        condition: service_started
     networks:
       - selendra-network
 
   # ============================================
-  # Explorer Only (Public RPC Only - No local node)
-  # Use this if you don't want to run a local node
+  # Explorer Standalone (Public RPC Only)
+  # Use when you don't want to run local node
   # ============================================
   explorer-standalone:
     build:
@@ -92,11 +193,13 @@ services:
     container_name: selendra-explorer-standalone
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3002:3000"
     environment:
       - NODE_ENV=production
-      # No local node configured - uses public RPC directly
-      # (BlockchainProvider defaults to rpc.selendra.org)
+      # Public RPC endpoints
+      - NEXT_PUBLIC_SUBSTRATE_RPC_WS=wss://rpc1.selendra.org
+      - NEXT_PUBLIC_SUBSTRATE_RPC_HTTP=https://rpc.selendra.org
+      - NEXT_PUBLIC_EVM_RPC_HTTP=https://rpc.selendra.org
     profiles:
       - standalone
     networks:
@@ -104,6 +207,8 @@ services:
 
 volumes:
   selendra-data:
+    driver: local
+  postgres_data:
     driver: local
 
 networks:

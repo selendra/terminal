@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { VMBadge } from '@/components/common/VMBadge';
+import { SkeletonAccountsTable, SkeletonCard, ErrorState } from '@/components/common';
 import { useTopAccounts, useAccountsCount } from '@/lib/hooks/useIndexerAccount';
 import { useIndexerStatus } from '@/lib/hooks/useIndexerStatus';
 import { IndexerAccount } from '@/lib/api/graphql';
@@ -154,7 +155,7 @@ export function AccountsExplorer() {
               className="pl-10 pr-4 py-2 w-full md:w-80 bg-background-secondary border border-border rounded-lg text-foreground placeholder:text-foreground-secondary focus:outline-none focus:border-selendra-500"
             />
           </div>
-          
+
           {/* Refresh button */}
           <button
             onClick={() => refetch()}
@@ -183,32 +184,40 @@ export function AccountsExplorer() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <p className="text-foreground-secondary text-sm">Total Accounts</p>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {stats.totalAccounts.toLocaleString()}
-          </p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <p className="text-foreground-secondary text-sm">EOA Accounts</p>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {stats.eoaAccounts.toLocaleString()}
-          </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <p className="text-foreground-secondary text-sm">Total Accounts</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {stats.totalAccounts.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <p className="text-foreground-secondary text-sm">EOA Accounts</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {stats.eoaAccounts.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <p className="text-foreground-secondary text-sm">Contract Accounts</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {stats.contractAccounts.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <p className="text-foreground-secondary text-sm">Indexed Block</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {stats.indexerBlock.toLocaleString()}
+            </p>
+          </div>
         </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <p className="text-foreground-secondary text-sm">Contract Accounts</p>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {stats.contractAccounts.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <p className="text-foreground-secondary text-sm">Indexed Block</p>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {stats.indexerBlock.toLocaleString()}
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
@@ -245,24 +254,33 @@ export function AccountsExplorer() {
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-selendra-500" />
-          </div>
-        ) : error ? (
-          <div className="p-8 flex flex-col items-center justify-center text-red-400">
-            <AlertCircle className="w-12 h-12 mb-4 opacity-50" />
-            <p>Failed to load accounts</p>
-            <p className="text-sm text-foreground-secondary mt-1">{error.message}</p>
-          </div>
-        ) : paginatedAccounts.length === 0 ? (
-          <div className="p-8 flex flex-col items-center justify-center text-foreground-secondary">
-            <Wallet className="w-12 h-12 mb-4 opacity-50" />
-            <p>No accounts found</p>
-            <p className="text-sm mt-1">The indexer is still syncing account data</p>
-          </div>
-        ) : (
+      {isLoading ? (
+        <SkeletonAccountsTable rows={10} />
+      ) : error ? (
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+          <ErrorState
+            type="indexer"
+            title="Failed to load accounts"
+            message={error.message}
+            onRetry={() => refetch()}
+            size="md"
+          />
+        </div>
+      ) : paginatedAccounts.length === 0 ? (
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+          <ErrorState
+            type="empty"
+            title="No accounts found"
+            message={
+              searchQuery || accountType !== 'all'
+                ? "No accounts match your current filters. Try adjusting your search criteria."
+                : "The indexer is still syncing account data. Accounts will appear as they are indexed."
+            }
+            size="md"
+          />
+        </div>
+      ) : (
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -422,8 +440,8 @@ export function AccountsExplorer() {
               </div>
             </div>
           </>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

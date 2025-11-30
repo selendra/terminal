@@ -86,12 +86,14 @@ interface SearchBarProps {
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  onSearch?: () => void;
 }
 
 export function SearchBar({
   className,
   placeholder = "Search by Address / Txn Hash / Block / Token",
   autoFocus = false,
+  onSearch,
 }: SearchBarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -249,6 +251,7 @@ export function SearchBar({
         router.push(result.redirectUrl);
         setQuery("");
         setIsOpen(false);
+        onSearch?.();
       }
     } catch (error) {
       toast.error("Search failed. Please try again.");
@@ -264,6 +267,7 @@ export function SearchBar({
     router.push(suggestion.url);
     setQuery("");
     setIsOpen(false);
+    onSearch?.();
   };
 
   // Handle clearing history

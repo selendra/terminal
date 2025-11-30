@@ -105,6 +105,7 @@ export async function handleExtrinsic(
 
 /**
  * Handle Balances.Transfer events
+ * Simplified for faster initial sync
  */
 export async function handleBalanceTransfer(
   event: SubstrateEvent
@@ -116,19 +117,7 @@ export async function handleBalanceTransfer(
 
   const [from, to, amount] = event.event.data;
 
-  // Update accounts
-  const fromAccount = await getOrCreateAccount(
-    from.toString(),
-    blockNumber,
-    timestamp
-  );
-  const toAccount = await getOrCreateAccount(
-    to.toString(),
-    blockNumber,
-    timestamp
-  );
-
-  // Create event record
+  // Create event record only (skip account creation for speed)
   const eventRecord = Event.create({
     id: `${blockNumber}-${event.idx}`,
     transactionId:

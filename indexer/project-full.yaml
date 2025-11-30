@@ -1,0 +1,122 @@
+specVersion: 1.0.0
+name: selendra-unified-indexer
+version: 1.0.0
+runner:
+  node:
+    name: "@subql/node"
+    version: ">=5.0.0"
+  query:
+    name: "@subql/query"
+    version: "*"
+description: >-
+  Full indexer for Selendra Terminal - indexes Substrate extrinsics/events 
+  and EVM transactions for a unified dual-VM experience
+repository: https://github.com/selendra/selendra-terminal
+schema:
+  file: ./schema.graphql
+
+network:
+  chainId: "0x536274806b33f992898c98f2ad4fe6e190057900fcd8505083e3b765790b4bed"
+  endpoint:
+    - http://selendra-node:9944
+    - ws://selendra-node:9944
+
+dataSources:
+  - kind: substrate/Runtime
+    startBlock: 1
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        - handler: handleBlock
+          kind: substrate/BlockHandler
+          filter:
+            modulo: 100
+
+        - handler: handleExtrinsic
+          kind: substrate/CallHandler
+          filter:
+            module: "*"
+            method: "*"
+
+        - handler: handleBalanceTransfer
+          kind: substrate/EventHandler
+          filter:
+            module: balances
+            method: Transfer
+
+        - handler: handleEvmExecuted
+          kind: substrate/EventHandler
+          filter:
+            module: ethereum
+            method: Executed
+
+        - handler: handleStakingBonded
+          kind: substrate/EventHandler
+          filter:
+            module: staking
+            method: Bonded
+
+        - handler: handleStakingUnbonded
+          kind: substrate/EventHandler
+          filter:
+            module: staking
+            method: Unbonded
+
+        - handler: handleStakingRewarded
+          kind: substrate/EventHandler
+          filter:
+            module: staking
+            method: Rewarded
+
+        - handler: handleAccountClaimed
+          kind: substrate/EventHandler
+          filter:
+            module: unifiedAccounts
+            method: AccountClaimed
+
+        - handler: handleIdentitySet
+          kind: substrate/EventHandler
+          filter:
+            module: identity
+            method: IdentitySet
+
+        - handler: handleIdentityCleared
+          kind: substrate/EventHandler
+          filter:
+            module: identity
+            method: IdentityCleared
+
+  - kind: substrate/FrontierEvm
+    startBlock: 1
+    processor:
+      file: ./node_modules/@subql/frontier-evm-processor/dist/bundle.js
+      options:
+        abi: erc20
+        address: null
+    assets:
+      erc20:
+        file: ./abis/erc20.json
+      erc721:
+        file: ./abis/erc721.json
+      erc1155:
+        file: ./abis/erc1155.json
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        - handler: handleErc20Transfer
+          kind: substrate/FrontierEvmEvent
+          filter:
+            topics:
+              - "Transfer(address indexed from, address indexed to, uint256 value)"
+
+        - handler: handleErc721Transfer
+          kind: substrate/FrontierEvmEvent
+          filter:
+            topics:
+              - "Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"
+
+        - handler: handleErc1155TransferSingle
+          kind: substrate/FrontierEvmEvent
+          filter:
+            topics:
+              - "TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value)"

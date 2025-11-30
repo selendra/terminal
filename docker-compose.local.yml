@@ -19,8 +19,7 @@ services:
     container_name: selendra-local-node
     restart: unless-stopped
     ports:
-      - "9944:9944"   # WebSocket RPC
-      - "9933:9933"   # HTTP RPC
+      - "9944:9944" # RPC (HTTP + WebSocket)
       - "30333:30333" # P2P
     volumes:
       - selendra-local-data:/data
@@ -30,22 +29,24 @@ services:
       - "--chain=selendra"
       - "--base-path=/data/selendradb"
       - "--name=selendra-local-explorer"
-      - "--rpc-port=9933"
+      - "--rpc-port=9944"
       - "--port=30333"
-      - "--rpc-external"
+      - "--unsafe-rpc-external"
       - "--rpc-cors=all"
       - "--rpc-methods=unsafe"
-      - "--rpc-max-connections=1000"
-      - "--db-cache=2048"
+      - "--rpc-max-connections=10000"
+      - "--rpc-max-request-size=50"
+      - "--rpc-max-response-size=50"
+      - "--db-cache=4096"
       - "--no-mdns"
-      # For faster sync in local dev, use warp sync
-      - "--sync=warp"
+      - "--state-pruning=archive"
+      - "--blocks-pruning=archive"
     healthcheck:
-      test: ["CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9933"]
+      test: [ "CMD", "curl", "-f", "-H", "Content-Type: application/json", "-d", '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}', "http://localhost:9944" ]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 300s
     networks:
       - selendra-local
 
@@ -65,7 +66,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U subquery"]
+      test: [ "CMD-SHELL", "pg_isready -U subquery" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -95,13 +96,16 @@ services:
     command:
       - -f=/app
       - --db-schema=app
-      - --workers=4
+      - --workers=2
       - --batch-size=30
       - --log-level=info
       - --disable-historical=false
-      - --network-endpoint=ws://selendra-node:9944
+      - --network-endpoint=http://selendra-node:9944
+      - --timeout=90000
+      - --unfinalized-blocks=true
+      - --store-flush-interval=30
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/ready" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -129,8 +133,9 @@ services:
       DB_DATABASE: subquery
       DB_HOST: postgres
       DB_PORT: 5432
+      DB_SCHEMA: app
     command:
-      - --name=selendra-unified-indexer
+      - --name=app
       - --playground
       - --indexer=http://subquery-node:3000
     networks:

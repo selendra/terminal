@@ -3,6 +3,8 @@
  *
  * Provides WebSocket-based subscriptions for new blocks
  * from both Substrate and EVM layers.
+ * 
+ * Selendra uses AlephBFT consensus with 1-second block time and instant finality.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -112,7 +114,7 @@ export function useBlockSubscription(
     if (!substrateSDK) return;
 
     const api = substrateSDK.getApi();
-    if (!api) return;
+    if (!api || !api.isConnected) return;
 
     try {
       substrateUnsubRef.current = await api.rpc.chain.subscribeNewHeads(
@@ -125,6 +127,9 @@ export function useBlockSubscription(
           digest: { logs: unknown[] };
         }) => {
           try {
+            // Check if still connected before making RPC calls
+            if (!api.isConnected) return;
+
             // Get block details
             const blockHash = header.hash;
             const [signedBlock, timestamp] = await Promise.all([
@@ -133,18 +138,19 @@ export function useBlockSubscription(
             ]);
 
             // Extract validator from consensus logs
+            // Selendra uses AURA for block production + AlephBFT for instant finality
             let validator: string | undefined;
             for (const log of header.digest.logs) {
               const logObj = log as {
                 isPreRuntime?: boolean;
-                asPreRuntime?: [{ toString: () => string }, unknown];
+                asPreRuntime?: [{ toString: () => string }, Uint8Array];
               };
               if (logObj.isPreRuntime) {
-                const [engine] = logObj.asPreRuntime || [];
-                if (engine?.toString() === "aura") {
-                  // AURA consensus - first 32 bytes is the authority index
-                  // Would need to decode properly
-                  validator = "Validator (AURA)";
+                const [engine, data] = logObj.asPreRuntime || [];
+                if (engine?.toString() === "aura" && data) {
+                  // AURA slot author - decode authority index from first 8 bytes (u64)
+                  // The actual validator address would need session keys lookup
+                  validator = "Block Author";
                 }
               }
             }
@@ -163,13 +169,21 @@ export function useBlockSubscription(
 
             addBlock(block);
           } catch (err) {
-            console.error("Error processing Substrate block:", err);
+            // Silently ignore disconnection errors - BlockchainProvider handles reconnection
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            if (!errorMessage.includes("disconnected") && !errorMessage.includes("1006")) {
+              console.error("Error processing Substrate block:", err);
+            }
           }
         }
       );
     } catch (err) {
-      console.error("Failed to subscribe to Substrate blocks:", err);
-      setError("Failed to subscribe to Substrate blocks");
+      // Silently ignore connection errors during subscription setup
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (!errorMessage.includes("disconnected") && !errorMessage.includes("1006")) {
+        console.error("Failed to subscribe to Substrate blocks:", err);
+        setError("Failed to subscribe to Substrate blocks");
+      }
     }
   }, [substrateSDK, addBlock]);
 
@@ -216,7 +230,11 @@ export function useBlockSubscription(
 
         addBlock(block);
       } catch (err) {
-        console.error("Error polling EVM blocks:", err);
+        // Silently ignore network errors during polling
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (!errorMessage.includes("disconnected") && !errorMessage.includes("network") && !errorMessage.includes("fetch")) {
+          console.error("Error polling EVM blocks:", err);
+        }
       }
     }, 1000);
   }, [evmSDK, addBlock]);

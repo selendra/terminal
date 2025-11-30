@@ -22,6 +22,7 @@ import Link from "next/link";
 import { AddressDisplay } from "@/components/common/AddressDisplay";
 import { VMBadge } from "@/components/common/VMBadge";
 import { StatusDot } from "@/components/common/StatusBadge";
+import { SkeletonTransactionTable, SkeletonCard, ErrorState, MobileTransactionList } from "@/components/common";
 import { useIndexerTransactions } from "@/lib/hooks/useIndexerTransactions";
 import { useIndexerStatus } from "@/lib/hooks/useIndexerStatus";
 import { IndexerTransaction } from "@/lib/api/graphql";
@@ -113,7 +114,7 @@ export const TransactionsExplorer: React.FC = () => {
     const txType = getTransactionType(tx);
     const vmType = getVmType(tx);
     const status = getStatus(tx);
-    
+
     const matchesSearch =
       !searchQuery ||
       tx.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -121,11 +122,11 @@ export const TransactionsExplorer: React.FC = () => {
       tx.from?.evmAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.to?.substrateAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.to?.evmAddress?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = filterType === "all" || txType === filterType;
     const matchesStatus = filterStatus === "all" || status === filterStatus;
     const matchesVm = filterVm === "all" || vmType === filterVm;
-    
+
     return matchesSearch && matchesType && matchesStatus && matchesVm;
   });
 
@@ -219,52 +220,60 @@ export const TransactionsExplorer: React.FC = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-purple-400" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Indexed Transactions</p>
+                <p className="text-xl font-bold">{stats.total}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Indexed Transactions</p>
-              <p className="text-xl font-bold">{stats.total}</p>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Indexed Block</p>
+                <p className="text-xl font-bold">{stats.indexerBlock.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <Flame className="w-5 h-5 text-orange-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Sync Lag</p>
+                <p className="text-xl font-bold">{stats.lag.toLocaleString()} blocks</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Pending</p>
+                <p className="text-xl font-bold">{stats.pending}</p>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Indexed Block</p>
-              <p className="text-xl font-bold">{stats.indexerBlock.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-              <Flame className="w-5 h-5 text-orange-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Sync Lag</p>
-              <p className="text-xl font-bold">{stats.lag.toLocaleString()} blocks</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Pending</p>
-              <p className="text-xl font-bold">{stats.pending}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -313,11 +322,10 @@ export const TransactionsExplorer: React.FC = () => {
               <button
                 key={vm}
                 onClick={() => setFilterVm(vm)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterVm === vm
-                    ? "bg-selendra-600 text-white"
-                    : "bg-background-secondary text-foreground-secondary hover:text-foreground"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterVm === vm
+                  ? "bg-selendra-600 text-white"
+                  : "bg-background-secondary text-foreground-secondary hover:text-foreground"
+                  }`}
               >
                 {vm === "all" ? "All" : vm.toUpperCase()}
               </button>
@@ -327,25 +335,66 @@ export const TransactionsExplorer: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-background-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-selendra-500" />
+      {isLoading ? (
+        <SkeletonTransactionTable rows={10} />
+      ) : error ? (
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+          <ErrorState
+            type="indexer"
+            title="Failed to load transactions"
+            message={error.message}
+            onRetry={() => refetch()}
+            size="md"
+          />
+        </div>
+      ) : paginatedTransactions.length === 0 ? (
+        <div className="bg-background-card border border-border rounded-xl overflow-hidden">
+          <ErrorState
+            type="empty"
+            title="No transactions found"
+            message={
+              searchQuery || filterType !== 'all' || filterStatus !== 'all' || filterVm !== 'all'
+                ? "No transactions match your current filters. Try adjusting your search criteria."
+                : "The indexer is still syncing historical data. Transactions will appear as they are indexed."
+            }
+            size="md"
+          />
+        </div>
+      ) : (
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            <MobileTransactionList
+              transactions={paginatedTransactions.map((tx) => {
+                const txType = getTransactionType(tx);
+                const vmType = getVmType(tx);
+                const status = getStatus(tx);
+                const fromAddress = vmType === "evm"
+                  ? tx.from?.evmAddress || tx.from?.substrateAddress || ""
+                  : tx.from?.substrateAddress || "";
+                const toAddress = tx.to
+                  ? (vmType === "evm"
+                    ? tx.to.evmAddress || tx.to.substrateAddress || ""
+                    : tx.to.substrateAddress || "")
+                  : "";
+                return {
+                  hash: tx.hash,
+                  type: txType,
+                  vmType,
+                  status,
+                  from: fromAddress,
+                  to: toAddress,
+                  value: formatValue(tx.value),
+                  fee: formatFee(tx.fee),
+                  blockNumber: tx.blockNumber,
+                  timestamp: tx.timestamp,
+                };
+              })}
+            />
           </div>
-        ) : error ? (
-          <div className="p-8 flex flex-col items-center justify-center text-red-400">
-            <XCircle className="w-12 h-12 mb-4 opacity-50" />
-            <p>Failed to load transactions</p>
-            <p className="text-sm text-foreground-secondary mt-1">{error.message}</p>
-          </div>
-        ) : paginatedTransactions.length === 0 ? (
-          <div className="p-8 flex flex-col items-center justify-center text-foreground-secondary">
-            <Activity className="w-12 h-12 mb-4 opacity-50" />
-            <p>No transactions found</p>
-            <p className="text-sm mt-1">The indexer is still syncing historical data</p>
-          </div>
-        ) : (
-          <>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-background-card border border-border rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -381,15 +430,15 @@ export const TransactionsExplorer: React.FC = () => {
                     const txType = getTransactionType(tx);
                     const vmType = getVmType(tx);
                     const status = getStatus(tx);
-                    const fromAddress = vmType === "evm" 
+                    const fromAddress = vmType === "evm"
                       ? tx.from?.evmAddress || tx.from?.substrateAddress || ""
                       : tx.from?.substrateAddress || "";
-                    const toAddress = tx.to 
-                      ? (vmType === "evm" 
-                          ? tx.to.evmAddress || tx.to.substrateAddress || ""
-                          : tx.to.substrateAddress || "")
+                    const toAddress = tx.to
+                      ? (vmType === "evm"
+                        ? tx.to.evmAddress || tx.to.substrateAddress || ""
+                        : tx.to.substrateAddress || "")
                       : "";
-                    
+
                     return (
                       <tr
                         key={tx.hash}
@@ -423,9 +472,9 @@ export const TransactionsExplorer: React.FC = () => {
                         </td>
                         <td className="px-4 py-4">
                           {fromAddress && (
-                            <AddressDisplay 
-                              address={fromAddress} 
-                              size="sm" 
+                            <AddressDisplay
+                              address={fromAddress}
+                              size="sm"
                               showCopy={false}
                               showToggle={false}
                               linkToAccount
@@ -434,9 +483,9 @@ export const TransactionsExplorer: React.FC = () => {
                         </td>
                         <td className="px-4 py-4">
                           {toAddress ? (
-                            <AddressDisplay 
-                              address={toAddress} 
-                              size="sm" 
+                            <AddressDisplay
+                              address={toAddress}
+                              size="sm"
                               showCopy={false}
                               showToggle={false}
                               linkToAccount
@@ -491,11 +540,10 @@ export const TransactionsExplorer: React.FC = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === pageNum
-                          ? "bg-selendra-600 text-white"
-                          : "bg-background-secondary hover:bg-background-hover"
-                      }`}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                        ? "bg-selendra-600 text-white"
+                        : "bg-background-secondary hover:bg-background-hover"
+                        }`}
                     >
                       {pageNum}
                     </button>
@@ -510,9 +558,33 @@ export const TransactionsExplorer: React.FC = () => {
                 </button>
               </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          {/* Mobile Pagination */}
+          <div className="md:hidden px-4 py-3 bg-background-card border border-border rounded-xl mt-4 flex items-center justify-between">
+            <p className="text-sm text-foreground-secondary">
+              Page {currentPage} of {totalPages || 1}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg bg-background-secondary hover:bg-background-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium px-2">{currentPage}</span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-2 rounded-lg bg-background-secondary hover:bg-background-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

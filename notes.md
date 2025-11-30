@@ -59,17 +59,61 @@
   - `VMBadge` - EVM/Substrate badge
   - `StatusBadge`, `StatusDot` - transaction status indicators
   - `SyncIndicator` - indexer sync progress
+  - `Skeleton` - loading skeleton states with shimmer animation
+  - `ErrorState`, `ErrorBanner`, `EmptyState` - consistent error handling UI
 - Updated `.env.example` and `.env.local` with correct variables
 
 ---
 
 ## 🔄 In Progress / Known Issues
 
-### Indexer Syncing
+### Local Node + Indexer Setup
 
-- Indexer was at ~225,000 blocks (still syncing historical data)
-- Full sync may take several hours depending on chain height
-- Transactions/accounts will populate as sync progresses
+- **Local Selendra Node**: Running via `docker-compose.local.yml`
+  - Image: `image.koompi.org/library/selendra-rpc:latest`
+  - Port 9944 (RPC/WS), Port 30333 (P2P)
+  - Node fully synced to latest block (~17M)
+  - Archive mode enabled (170GB database)
+
+- **Indexer Status** (as of Nov 30, 2025):
+  - **FAST SYNC MODE ENABLED** 🚀
+  - Speed: **5,000-18,000 blocks/second** (block-only, no events)
+  - Estimated full sync: **~1 hour** (from block 0 to 17M)
+  
+- **Fast Sync Strategy**:
+  1. Use minimal `project.yaml` with block handler only (modulo 5000)
+  2. Disable all event handlers (balance transfers, EVM, staking, etc.)
+  3. Use HTTP endpoint instead of WebSocket
+  4. After fast sync completes, switch to full `project-full.yaml`
+
+- **Monitor Progress**:
+  ```bash
+  # Check sync status
+  curl -s 'http://localhost:3001/graphql' -H 'Content-Type: application/json' \
+    -d '{"query":"{ _metadata { lastProcessedHeight targetHeight } }"}'
+  
+  # Watch benchmark
+  docker logs -f selendra-indexer-node 2>&1 | grep INDEXING
+  ```
+
+### Fast Sync Complete? Enable Full Indexing
+
+After the fast sync reaches the target height:
+
+1. Restore full project.yaml:
+   ```bash
+   cp indexer/project-full.yaml indexer/project.yaml
+   cd indexer && pnpm build
+   docker-compose -f docker-compose.local.yml restart subquery-node
+   ```
+
+2. The indexer will re-process blocks with full handlers (slower but captures all events)
+
+### Previous Issues (Resolved)
+
+- Public `wss://rpc.selendra.org` had constant WebSocket 1006 disconnections
+- HTTPS endpoint had HTTP/2 GOAWAY session issues
+- **Solution**: Run local Selendra node for reliable indexing
 
 ---
 
@@ -92,32 +136,40 @@
 
 ### Additional Features
 
-- [ ] Real-time block/transaction subscriptions (WebSocket)
+- [x] Real-time block/transaction subscriptions (WebSocket) - LatestBlocksLive, LatestTransactionsLive components
 - [ ] Token transfer indexing and display
 - [ ] Contract verification and source code display
 - [ ] Staking dashboard with real validator data
 - [ ] Governance proposals from indexer
-- [ ] Search functionality across blocks/txs/accounts
+- [x] Search functionality across blocks/txs/accounts - SearchResults page with comprehensive search
 
 ### UI Polish
 
-- [ ] Mobile responsive improvements
-- [ ] Dark/light theme toggle persistence
-- [ ] Loading skeleton states
-- [ ] Better error handling UI
+- [x] Loading skeleton states (Skeleton components)
+- [x] Error handling UI (ErrorState, ErrorBanner, EmptyState components)
+- [x] Mobile responsive improvements (MobileCards, responsive TransactionsExplorer, mobile search)
+- [x] Dark/light theme toggle persistence (ThemeProvider)
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Start indexer stack (PostgreSQL + SubQuery)
+# Option 1: Start with LOCAL node + indexer (recommended for development)
+docker-compose -f docker-compose.local.yml up -d
+
+# Option 2: Start indexer only (connects to public RPC - may be unstable)
 docker-compose -f docker-compose.indexer.yml up -d
 
 # Check indexer sync status
 curl -s 'http://localhost:3001/graphql' \
   -H 'Content-Type: application/json' \
   -d '{"query":"{ _metadata { lastProcessedHeight targetHeight } }"}'
+
+# Check local node health
+curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}' \
+  http://localhost:9944
 
 # Start dev server
 pnpm dev
@@ -144,13 +196,45 @@ curl http://localhost:3000/api/health
 
 ## 🔗 Endpoints
 
-| Service         | URL                              |
-| --------------- | -------------------------------- |
-| Terminal UI     | http://localhost:3000            |
-| Indexer GraphQL | http://localhost:3001/graphql    |
-| Public RPC      | wss://rpc.selendra.org           |
-| Health Check    | http://localhost:3000/api/health |
+| Service           | URL                              |
+| ----------------- | -------------------------------- |
+| Terminal UI       | http://localhost:3000            |
+| Indexer GraphQL   | http://localhost:3001/graphql    |
+| Local Node RPC    | http://localhost:9944            |
+| Local Node WS     | ws://localhost:9944              |
+| Public RPC        | wss://rpc.selendra.org           |
+| Health Check      | http://localhost:3000/api/health |
 
 ---
 
-_Last updated: November 29, 2025_
+## 🔧 Selendra Chain Specifications
+
+| Property | Value |
+|----------|-------|
+| **Consensus** | AURA (block production) + AlephBFT (finality) |
+| **Block Time** | 1 second |
+| **Finality** | Instant (AlephBFT) |
+| **Chain ID (EVM)** | 1961 (Mainnet), 1953 (Testnet) |
+| **SS58 Prefix** | 42 |
+| **Token Symbol** | SEL |
+| **Token Decimals** | 18 |
+| **VM Architecture** | Unified Dual-VM (Substrate + Frontier EVM) |
+
+### RPC Endpoints
+
+| Network | Substrate WS | EVM HTTP |
+|---------|-------------|----------|
+| Mainnet | `wss://rpc.selendra.org` | `https://rpc.selendra.org` |
+| Testnet | `wss://rpc-testnet.selendra.org` | `https://rpc-testnet.selendra.org` |
+
+### Precompile Addresses
+
+| Precompile | Address |
+|------------|--------|
+| Staking | `0x0000000000000000000000000000000000000403` |
+| DEX | `0x0000000000000000000000000000000000000408` |
+| Unified Accounts | `0x0000000000000000000000000000000000000801` |
+
+---
+
+_Last updated: November 30, 2025_

@@ -1,8 +1,8 @@
 "use client";
 
 import { NetworkOverview } from "./NetworkOverview";
-import { LatestBlocks } from "./LatestBlocks";
-import { LatestTransactions } from "./LatestTransactions";
+import { LatestBlocks } from "./LatestBlocksLive";
+import { LatestTransactions } from "./LatestTransactionsLive";
 import { PriceChart } from "./PriceChart";
 import { QuickStats } from "./QuickStats";
 import { TransactionHistory } from "./TransactionHistory";
@@ -24,7 +24,7 @@ export function Dashboard() {
       {/* Transaction History Chart */}
       <TransactionHistory />
 
-      {/* Latest Blocks and Transactions */}
+      {/* Latest Blocks and Transactions - Real-time */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <LatestBlocks />
         <LatestTransactions />

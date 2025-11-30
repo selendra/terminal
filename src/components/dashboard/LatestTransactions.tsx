@@ -27,31 +27,24 @@ export function LatestTransactions() {
   const lastProcessedBlockRef = useRef<number>(0);
 
   useEffect(() => {
-    console.log("LatestTransactions useEffect triggered", { isConnected, latestBlock: latestSubstrateBlock?.number });
-
     if (!isConnected) {
-      console.log("Not connected, returning");
       return;
     }
 
     if (!substrateSDK || !latestSubstrateBlock) {
-      console.log("Missing SDK or latest block", { hasSDK: !!substrateSDK, hasBlock: !!latestSubstrateBlock });
       return;
     }
 
     if (fetchingRef.current) {
-      console.log("Already fetching, skipping");
       return;
     }
 
     const fetchTransactions = async () => {
-      console.log("Starting fetchTransactions");
       fetchingRef.current = true;
       const currentBlockNum = latestSubstrateBlock.number;
 
       // Skip if we already processed this block
       if (lastProcessedBlockRef.current === currentBlockNum) {
-        console.log("Block already processed", currentBlockNum);
         fetchingRef.current = false;
         return;
       }

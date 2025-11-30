@@ -82,6 +82,7 @@
 }
 
 @layer components {
+
   /* Card styles */
   .card {
     background-color: rgb(var(--background-card));
@@ -216,6 +217,7 @@
 }
 
 @layer utilities {
+
   /* Theme-aware text colors */
   .text-foreground {
     color: rgb(var(--foreground));
@@ -292,6 +294,7 @@
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -303,10 +306,31 @@
     opacity: 0;
     transform: translateX(-100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton shimmer effect */
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      rgb(var(--background-tertiary)) 0%,
+      rgb(var(--background-hover)) 50%,
+      rgb(var(--background-tertiary)) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
 }
 
 /* Chart.js customization */

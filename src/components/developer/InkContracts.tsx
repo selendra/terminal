@@ -125,9 +125,7 @@ export function InkContracts() {
 
     try {
       const text = await file.text();
-      const metadata = JSON.parse(text);
-      // Parse ABI from metadata
-      console.log("Loaded contract metadata:", metadata);
+      JSON.parse(text); // Validate JSON
       toast.success("Contract metadata loaded");
     } catch (error) {
       console.error("Failed to parse metadata:", error);
@@ -152,9 +150,9 @@ export function InkContracts() {
       // Mock deployment
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const mockAddress = "5" + Array.from({ length: 47 }, () => 
+      const mockAddress = "5" + Array.from({ length: 47 }, () =>
         "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789"[
-          Math.floor(Math.random() * 58)
+        Math.floor(Math.random() * 58)
         ]
       ).join("");
 
@@ -168,7 +166,7 @@ export function InkContracts() {
       setContracts((prev) => [newContract, ...prev]);
       setSelectedContract(mockAddress);
       setActiveTab("interact");
-      
+
       toast.success("Contract deployed successfully");
     } catch (error) {
       console.error("Deployment failed:", error);

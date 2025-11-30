@@ -1,5 +1,5 @@
 specVersion: 1.0.0
-name: selendra-unified-indexer
+name: selendra-fast-sync
 version: 1.0.0
 runner:
   node:
@@ -9,8 +9,7 @@ runner:
     name: "@subql/query"
     version: "*"
 description: >-
-  Minimal indexer for fast initial sync - blocks only.
-  Switch to project-full.yaml after sync is complete.
+  Ultra-fast sync - blocks only, no events. Switch to project.yaml after sync.
 repository: https://github.com/selendra/selendra-terminal
 schema:
   file: ./schema.graphql
@@ -18,7 +17,7 @@ schema:
 network:
   chainId: "0x536274806b33f992898c98f2ad4fe6e190057900fcd8505083e3b765790b4bed"
   endpoint:
-    - http://selendra-node:9944
+    - ws://selendra-node:9944
 
 dataSources:
   - kind: substrate/Runtime
@@ -26,8 +25,8 @@ dataSources:
     mapping:
       file: ./dist/index.js
       handlers:
-        # Block handler only - process every 5000th block
+        # Only block stats every 10000 blocks for fastest sync
         - handler: handleBlock
           kind: substrate/BlockHandler
           filter:
-            modulo: 5000
+            modulo: 10000

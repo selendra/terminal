@@ -3,6 +3,8 @@
  *
  * Provides WebSocket-based subscriptions for new transactions
  * from both Substrate and EVM layers.
+ * 
+ * Selendra uses AlephBFT consensus with 1-second block time and instant finality.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -119,22 +121,26 @@ export function useTransactionSubscription(
   );
 
   /**
-   * Subscribe to Substrate finalized blocks
+   * Subscribe to Substrate new blocks (faster than finalized)
    */
   const subscribeSubstrate = useCallback(async () => {
     if (!substrateSDK) return;
 
     const api = substrateSDK.getApi();
-    if (!api) return;
+    if (!api || !api.isConnected) return;
 
     try {
-      // Subscribe to finalized blocks
-      substrateUnsubRef.current = await api.rpc.chain.subscribeFinalizedHeads(
+      // Subscribe to new heads (faster than finalized)
+      substrateUnsubRef.current = await api.rpc.chain.subscribeNewHeads(
         async (header: {
           number: { toNumber: () => number };
           hash: { toString: () => string };
         }) => {
+          // Wrap block processing in try-catch to handle disconnections gracefully
           try {
+            // Check if still connected before making RPC calls
+            if (!api.isConnected) return;
+
             // Get block with extrinsics
             const blockHash = header.hash;
             const [signedBlock, events] = await Promise.all([
@@ -246,13 +252,21 @@ export function useTransactionSubscription(
               }
             );
           } catch (err) {
-            console.error("Error processing Substrate block:", err);
+            // Silently ignore disconnection errors - BlockchainProvider handles reconnection
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            if (!errorMessage.includes("disconnected") && !errorMessage.includes("1006")) {
+              console.error("Error processing Substrate block:", err);
+            }
           }
         }
       );
     } catch (err) {
-      console.error("Failed to subscribe to Substrate blocks:", err);
-      setError("Failed to subscribe to Substrate transactions");
+      // Silently ignore connection errors during subscription setup
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (!errorMessage.includes("disconnected") && !errorMessage.includes("1006")) {
+        console.error("Failed to subscribe to Substrate blocks:", err);
+        setError("Failed to subscribe to Substrate transactions");
+      }
     }
   }, [substrateSDK, addTransaction]);
 
@@ -265,19 +279,31 @@ export function useTransactionSubscription(
     const provider = evmSDK.getEvmProvider();
     if (!provider) return;
 
+    // Get initial block number
+    try {
+      const initialBlock = await provider.getBlockNumber();
+      lastEvmBlockRef.current = initialBlock;
+    } catch (err) {
+      console.error("Failed to get initial EVM block:", err);
+    }
+
     // Poll for new blocks every 1 second (Selendra block time)
     evmIntervalRef.current = setInterval(async () => {
       try {
-        const latestBlock = await provider.getBlock("latest", true);
-        if (!latestBlock) return;
+        const latestBlockNum = await provider.getBlockNumber();
 
         // Skip if we already processed this block
-        if (latestBlock.number <= lastEvmBlockRef.current) return;
-        lastEvmBlockRef.current = latestBlock.number;
+        if (latestBlockNum <= lastEvmBlockRef.current) return;
 
-        // Process transactions in block
-        if (latestBlock.prefetchedTransactions) {
-          for (const tx of latestBlock.prefetchedTransactions) {
+        // Process all blocks we might have missed
+        for (let blockNum = lastEvmBlockRef.current + 1; blockNum <= latestBlockNum; blockNum++) {
+          const block = await provider.getBlock(blockNum, true);
+          if (!block) continue;
+
+          // Process transactions in block using prefetchedTransactions (ethers v6)
+          const txs = block.prefetchedTransactions || [];
+
+          for (const tx of txs) {
             // Get receipt for status
             const receipt = await provider.getTransactionReceipt(tx.hash);
 
@@ -285,8 +311,8 @@ export function useTransactionSubscription(
               id: `evm-${tx.hash}`,
               hash: tx.hash,
               type: "evm",
-              blockNumber: latestBlock.number,
-              timestamp: latestBlock.timestamp * 1000,
+              blockNumber: block.number,
+              timestamp: block.timestamp * 1000,
               from: tx.from,
               to: tx.to,
               value: tx.value.toString(),
@@ -298,8 +324,14 @@ export function useTransactionSubscription(
             addTransaction(transaction);
           }
         }
+
+        lastEvmBlockRef.current = latestBlockNum;
       } catch (err) {
-        console.error("Error polling EVM blocks:", err);
+        // Silently ignore network errors during polling
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (!errorMessage.includes("disconnected") && !errorMessage.includes("network") && !errorMessage.includes("fetch")) {
+          console.error("Error polling EVM blocks:", err);
+        }
       }
     }, 1000);
   }, [evmSDK, addTransaction]);

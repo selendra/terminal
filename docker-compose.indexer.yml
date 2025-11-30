@@ -27,7 +27,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./indexer/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U subquery"]
+      test: [ "CMD-SHELL", "pg_isready -U subquery" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,13 +56,18 @@ services:
       - -f=/app
       - --db-schema=app
       - --workers=4
-      - --batch-size=30
+      - --batch-size=100
       - --log-level=info
       - --disable-historical=false
-      # Connect to public Selendra RPC
+      # Use HTTP endpoint for more stable historical sync
+      # WebSocket can be added as fallback for real-time updates
+      - --network-endpoint=https://rpc.selendra.org
       - --network-endpoint=wss://rpc.selendra.org
+      # Connection stability settings
+      - --timeout=90000
+      - --unfinalized-blocks=true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/ready" ]
       interval: 30s
       timeout: 10s
       retries: 5

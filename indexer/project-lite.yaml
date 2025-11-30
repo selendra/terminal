@@ -1,0 +1,78 @@
+specVersion: 1.0.0
+name: selendra-indexer-lite
+version: 1.0.0
+runner:
+  node:
+    name: "@subql/node"
+    version: ">=5.0.0"
+  query:
+    name: "@subql/query"
+    version: "*"
+description: >-
+  Lite indexer for Selendra Terminal - faster initial sync with essential data only.
+  Use project.yaml for full indexing after initial sync is complete.
+repository: https://github.com/selendra/selendra-terminal
+schema:
+  file: ./schema.graphql
+
+network:
+  chainId: "0x536274806b33f992898c98f2ad4fe6e190057900fcd8505083e3b765790b4bed"
+  endpoint:
+    - https://rpc.selendra.org
+    - wss://rpc.selendra.org
+
+dataSources:
+  # ============================================
+  # SUBSTRATE DATA SOURCE (LITE)
+  # ============================================
+  - kind: substrate/Runtime
+    startBlock: 1
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        # Block handler - every 1000th block for faster stats
+        - handler: handleBlock
+          kind: substrate/BlockHandler
+          filter:
+            modulo: 1000
+
+        # Only balance transfer events (most common user activity)
+        - handler: handleBalanceTransfer
+          kind: substrate/EventHandler
+          filter:
+            module: balances
+            method: Transfer
+
+        # EVM execution events
+        - handler: handleEvmExecuted
+          kind: substrate/EventHandler
+          filter:
+            module: ethereum
+            method: Executed
+
+  # ============================================
+  # EVM/FRONTIER DATA SOURCE (LITE)
+  # ============================================
+  - kind: substrate/FrontierEvm
+    startBlock: 1
+    processor:
+      file: ./node_modules/@subql/frontier-evm-processor/dist/bundle.js
+      options:
+        abi: erc20
+        address: null
+    assets:
+      erc20:
+        file: ./abis/erc20.json
+      erc721:
+        file: ./abis/erc721.json
+      erc1155:
+        file: ./abis/erc1155.json
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        # ERC-20 Transfer events only (most common)
+        - handler: handleErc20Transfer
+          kind: substrate/FrontierEvmEvent
+          filter:
+            topics:
+              - "Transfer(address indexed from, address indexed to, uint256 value)"
