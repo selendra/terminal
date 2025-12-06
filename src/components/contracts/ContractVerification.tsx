@@ -19,11 +19,50 @@ export const ContractVerification: React.FC<ContractVerificationProps> = ({ isOp
 
     const handleVerify = async () => {
         setLoading(true);
-        // Simulate verification delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setLoading(false);
-        setStep(3);
-        toast.success("Contract verified successfully!");
+        try {
+            // 1. Submit verification request
+            // In a real app, we'd read the file content here
+            const response = await fetch("/api/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    address: contractAddress,
+                    compiler: "Solidity", // Simplified for demo
+                    version: compilerVersion,
+                    license: licenseType,
+                    sourceCode: "// Mock source code from file upload",
+                }),
+            });
+
+            if (!response.ok) throw new Error("Verification request failed");
+
+            const { jobId } = await response.json();
+
+            // 2. Poll for status
+            const pollStatus = async () => {
+                const statusRes = await fetch(`/api/verify/status?jobId=${jobId}`);
+                const statusData = await statusRes.json();
+
+                if (statusData.status === "success") {
+                    setLoading(false);
+                    setStep(3);
+                    toast.success(statusData.message);
+                } else if (statusData.status === "failed") {
+                    setLoading(false);
+                    toast.error("Verification failed");
+                } else {
+                    // Keep polling
+                    setTimeout(pollStatus, 1000);
+                }
+            };
+
+            pollStatus();
+
+        } catch (error) {
+            console.error(error);
+            setLoading(false);
+            toast.error("An error occurred during verification");
+        }
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -63,8 +102,8 @@ export const ContractVerification: React.FC<ContractVerificationProps> = ({ isOp
                             <div
                                 key={s}
                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step >= s
-                                        ? "bg-selendra-600 text-white"
-                                        : "bg-background-secondary text-foreground-secondary"
+                                    ? "bg-selendra-600 text-white"
+                                    : "bg-background-secondary text-foreground-secondary"
                                     }`}
                             >
                                 {step > s ? <CheckCircle className="w-5 h-5" /> : s}

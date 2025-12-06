@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Token, TokenType, TokenStandard } from "./TokensExplorer";
+import { Token, TokenType, TokenStandard } from "@/types/tokens";
 import { AddToWalletButton } from "./AddToWalletButton";
 import { TokenIcon } from "./TokenIcon";
 

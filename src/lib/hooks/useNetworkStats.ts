@@ -10,13 +10,31 @@ import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { useCallback, useEffect, useState } from "react";
 import { rpcCache } from "@/lib/cache";
 
+// Blockscout API endpoint
+const BLOCKSCOUT_API = "https://explorer.selendra.org/api/v2";
+
 // Cache TTL constants
 const CACHE_TTL = {
   NETWORK_STATS: 10000, // 10 seconds for general stats
   VALIDATORS: 30000, // 30 seconds for validator data
   GAS_PRICE: 5000, // 5 seconds for gas price
   CHAIN_INFO: 60000, // 60 seconds for static chain info
+  BLOCKSCOUT_STATS: 15000, // 15 seconds for Blockscout stats
 } as const;
+
+// Blockscout stats response type
+interface BlockscoutStats {
+  total_transactions: string;
+  total_addresses: string;
+  total_blocks: string;
+  transactions_today: string;
+  average_block_time: number;
+  gas_prices: {
+    slow: number;
+    average: number;
+    fast: number;
+  };
+}
 
 export interface NetworkStats {
   // Block data

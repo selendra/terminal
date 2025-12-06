@@ -15,7 +15,7 @@ import {
   Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { VMType } from "./ContractsExplorer";
+import { VMType } from "@/types/contracts";
 
 interface WriteContractProps {
   address: string;
@@ -82,7 +82,7 @@ export const WriteContract: React.FC<WriteContractProps> = ({
       // Simulate wallet connection
       toast.loading("Connecting wallet...", { id: "wallet-connect" });
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+
       // Mock connected address
       setIsWalletConnected(true);
       setConnectedAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
@@ -114,7 +114,7 @@ export const WriteContract: React.FC<WriteContractProps> = ({
 
       // Mock transaction hash
       const mockTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
-      
+
       setTransactionResults((prev) => ({
         ...prev,
         [funcName]: { hash: mockTxHash, status: "pending" },
@@ -209,7 +209,7 @@ export const WriteContract: React.FC<WriteContractProps> = ({
           <div className="text-sm">
             <p className="font-medium text-yellow-400">Caution Required</p>
             <p className="text-foreground-secondary mt-1">
-              Write functions modify the blockchain state. They require gas fees and 
+              Write functions modify the blockchain state. They require gas fees and
               cannot be reversed. Please verify all parameters before executing.
             </p>
           </div>
@@ -322,13 +322,12 @@ export const WriteContract: React.FC<WriteContractProps> = ({
 
                     {/* Result */}
                     {result && (
-                      <div className={`p-3 rounded-lg ${
-                        result.status === "failed" 
-                          ? "bg-red-500/10 border border-red-500/30" 
+                      <div className={`p-3 rounded-lg ${result.status === "failed"
+                          ? "bg-red-500/10 border border-red-500/30"
                           : result.status === "success"
-                          ? "bg-green-500/10 border border-green-500/30"
-                          : "bg-yellow-500/10 border border-yellow-500/30"
-                      }`}>
+                            ? "bg-green-500/10 border border-green-500/30"
+                            : "bg-yellow-500/10 border border-yellow-500/30"
+                        }`}>
                         {result.error ? (
                           <div className="flex items-start gap-2 text-red-400">
                             <AlertCircle className="w-4 h-4 mt-0.5" />
@@ -342,9 +341,8 @@ export const WriteContract: React.FC<WriteContractProps> = ({
                               ) : (
                                 <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
                               )}
-                              <span className={`text-sm font-medium ${
-                                result.status === "success" ? "text-green-400" : "text-yellow-400"
-                              }`}>
+                              <span className={`text-sm font-medium ${result.status === "success" ? "text-green-400" : "text-yellow-400"
+                                }`}>
                                 {result.status === "success" ? "Transaction Successful" : "Transaction Pending"}
                               </span>
                             </div>

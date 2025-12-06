@@ -30,19 +30,21 @@ import { ContractVerification } from "./ContractVerification";
 
 import { Skeleton, SkeletonTableRow } from "@/components/common/Skeleton";
 import { useContracts } from "@/lib/hooks/useContracts";
+import { useIndexerContracts } from "@/lib/hooks/useIndexer";
 import { Contract, ContractType, VMType } from "@/types/contracts";
 
 // ... (keep other imports)
 
 export const ContractsExplorer: React.FC = () => {
-  const { contracts: fetchedContracts, isLoading } = useContracts();
-  const [contracts, setContracts] = useState<Contract[]>([]);
+  const { data: indexerData, isLoading: indexerLoading } = useIndexerContracts();
+  const { contracts: chainContracts, isLoading: chainLoading } = useContracts();
 
-  useEffect(() => {
-    if (fetchedContracts.length > 0) {
-      setContracts(fetchedContracts);
-    }
-  }, [fetchedContracts]);
+  // Prefer indexer data, fallback to chain data
+  const contracts = indexerData?.contracts && indexerData.contracts.length > 0
+    ? indexerData.contracts
+    : chainContracts;
+
+  const isLoading = indexerLoading || (chainLoading && !contracts.length);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "erc20" | "erc721" | "erc1155" | "defi" | "proxy" | "ink" | "other">("all");

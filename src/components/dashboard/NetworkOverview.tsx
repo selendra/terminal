@@ -74,26 +74,26 @@ export function NetworkOverview() {
     return String(value);
   };
 
+  // SEL is not listed on exchanges yet - don't show mock price data
+  const isListedOnExchange = false; // TODO: Set to true when SEL is listed on exchanges
+
   const stats: StatCard[] = [
     {
       title: "SEL Price",
-      value: price !== null ? formatPrice(price) : "---",
-      change:
-        priceChangePercent24h !== null
-          ? formatPriceChange(priceChangePercent24h)
-          : undefined,
-      changeType:
-        priceChangePercent24h !== null
-          ? priceChangePercent24h >= 0
-            ? "positive"
-            : "negative"
-          : undefined,
+      value: isListedOnExchange && price !== null ? formatPrice(price) : "Not Listed",
+      change: isListedOnExchange && priceChangePercent24h !== null
+        ? formatPriceChange(priceChangePercent24h)
+        : undefined,
+      changeType: isListedOnExchange && priceChangePercent24h !== null
+        ? priceChangePercent24h >= 0
+          ? "positive"
+          : "negative"
+        : undefined,
       icon: <TrendingUp className="h-5 w-5" />,
-      subValue:
-        marketCap !== null
-          ? `Market Cap: ${formatMarketCap(marketCap)}`
-          : "Market Cap: ---",
-      isLoading: priceLoading,
+      subValue: isListedOnExchange && marketCap !== null
+        ? `Market Cap: ${formatMarketCap(marketCap)}`
+        : "Coming soon to exchanges",
+      isLoading: false,
     },
     {
       title: "Block Height",
@@ -152,10 +152,10 @@ export function NetworkOverview() {
     },
     {
       title: "TPS",
-      value: tps !== null ? formatTPS(tps) : "2,000+",
+      value: "N/A",
       icon: <TrendingUp className="h-5 w-5" />,
-      subValue: "Transactions per second",
-      isLoading: txStatsLoading,
+      subValue: "Benchmarking in progress",
+      isLoading: false,
     },
   ];
 

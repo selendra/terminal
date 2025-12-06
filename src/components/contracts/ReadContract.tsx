@@ -13,7 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { VMType } from "./ContractsExplorer";
+import { VMType } from "@/types/contracts";
 
 interface ReadContractProps {
   address: string;
@@ -154,7 +154,7 @@ export const ReadContract: React.FC<ReadContractProps> = ({
           <div className="text-sm">
             <p className="font-medium text-blue-400">Read-Only Functions</p>
             <p className="text-foreground-secondary mt-1">
-              These functions are read-only and don't modify the blockchain state. 
+              These functions are read-only and don't modify the blockchain state.
               They can be called without gas fees.
             </p>
           </div>

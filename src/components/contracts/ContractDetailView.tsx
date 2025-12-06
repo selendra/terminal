@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Contract, ContractType, VMType } from "./ContractsExplorer";
+import { Contract, ContractType, VMType } from "@/types/contracts";
 import { CodeViewer } from "./CodeViewer";
 import { ReadContract } from "./ReadContract";
 import { WriteContract } from "./WriteContract";
@@ -331,11 +331,10 @@ export const ContractDetailView: React.FC<ContractDetailViewProps> = ({
                 <span className={`px-2 py-1 rounded text-sm font-medium ${getTypeColor(contract.type)}`}>
                   {getTypeLabel(contract.type)}
                 </span>
-                <span className={`px-2 py-1 rounded text-sm font-medium ${
-                  contract.vmType === "evm" 
-                    ? "bg-orange-500/20 text-orange-400" 
+                <span className={`px-2 py-1 rounded text-sm font-medium ${contract.vmType === "evm"
+                    ? "bg-orange-500/20 text-orange-400"
                     : "bg-cyan-500/20 text-cyan-400"
-                }`}>
+                  }`}>
                   {contract.vmType === "evm" ? "EVM" : "WASM"}
                 </span>
               </div>
@@ -402,13 +401,12 @@ export const ContractDetailView: React.FC<ContractDetailViewProps> = ({
               key={tab.id}
               onClick={() => !isDisabled && setActiveTab(tab.id)}
               disabled={isDisabled}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                   ? "bg-selendra-600 text-white"
                   : isDisabled
-                  ? "text-foreground-secondary/50 cursor-not-allowed"
-                  : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
-              }`}
+                    ? "text-foreground-secondary/50 cursor-not-allowed"
+                    : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
+                }`}
               title={isDisabled ? "Contract must be verified to access this tab" : undefined}
             >
               <tab.icon className="w-4 h-4" />
