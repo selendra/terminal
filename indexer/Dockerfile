@@ -65,7 +65,7 @@ su - postgres -c "pg_ctl start -D /var/lib/postgresql/data -l /var/lib/postgresq
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL..."
 until su - postgres -c "pg_isready" 2>/dev/null; do
-  sleep 1
+sleep 1
 done
 
 # Create user and database if not exists
@@ -75,43 +75,45 @@ su - postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='subquery'\
 echo "PostgreSQL ready!"
 
 # Start SubQuery Node in background
-echo "Starting SubQuery Node..."
+echo "Starting SubQuery Node on port 3001..."
 cd /app
 subql-node-substrate \
-  -f=/app \
-  --db-schema=app \
-  --db-host=localhost \
-  --db-port=5432 \
-  --db-user=subquery \
-  --db-pass=subquery \
-  --db-database=subquery \
-  --workers=${SUBQUERY_WORKERS:-2} \
-  --batch-size=${SUBQUERY_BATCH_SIZE:-30} \
-  --log-level=info \
-  --network-endpoint=${SUBSTRATE_RPC:-wss://rpc.selendra.org} \
-  --timeout=90000 \
-  --disable-historical=false &
+    -f=/app \
+    --db-schema=app \
+    --db-host=localhost \
+    --db-port=5432 \
+    --db-user=subquery \
+    --db-pass=subquery \
+    --db-database=subquery \
+    --workers=${SUBQUERY_WORKERS:-2} \
+    --batch-size=${SUBQUERY_BATCH_SIZE:-30} \
+    --log-level=info \
+    --network-endpoint=${SUBSTRATE_RPC:-wss://rpc.selendra.org} \
+    --timeout=90000 \
+    --disable-historical=false \
+    --port=3001 &
 
 # Wait for SubQuery Node to be ready
 echo "Waiting for SubQuery Node..."
 sleep 10
-until curl -sf http://localhost:3000/ready > /dev/null 2>&1; do
-  echo "Waiting for SubQuery Node to be ready..."
-  sleep 5
+until curl -sf http://localhost:3001/ready > /dev/null 2>&1; do
+echo "Waiting for SubQuery Node to be ready..."
+sleep 5
 done
 echo "SubQuery Node ready!"
 
 # Start SubQuery Query Service (GraphQL API)
-echo "Starting GraphQL Query Service on port 3001..."
+echo "Starting GraphQL Query Service on port 3000..."
 subql-query \
-  --name=app \
-  --playground \
-  --indexer=http://localhost:3000 \
-  --db-host=localhost \
-  --db-port=5432 \
-  --db-user=subquery \
-  --db-pass=subquery \
-  --db-database=subquery &
+    --name=app \
+    --playground \
+    --indexer=http://localhost:3001 \
+    --db-host=localhost \
+    --db-port=5432 \
+    --db-user=subquery \
+    --db-pass=subquery \
+    --db-database=subquery \
+    --port=3000 &
 
 echo "=== All services started ==="
 echo "GraphQL Playground: http://localhost:3000"
@@ -128,7 +130,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-  CMD curl -f http://localhost:3000/ready || exit 1
+    CMD curl -f http://localhost:3000/ready || exit 1
 
 # Start all services
 CMD ["/start.sh"]
