@@ -23,7 +23,7 @@ network:
 
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 17500000 # Start from recent block for faster initial sync
+    startBlock: 1 # Full history indexing from genesis
     mapping:
       file: ./dist/index.js
       handlers:
