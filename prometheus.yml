@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'subquery-node'
+    static_configs:
+      - targets: ['subquery-node:3000']
+
+  - job_name: 'graphql-engine'
+    static_configs:
+      - targets: ['graphql-engine:3000']

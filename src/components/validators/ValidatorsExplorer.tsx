@@ -211,7 +211,7 @@ export default function ValidatorsExplorer() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'waiting' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'stake' | 'commission' | 'nominators' | 'apy'>('stake');
   const [favorites, setFavorites] = useState<string[]>([]);
-  
+
   // Fetch real tokenomics data
   const { stakedSupply, stakingRate, isLoading: tokenomicsLoading } = useTokenomics({
     refreshInterval: 60000,

@@ -10,7 +10,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useBlockchain } from "@/components/providers/BlockchainProvider";
-import { truncateHash } from "@/lib/utils";
+import { truncateHash, formatDistanceToNow } from "@/lib/utils";
 import { clsx } from "clsx";
 
 interface BlockData {
@@ -24,14 +24,20 @@ interface BlockData {
 }
 
 export function BlocksExplorer() {
-  const { substrateSDK, evmSDK, isConnected, latestSubstrateBlock, latestEvmBlock } =
-    useBlockchain();
+  const {
+    substrateSDK,
+    evmSDK,
+    isConnected,
+    latestSubstrateBlock,
+    latestEvmBlock,
+  } = useBlockchain();
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBlocks, setTotalBlocks] = useState(0);
   const [vmFilter, setVmFilter] = useState<"all" | "substrate" | "evm">("all");
+  const [avgBlockTime, setAvgBlockTime] = useState<number>(1); // in seconds
 
   // Track if this is the initial load - don't show loading spinner on updates
   const hasLoadedOnce = useRef(false);
@@ -84,7 +90,7 @@ export function BlocksExplorer() {
             } catch {
               return null;
             }
-          })()
+          })(),
         );
       }
 
@@ -95,7 +101,7 @@ export function BlocksExplorer() {
 
       return blocksData;
     },
-    [substrateSDK]
+    [substrateSDK],
   );
 
   // Fetch blocks from EVM chain
@@ -130,7 +136,7 @@ export function BlocksExplorer() {
             } catch {
               return null;
             }
-          })()
+          })(),
         );
       }
 
@@ -141,90 +147,105 @@ export function BlocksExplorer() {
 
       return blocksData;
     },
-    [evmSDK]
+    [evmSDK],
   );
 
   // Main fetch function - does not depend on latest block numbers
   // to prevent recreation on every block update
-  const fetchBlocks = useCallback(async (
-    latestSubstrate: number,
-    latestEvm: number,
-    showLoading: boolean = false
-  ) => {
-    if (!isConnected) return;
-    if (isFetching.current) return; // Prevent concurrent fetches
+  const fetchBlocks = useCallback(
+    async (
+      latestSubstrate: number,
+      latestEvm: number,
+      showLoading: boolean = false,
+    ) => {
+      if (!isConnected) return;
+      if (isFetching.current) return; // Prevent concurrent fetches
 
-    isFetching.current = true;
+      isFetching.current = true;
 
-    // Only show loading spinner on initial load
-    if (showLoading) {
-      setIsLoading(true);
-    }
-    setFetchError(null);
-
-    try {
-      // Fetch real data based on filter
-      let blocksData: BlockData[] = [];
-      let total = 0;
-
-      if (vmFilter === "substrate" || vmFilter === "all") {
-        const latestNumber = latestSubstrate;
-        total = Math.max(total, latestNumber);
-
-        if (latestNumber > 0) {
-          const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
-          const substrateBlocks = await fetchSubstrateBlocks(
-            startBlock,
-            vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
-          );
-          blocksData = [...blocksData, ...substrateBlocks];
-        }
+      // Only show loading spinner on initial load
+      if (showLoading) {
+        setIsLoading(true);
       }
+      setFetchError(null);
 
-      if (vmFilter === "evm" || vmFilter === "all") {
-        const latestNumber = latestEvm;
-        total = Math.max(total, latestNumber);
+      try {
+        // Fetch real data based on filter
+        let blocksData: BlockData[] = [];
+        let total = 0;
 
-        if (latestNumber > 0) {
-          const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
-          const evmBlocks = await fetchEvmBlocks(
-            startBlock,
-            vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage
-          );
-          blocksData = [...blocksData, ...evmBlocks];
+        if (vmFilter === "substrate" || vmFilter === "all") {
+          const latestNumber = latestSubstrate;
+          total = Math.max(total, latestNumber);
+
+          if (latestNumber > 0) {
+            const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
+            const substrateBlocks = await fetchSubstrateBlocks(
+              startBlock,
+              vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage,
+            );
+            blocksData = [...blocksData, ...substrateBlocks];
+          }
         }
+
+        if (vmFilter === "evm" || vmFilter === "all") {
+          const latestNumber = latestEvm;
+          total = Math.max(total, latestNumber);
+
+          if (latestNumber > 0) {
+            const startBlock = latestNumber - (currentPage - 1) * blocksPerPage;
+            const evmBlocks = await fetchEvmBlocks(
+              startBlock,
+              vmFilter === "all" ? Math.ceil(blocksPerPage / 2) : blocksPerPage,
+            );
+            blocksData = [...blocksData, ...evmBlocks];
+          }
+        }
+
+        // Sort by block number descending
+        blocksData.sort((a, b) => b.number - a.number);
+
+        // Limit to blocksPerPage
+        blocksData = blocksData.slice(0, blocksPerPage);
+
+        // Calculate average block time from blocks with timestamps
+        const blocksWithTimestamps = blocksData.filter((b) => b.timestamp);
+        if (blocksWithTimestamps.length >= 2) {
+          const sortedByTime = [...blocksWithTimestamps].sort(
+            (a, b) => (a.timestamp || 0) - (b.timestamp || 0),
+          );
+          const timeRange =
+            (sortedByTime[sortedByTime.length - 1].timestamp || 0) -
+            (sortedByTime[0].timestamp || 0);
+          const blockRange =
+            sortedByTime[sortedByTime.length - 1].number -
+            sortedByTime[0].number;
+          if (blockRange > 0) {
+            const avgTime = timeRange / blockRange / 1000; // Convert ms to seconds
+            setAvgBlockTime(Math.max(0.1, avgTime)); // Ensure positive, min 0.1s
+          }
+        }
+
+        setTotalBlocks(total);
+        setBlocks(blocksData);
+        hasLoadedOnce.current = true;
+        lastFetchedBlock.current = Math.max(latestSubstrate, latestEvm);
+      } catch (err) {
+        setFetchError("Failed to fetch blocks. Please try again.");
+        console.error("Block fetch error:", err);
+      } finally {
+        setIsLoading(false);
+        isFetching.current = false;
       }
-
-      // Sort by block number descending
-      blocksData.sort((a, b) => b.number - a.number);
-
-      // Limit to blocksPerPage
-      blocksData = blocksData.slice(0, blocksPerPage);
-
-      setTotalBlocks(total);
-      setBlocks(blocksData);
-      hasLoadedOnce.current = true;
-      lastFetchedBlock.current = Math.max(latestSubstrate, latestEvm);
-    } catch (err) {
-      setFetchError("Failed to fetch blocks. Please try again.");
-      console.error("Block fetch error:", err);
-    } finally {
-      setIsLoading(false);
-      isFetching.current = false;
-    }
-  }, [
-    isConnected,
-    currentPage,
-    vmFilter,
-    fetchSubstrateBlocks,
-    fetchEvmBlocks,
-  ]);
+    },
+    [isConnected, currentPage, vmFilter, fetchSubstrateBlocks, fetchEvmBlocks],
+  );
 
   // Initial load and page/filter changes - show loading state
   useEffect(() => {
     const latestSubstrate = latestSubstrateBlock?.number || 0;
     const latestEvm = latestEvmBlock?.number || 0;
-    
+
     // Show loading on first load or when page/filter changes
     if (!hasLoadedOnce.current || currentPage !== 1) {
       fetchBlocks(latestSubstrate, latestEvm, true);
@@ -244,7 +265,12 @@ export function BlocksExplorer() {
     if (currentLatest > lastFetchedBlock.current) {
       fetchBlocks(latestSubstrate, latestEvm, false);
     }
-  }, [latestSubstrateBlock?.number, latestEvmBlock?.number, currentPage, fetchBlocks]);
+  }, [
+    latestSubstrateBlock?.number,
+    latestEvmBlock?.number,
+    currentPage,
+    fetchBlocks,
+  ]);
 
   const totalPages = Math.ceil(totalBlocks / blocksPerPage);
 
@@ -273,7 +299,7 @@ export function BlocksExplorer() {
                   "px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize",
                   vmFilter === filter
                     ? "bg-selendra-500/20 text-selendra-400"
-                    : "text-foreground-secondary hover:text-foreground"
+                    : "text-foreground-secondary hover:text-foreground",
                 )}
               >
                 {filter}
@@ -299,7 +325,11 @@ export function BlocksExplorer() {
         </div>
         <div className="card">
           <p className="text-sm text-foreground-secondary">Avg Block Time</p>
-          <p className="text-xl font-bold text-foreground">1 second</p>
+          <p className="text-xl font-bold text-foreground">
+            {avgBlockTime >= 1
+              ? `${avgBlockTime.toFixed(2)}s`
+              : `${(avgBlockTime * 1000).toFixed(0)}ms`}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-foreground-secondary">Network</p>
@@ -335,7 +365,9 @@ export function BlocksExplorer() {
                 <tr>
                   <td colSpan={5} className="py-12 text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-selendra-500 mx-auto mb-2" />
-                    <p className="text-foreground-secondary">Loading blocks...</p>
+                    <p className="text-foreground-secondary">
+                      Loading blocks...
+                    </p>
                   </td>
                 </tr>
               ) : fetchError ? (
@@ -364,10 +396,16 @@ export function BlocksExplorer() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-foreground">{block.extrinsicsCount}</span>
+                      <span className="text-foreground">
+                        {block.extrinsicsCount}
+                      </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-foreground-secondary text-sm">Just now</span>
+                      <span className="text-foreground-secondary text-sm">
+                        {block.timestamp
+                          ? formatDistanceToNow(block.timestamp)
+                          : "Just now"}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <Link
@@ -381,7 +419,10 @@ export function BlocksExplorer() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-foreground-secondary">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-foreground-secondary"
+                  >
                     No blocks found
                   </td>
                 </tr>

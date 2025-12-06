@@ -13,8 +13,45 @@ import {
   RefreshCw,
   Shield,
   Loader2,
+  Flame,
+  AlertTriangle,
 } from "lucide-react";
 import { useWallet } from "@/components/providers/WalletProvider";
+
+// Anti-dump friction configuration (from BRIDGE_SPECIFICATION.md)
+const BRIDGE_CONFIG = {
+  baseFee: 0.5, // 0.5% base fee (burned)
+  processingDelay: 15, // 15 minutes minimum
+  dailyLimit: 1_000_000, // 1M SEL per day per address
+  weeklyLimit: 5_000_000, // 5M SEL per week per address
+  feeTiers: [
+    { threshold: 10_000, fee: 0.5 }, // 0-10K: 0.5%
+    { threshold: 100_000, fee: 1.0 }, // 10K-100K: 1.0%
+    { threshold: 1_000_000, fee: 2.0 }, // 100K-1M: 2.0%
+    { threshold: Infinity, fee: 3.0 }, // 1M+: 3.0%
+  ],
+};
+
+// Calculate progressive fee based on amount
+function calculateBridgeFee(amount: number): {
+  feePercent: number;
+  feeAmount: number;
+} {
+  for (const tier of BRIDGE_CONFIG.feeTiers) {
+    if (amount <= tier.threshold) {
+      return {
+        feePercent: tier.fee,
+        feeAmount: amount * (tier.fee / 100),
+      };
+    }
+  }
+  // Fallback to highest tier
+  const highestTier = BRIDGE_CONFIG.feeTiers[BRIDGE_CONFIG.feeTiers.length - 1];
+  return {
+    feePercent: highestTier.fee,
+    feeAmount: amount * (highestTier.fee / 100),
+  };
+}
 
 interface Network {
   id: string;
@@ -34,7 +71,7 @@ interface Token {
   decimals: number;
   minBridge: string;
   maxBridge: string;
-  fee: string;
+  fee?: string; // Optional - calculated dynamically based on amount
 }
 
 interface BridgeTransaction {
@@ -110,9 +147,8 @@ const tokens: Token[] = [
     logo: "🔮",
     balance: "1,250.00",
     decimals: 18,
-    minBridge: "10",
-    maxBridge: "1000000",
-    fee: "0.1%",
+    minBridge: "100", // Higher minimum for anti-dump
+    maxBridge: "1000000", // Subject to daily limits
   },
   {
     symbol: "USDT",
@@ -122,7 +158,6 @@ const tokens: Token[] = [
     decimals: 6,
     minBridge: "10",
     maxBridge: "500000",
-    fee: "0.05%",
   },
   {
     symbol: "USDC",
@@ -132,7 +167,6 @@ const tokens: Token[] = [
     decimals: 6,
     minBridge: "10",
     maxBridge: "500000",
-    fee: "0.05%",
   },
   {
     symbol: "WETH",
@@ -142,7 +176,6 @@ const tokens: Token[] = [
     decimals: 18,
     minBridge: "0.01",
     maxBridge: "1000",
-    fee: "0.1%",
   },
   {
     symbol: "WBTC",
@@ -152,7 +185,6 @@ const tokens: Token[] = [
     decimals: 8,
     minBridge: "0.001",
     maxBridge: "100",
-    fee: "0.15%",
   },
 ];
 
@@ -190,22 +222,23 @@ const mockTransactions: BridgeTransaction[] = [
 ];
 
 export const BridgeInterface: React.FC = () => {
-  const { 
-    isConnected, 
-    selectedSubstrateAccount, 
-    evmAccount, 
+  const {
+    isConnected,
+    selectedSubstrateAccount,
+    evmAccount,
     connectEvmWallet,
-    connectSubstrateWallet 
+    connectSubstrateWallet,
   } = useWallet();
-  
+
   // Get address from whichever account is connected
-  const address = selectedSubstrateAccount?.address || evmAccount?.address || null;
-  
+  const address =
+    selectedSubstrateAccount?.address || evmAccount?.address || null;
+
   const connect = () => {
     // Default to connecting EVM wallet for bridge
     connectEvmWallet();
   };
-  
+
   const [fromNetwork, setFromNetwork] = useState<Network>(networks[0]);
   const [toNetwork, setToNetwork] = useState<Network>(networks[2]);
   const [selectedToken, setSelectedToken] = useState<Token>(tokens[0]);
@@ -214,18 +247,33 @@ export const BridgeInterface: React.FC = () => {
   const [showToDropdown, setShowToDropdown] = useState(false);
   const [showTokenDropdown, setShowTokenDropdown] = useState(false);
   const [isBridging, setIsBridging] = useState(false);
-  const [transactions, setTransactions] = useState<BridgeTransaction[]>(mockTransactions);
-  const [estimatedTime, setEstimatedTime] = useState("5-10 minutes");
+  const [transactions, setTransactions] =
+    useState<BridgeTransaction[]>(mockTransactions);
+  const [estimatedTime, setEstimatedTime] = useState(
+    `${BRIDGE_CONFIG.processingDelay}+ minutes`,
+  );
   const [bridgeFee, setBridgeFee] = useState("0.00");
+  const [feePercent, setFeePercent] = useState(BRIDGE_CONFIG.baseFee);
 
   useEffect(() => {
-    // Calculate bridge fee
+    // Calculate progressive bridge fee based on amount
     if (amount && !isNaN(parseFloat(amount))) {
-      const feePercent = parseFloat(selectedToken.fee) / 100;
-      const fee = (parseFloat(amount.replace(/,/g, "")) * feePercent).toFixed(4);
-      setBridgeFee(fee);
+      const amountNum = parseFloat(amount.replace(/,/g, ""));
+
+      // Use progressive fee for SEL, flat fee for other tokens
+      if (selectedToken.symbol === "SEL") {
+        const { feePercent: percent, feeAmount } =
+          calculateBridgeFee(amountNum);
+        setFeePercent(percent);
+        setBridgeFee(feeAmount.toFixed(4));
+      } else {
+        // Flat 0.1% for non-SEL tokens
+        setFeePercent(0.1);
+        setBridgeFee((amountNum * 0.001).toFixed(4));
+      }
     } else {
       setBridgeFee("0.00");
+      setFeePercent(BRIDGE_CONFIG.baseFee);
     }
   }, [amount, selectedToken]);
 
@@ -303,7 +351,9 @@ export const BridgeInterface: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-green-400" />
-          <span className="text-sm text-foreground-secondary">Secured by Selendra</span>
+          <span className="text-sm text-foreground-secondary">
+            Secured by Selendra
+          </span>
         </div>
       </div>
 
@@ -366,7 +416,9 @@ export const BridgeInterface: React.FC = () => {
                       className="flex items-center gap-2 bg-background-tertiary hover:bg-background-hover rounded-lg px-3 py-2 transition-colors"
                     >
                       <span className="text-xl">{selectedToken.logo}</span>
-                      <span className="font-medium">{selectedToken.symbol}</span>
+                      <span className="font-medium">
+                        {selectedToken.symbol}
+                      </span>
                       <ArrowUpDown className="w-4 h-4 text-foreground-secondary" />
                     </button>
 
@@ -385,7 +437,9 @@ export const BridgeInterface: React.FC = () => {
                               <span className="text-xl">{token.logo}</span>
                               <div className="text-left">
                                 <p className="font-medium">{token.symbol}</p>
-                                <p className="text-xs text-foreground-secondary">{token.name}</p>
+                                <p className="text-xs text-foreground-secondary">
+                                  {token.name}
+                                </p>
                               </div>
                             </div>
                             <span className="text-sm text-foreground-secondary">
@@ -408,7 +462,9 @@ export const BridgeInterface: React.FC = () => {
                     className="flex-1 bg-transparent text-3xl font-medium placeholder-foreground-secondary outline-none"
                   />
                   <button
-                    onClick={() => setAmount(selectedToken.balance.replace(/,/g, ""))}
+                    onClick={() =>
+                      setAmount(selectedToken.balance.replace(/,/g, ""))
+                    }
                     className="px-3 py-1 text-sm text-selendra-500 hover:text-selendra-400 bg-selendra-500/10 rounded-lg transition-colors"
                   >
                     MAX
@@ -489,19 +545,35 @@ export const BridgeInterface: React.FC = () => {
             <div className="mt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-foreground-secondary flex items-center gap-1">
-                  <Info className="w-4 h-4" />
-                  Bridge Fee
+                  <Flame className="w-4 h-4 text-orange-400" />
+                  Bridge Fee (Burned)
                 </span>
-                <span>
-                  {bridgeFee} {selectedToken.symbol} ({selectedToken.fee})
+                <span className="text-orange-400 font-medium">
+                  {bridgeFee} {selectedToken.symbol} ({feePercent}%)
                 </span>
               </div>
+
+              {selectedToken.symbol === "SEL" &&
+                parseFloat(amount || "0") > 10000 && (
+                  <div className="flex items-start gap-2 p-2 bg-amber-500/10 rounded-lg text-xs text-amber-400">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Progressive fee tier: Larger amounts incur higher fees to
+                      prevent dumps.
+                    </span>
+                  </div>
+                )}
+
               <div className="flex items-center justify-between text-sm">
                 <span className="text-foreground-secondary flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  Estimated Time
+                  Processing Time
                 </span>
-                <span>{estimatedTime}</span>
+                <span className="text-amber-400">{estimatedTime}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-foreground-secondary">Daily Limit</span>
+                <span>{BRIDGE_CONFIG.dailyLimit.toLocaleString()} SEL</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-foreground-secondary">Min Amount</span>
@@ -509,11 +581,22 @@ export const BridgeInterface: React.FC = () => {
                   {selectedToken.minBridge} {selectedToken.symbol}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground-secondary">Max Amount</span>
-                <span>
-                  {selectedToken.maxBridge} {selectedToken.symbol}
-                </span>
+
+              {/* Anti-dump notice */}
+              <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
+                <div className="flex items-start gap-2">
+                  <Shield className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-purple-400 font-medium">
+                      Anti-Dump Protection
+                    </p>
+                    <p className="text-xs text-foreground-secondary mt-1">
+                      Bridge fees are 100% burned, creating deflation.
+                      Progressive fees and delays discourage large dumps while
+                      supporting long-term holders.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -550,29 +633,43 @@ export const BridgeInterface: React.FC = () => {
             <h3 className="font-semibold mb-4">Bridge Information</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-green-400 mt-0.5" />
+                <Flame className="w-5 h-5 text-orange-400 mt-0.5" />
                 <div>
-                  <p className="font-medium text-sm">Secure & Audited</p>
+                  <p className="font-medium text-sm">100% Fee Burn</p>
                   <p className="text-xs text-foreground-secondary">
-                    Smart contracts audited by leading security firms
+                    All bridge fees are burned, reducing SEL supply permanently
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-blue-400 mt-0.5" />
+                <Clock className="w-5 h-5 text-amber-400 mt-0.5" />
                 <div>
-                  <p className="font-medium text-sm">Fast Transfers</p>
+                  <p className="font-medium text-sm">
+                    {BRIDGE_CONFIG.processingDelay}+ Min Delay
+                  </p>
                   <p className="text-xs text-foreground-secondary">
-                    Most transfers complete in 5-10 minutes
+                    Processing time prevents flash loan attacks
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Wallet className="w-5 h-5 text-purple-400 mt-0.5" />
+                <Shield className="w-5 h-5 text-purple-400 mt-0.5" />
                 <div>
-                  <p className="font-medium text-sm">Low Fees</p>
+                  <p className="font-medium text-sm">Progressive Fees</p>
                   <p className="text-xs text-foreground-secondary">
-                    Competitive fees starting at 0.05%
+                    0.5% to 3% based on amount — discourages large dumps
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Wallet className="w-5 h-5 text-blue-400 mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Rate Limits</p>
+                  <p className="text-xs text-foreground-secondary">
+                    {(BRIDGE_CONFIG.dailyLimit / 1_000_000).toFixed(0)}M
+                    SEL/day,{" "}
+                    {(BRIDGE_CONFIG.weeklyLimit / 1_000_000).toFixed(0)}M
+                    SEL/week per address
                   </p>
                 </div>
               </div>
@@ -598,7 +695,9 @@ export const BridgeInterface: React.FC = () => {
                     <ArrowRight className="w-3 h-3 text-foreground-secondary" />
                     <span>{route.to}</span>
                   </div>
-                  <span className="text-foreground-secondary">{route.volume}</span>
+                  <span className="text-foreground-secondary">
+                    {route.volume}
+                  </span>
                 </div>
               ))}
             </div>
@@ -651,7 +750,7 @@ export const BridgeInterface: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(
-                        tx.status
+                        tx.status,
                       )}`}
                     >
                       {getStatusIcon(tx.status)}

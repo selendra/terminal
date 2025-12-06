@@ -10,9 +10,12 @@ import {
   SupplyStats,
   fetchSupplyData,
   getMockSupplyStats,
-  formatSEL,
   SELENDRA_CHAIN_CONFIG,
 } from "@/lib/tokenomics";
+import { rpcCache } from "@/lib/cache";
+
+// Cache TTL for tokenomics data (60 seconds - data doesn't change frequently)
+const TOKENOMICS_CACHE_TTL = 60000;
 
 interface UseTokenomicsOptions {
   /** Refresh interval in milliseconds (default: 60000 = 1 minute) */
@@ -59,7 +62,13 @@ export function useTokenomics(
 
     try {
       setIsRefreshing(true);
-      const data = await fetchSupplyData(rpcUrl);
+
+      // Use RPC cache for tokenomics data
+      const data = await rpcCache.get(
+        `tokenomics:supply:${rpcUrl}`,
+        async () => fetchSupplyData(rpcUrl),
+        { ttl: TOKENOMICS_CACHE_TTL }
+      );
 
       console.log("[useTokenomics] Fetched data:", {
         totalIssuance: data.totalIssuance,

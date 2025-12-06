@@ -21,7 +21,7 @@ const generateMockPriceData = (): PricePoint[] => {
     0.0010, -0.0007, 0.0006, -0.0010, 0.0012, -0.0008, 0.0009, -0.0003,
     0.0015, -0.0005, 0.0011, -0.0009, 0.0013, -0.0006, 0.0016
   ];
-  
+
   for (let i = 30; i >= 0; i--) {
     const variation = variations[30 - i] || 0;
     data.push({
@@ -29,7 +29,7 @@ const generateMockPriceData = (): PricePoint[] => {
       price: basePrice + variation + (30 - i) * 0.0001,
     });
   }
-  
+
   return data;
 };
 
@@ -41,7 +41,7 @@ export function PriceChart() {
   const [priceData] = useState<PricePoint[]>(initialPriceData);
   const [timeframe, setTimeframe] = useState<"24H" | "7D" | "30D" | "1Y">("30D");
   const [isClient, setIsClient] = useState(false);
-  
+
   // Fetch real tokenomics data
   const { totalSupply, circulatingSupply, isLoading: supplyLoading } = useTokenomics({
     refreshInterval: 300000, // 5 minutes
@@ -60,7 +60,7 @@ export function PriceChart() {
 
   useEffect(() => {
     if (!isClient) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 

@@ -13,7 +13,7 @@ export const SELENDRA_CHAIN_CONFIG = {
   // Network identifiers
   mainnet: {
     chainId: 1961,
-    ss58Prefix: 204,
+    ss58Prefix: 42,
     name: "Selendra Mainnet",
     rpcHttpUrl:
       process.env.NEXT_PUBLIC_RPC_HTTP_URL || "https://rpc.selendra.org",
@@ -21,7 +21,7 @@ export const SELENDRA_CHAIN_CONFIG = {
   },
   testnet: {
     chainId: 1953,
-    ss58Prefix: 204,
+    ss58Prefix: 42,
     name: "Selendra Testnet",
     rpcHttpUrl:
       process.env.NEXT_PUBLIC_TESTNET_RPC_HTTP_URL ||
@@ -33,7 +33,7 @@ export const SELENDRA_CHAIN_CONFIG = {
 } as const;
 
 // =============================================================================
-// Token Configuration
+// Token Configuration - Tokenomics v3.0 (Hybrid Cap + Burns)
 // =============================================================================
 
 export const SEL_TOKEN_CONFIG = {
@@ -42,31 +42,98 @@ export const SEL_TOKEN_CONFIG = {
   symbol: "SEL",
   decimals: 18,
 
-  // Token addresses
+  // Token address
+  // Selendra uses Unified Accounts - native SEL works on both EVM and Substrate
+  // No wrapped token needed - same balance accessible from both VMs
   nativeAddress: "0x0000000000000000000000000000000000000000",
-  wrappedAddress: "0x0000000000000000000000000000000000000802", // WSEL precompile
+  // Note: No WSEL exists - Selendra's unified account system handles EVM/Substrate natively
 
   // Supply parameters (in SEL, not wei)
-  // Default SEL cap in chain code: 320M (pallet_aleph DefaultSelCap)
-  // Tokenomics design v2.1: 400M max (balanced model)
-  // Current on-chain issuance: ~230M SEL
-  maxSupply: 320_000_000, // 320M SEL - matches DefaultSelCap in chain code
-  currentIssuance: 230_000_000, // ~230M SEL - actual on-chain value
-  genesisCirculating: 100_000_000, // 100 million at genesis
+  // Tokenomics v3.0 - Hybrid Cap + Burns Model
+  // Chain code DefaultSelCap: 320M SEL
+  // Pre-burn issuance: ~230M SEL
+  // Post-burn target: 150M SEL (burn 80M unclaimed/inactive)
+  maxSupply: 320_000_000, // 320M SEL - hard cap in chain code
+  currentIssuance: 230_000_000, // ~230M SEL - pre-burn on-chain value
+  targetPostBurn: 150_000_000, // 150M SEL - target after initial burn
+  burnAmount: 80_000_000, // 80M SEL to burn (unclaimed/inactive)
+  genesisCirculating: 100_000_000, // 100M at genesis
 
-  // Inflation parameters (from tokenomics design)
-  targetInflation: 8, // 8% annual starting rate
+  // Fee burn parameters (Tokenomics v3.0)
+  feeBurnRate: 90, // 90% of fees burned
+  treasuryFeeRate: 10, // 10% of fees to treasury
+
+  // Inflation parameters (Tokenomics v3.0)
+  targetInflation: 5, // 5% annual starting rate (reduced)
   minInflation: 0.5, // 0.5% terminal rate
-  maxInflation: 10, // 10% maximum
+  maxInflation: 8, // 8% maximum
+  inflationDecayYears: 10, // Years to reach terminal rate
 
-  // Staking parameters
-  idealStakingRate: 70, // 70% of total supply (from docs)
-  minStakingRate: 25, // 25% minimum healthy
-  maxStakingRate: 85, // 85% maximum healthy
+  // Staking parameters (Tokenomics v3.0)
+  idealStakingRate: 65, // 65% target staking rate
+  minStakingRate: 50, // 50% minimum healthy
+  maxStakingRate: 75, // 75% maximum healthy
+  stakingRewardRate: 12, // ~12% APY for stakers
 
   // Economic parameters
   existentialDeposit: 0.0005, // 500 PICO_SEL minimum balance
   transactionBaseFee: 0.0001, // Base fee in SEL
+
+  // Price targets (from tokenomics v3.0)
+  initialPrice: 0.0025, // $0.0025 initial listing price
+  targetMarketCap: 10_000_000_000, // $10B target in 10 years
+} as const;
+
+// =============================================================================
+// SelendraDEX Configuration
+// =============================================================================
+
+export const SELENDRA_DEX_CONFIG = {
+  name: "SelendraDEX",
+  version: "1.0.0",
+
+  // Fee structure (from DEX architecture spec)
+  swapFee: 0.30, // 0.30% total swap fee
+  lpFeeShare: 0.20, // 0.20% to LPs
+  burnFeeShare: 0.05, // 0.05% burned (deflationary)
+  treasuryFeeShare: 0.05, // 0.05% to treasury
+
+  // Liquidity parameters
+  minLiquidity: 1000, // Minimum liquidity in SEL equivalent
+  maxSlippage: 5, // 5% max slippage default
+
+  // Initial pools
+  initialPools: [
+    { pair: "SEL/USDT", initialLiquidity: 50000 },
+    { pair: "SEL/USDC", initialLiquidity: 50000 },
+    { pair: "SEL/WETH", initialLiquidity: 25000 },
+  ],
+} as const;
+
+// =============================================================================
+// Bridge Configuration (Anti-Dump Friction)
+// =============================================================================
+
+export const SELENDRA_BRIDGE_CONFIG = {
+  name: "Selendra Bridge",
+  version: "1.0.0",
+
+  // Anti-dump friction parameters
+  bridgeFee: 0.5, // 0.5% bridge fee (burned)
+  processingDelay: 15, // 15 minutes minimum delay
+  dailyLimit: 1_000_000, // 1M SEL daily limit per address
+  weeklyLimit: 5_000_000, // 5M SEL weekly limit per address
+
+  // Progressive fee tiers (larger amounts = higher fees)
+  feeTiers: [
+    { threshold: 10_000, fee: 0.5 }, // 0-10K: 0.5%
+    { threshold: 100_000, fee: 1.0 }, // 10K-100K: 1.0%
+    { threshold: 1_000_000, fee: 2.0 }, // 100K-1M: 2.0%
+    { threshold: Infinity, fee: 3.0 }, // 1M+: 3.0%
+  ],
+
+  // Supported networks
+  supportedNetworks: ["bsc", "ethereum", "polygon"],
 } as const;
 
 // =============================================================================
@@ -177,7 +244,7 @@ function getStorageKey(palletName: string, itemName: string): string {
     "Balances.TotalIssuance": "0xc2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80",
     "Staking.CurrentEra": "0x5f3e4907f716ac89b6347d15ececedca42982b9d6c7acc99faa9094c912c74e2",
   };
-  
+
   const key = `${palletName}.${itemName}`;
   return knownKeys[key] || "";
 }
@@ -189,19 +256,19 @@ function decodeU128(hexValue: string): bigint {
   if (!hexValue || !hexValue.startsWith("0x")) {
     return BigInt(0);
   }
-  
+
   const hex = hexValue.slice(2);
   if (hex.length === 0) {
     return BigInt(0);
   }
-  
+
   // SCALE u128 is 16 bytes little-endian
   // Reverse bytes for little-endian
   const bytes = [];
   for (let i = 0; i < hex.length; i += 2) {
     bytes.unshift(hex.slice(i, i + 2));
   }
-  
+
   const result = bytes.join("");
   return result ? BigInt("0x" + result) : BigInt(0);
 }
@@ -215,7 +282,7 @@ export async function fetchTotalIssuance(
   try {
     // Use state_getStorage with the Balances.TotalIssuance storage key
     const storageKey = getStorageKey("Balances", "TotalIssuance");
-    
+
     const response = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -267,7 +334,7 @@ export async function fetchStakedAmount(
       const estimatedStakingRate = BigInt(65);
       return (totalIssuance * estimatedStakingRate) / BigInt(100);
     }
-    
+
     // Fallback: estimate based on known total issuance (~230M SEL)
     // ~65% of 230M = ~150M staked
     return parseToWei(150_000_000);
@@ -285,7 +352,7 @@ export async function fetchSupplyData(
 ): Promise<SupplyData> {
   // First fetch total issuance
   const totalIssuance = await fetchTotalIssuance(rpcUrl);
-  
+
   // Then estimate staked amount based on total issuance
   const stakedAmount = await fetchStakedAmount(rpcUrl, totalIssuance);
 

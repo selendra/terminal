@@ -1,0 +1,130 @@
+# Selendra Terminal - Indexer Production
+# This file starts the indexer services for a production environment.
+#
+# Usage:
+#   docker compose -f indexer/docker-compose.prod.yml up -d
+#
+# This setup assumes a reverse proxy (like Traefik) is running and handles SSL.
+
+version: "3.8"
+
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user
+  postgres_password:
+    file: ./secrets/postgres_password
+  postgres_db:
+    file: ./secrets/postgres_db
+
+services:
+  # ============================================
+  # PostgreSQL for SubQuery Indexer
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: selendra-indexer-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB_FILE: /run/secrets/postgres_db
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - selendra-indexer-prod
+
+  # ============================================
+  # SubQuery Node - Indexes blockchain data
+  # ============================================
+  subquery-node:
+    image: subquerynetwork/subql-node-substrate:latest
+    container_name: selendra-indexer-node-prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_USER_FILE: /run/secrets/postgres_user
+      DB_PASS_FILE: /run/secrets/postgres_password
+      DB_DATABASE_FILE: /run/secrets/postgres_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+    volumes:
+      - ./:/app
+    command:
+      - -f=/app
+      - --db-schema=app
+      - --workers=${SUBQUERY_WORKERS:-4}
+      - --batch-size=${SUBQUERY_BATCH_SIZE:-100}
+      - --log-level=info
+      - --disable-historical=false
+      - --network-endpoint=${SUBSTRATE_RPC_HTTP:-https://rpc.selendra.org}
+      - --network-endpoint=${SUBSTRATE_RPC_WS:-wss://rpc.selendra.org}
+      - --timeout=90000
+      - --unfinalized-blocks=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - selendra-indexer-prod
+
+  # ============================================
+  # SubQuery Query Service - GraphQL API
+  # ============================================
+  graphql-engine:
+    image: subquerynetwork/subql-query:latest
+    container_name: selendra-indexer-query-prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      subquery-node:
+        condition: service_healthy
+    environment:
+      DB_USER_FILE: /run/secrets/postgres_user
+      DB_PASS_FILE: /run/secrets/postgres_password
+      DB_DATABASE_FILE: /run/secrets/postgres_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_SCHEMA: app
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+    command:
+      - --name=app
+      - --playground
+      - --indexer=http://subquery-node:3000
+    networks:
+      - selendra-indexer-prod
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.indexer-graphql.rule=Host(`${INDEXER_HOSTNAME}`)"
+      - "traefik.http.routers.indexer-graphql.entrypoints=websecure"
+      - "traefik.http.routers.indexer-graphql.tls.certresolver=myresolver"
+      - "traefik.http.services.indexer-graphql.loadbalancer.server.port=3000"
+
+volumes:
+  prod_postgres_data:
+    driver: local
+
+networks:
+  selendra-indexer-prod:
+    driver: bridge

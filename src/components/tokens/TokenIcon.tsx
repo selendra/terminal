@@ -63,7 +63,7 @@ export const TokenIcon: React.FC<TokenIconProps> = ({
 
     switch (upperSymbol) {
         case 'SEL':
-        case 'WSEL':
+            // Selendra uses unified accounts - no WSEL needed
             return (
                 <NextImage
                     src="/tokens/sel.png"

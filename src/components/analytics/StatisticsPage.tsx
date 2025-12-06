@@ -63,14 +63,16 @@ function StatCard({
                   "text-sm font-medium",
                   trend === "up" && "text-green-500",
                   trend === "down" && "text-red-500",
-                  trend === "neutral" && "text-foreground-secondary"
+                  trend === "neutral" && "text-foreground-secondary",
                 )}
               >
                 {change > 0 ? "+" : ""}
                 {change}%
               </span>
               {changeLabel && (
-                <span className="text-xs text-foreground-secondary ml-1">{changeLabel}</span>
+                <span className="text-xs text-foreground-secondary ml-1">
+                  {changeLabel}
+                </span>
               )}
             </div>
           )}
@@ -95,9 +97,7 @@ interface CategoryStatsProps {
 function CategoryStats({ title, stats }: CategoryStatsProps) {
   return (
     <div className="bg-background-card rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
-        {title}
-      </h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
       <div className="space-y-4">
         {stats.map((stat, idx) => (
           <div key={idx} className="flex items-center justify-between">
@@ -107,7 +107,9 @@ function CategoryStats({ title, stats }: CategoryStatsProps) {
                 {stat.value}
               </span>
               {stat.subValue && (
-                <span className="text-xs text-foreground-secondary ml-2">{stat.subValue}</span>
+                <span className="text-xs text-foreground-secondary ml-2">
+                  {stat.subValue}
+                </span>
               )}
             </div>
           </div>
@@ -131,9 +133,7 @@ interface TopListProps {
 function TopList({ title, items, valueLabel }: TopListProps) {
   return (
     <div className="bg-background-card rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
-        {title}
-      </h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
       <div className="space-y-3">
         {items.map((item) => (
           <div
@@ -146,7 +146,8 @@ function TopList({ title, items, valueLabel }: TopListProps) {
                 item.rank === 1 && "bg-yellow-500/20 text-yellow-500",
                 item.rank === 2 && "bg-gray-500/20 text-foreground-secondary",
                 item.rank === 3 && "bg-orange-500/20 text-orange-500",
-                item.rank > 3 && "bg-background-secondary text-foreground-secondary"
+                item.rank > 3 &&
+                  "bg-background-secondary text-foreground-secondary",
               )}
             >
               {item.rank}
@@ -164,7 +165,7 @@ function TopList({ title, items, valueLabel }: TopListProps) {
                 <p
                   className={clsx(
                     "text-xs",
-                    item.change >= 0 ? "text-green-500" : "text-red-500"
+                    item.change >= 0 ? "text-green-500" : "text-red-500",
                   )}
                 >
                   {item.change >= 0 ? "+" : ""}
@@ -175,20 +176,22 @@ function TopList({ title, items, valueLabel }: TopListProps) {
           </div>
         ))}
       </div>
-      <p className="text-xs text-foreground-secondary mt-4 text-center">{valueLabel}</p>
+      <p className="text-xs text-foreground-secondary mt-4 text-center">
+        {valueLabel}
+      </p>
     </div>
   );
 }
 
-// Mock data
+// Mock data - TODO: Replace with real data from indexer
 const networkStats = {
   totalTransactions: "45,892,341",
   totalBlocks: "3,456,789",
   totalAccounts: "1,234,567",
   totalContracts: "23,456",
-  avgBlockTime: "6.2s",
+  avgBlockTime: "1.0s", // Updated to match Selendra's actual 1s block time
   avgGasPrice: "25 Gwei",
-  tps: "142.5",
+  tps: "N/A", // TPS varies based on transaction complexity; no fixed maximum
   networkUtilization: "67.8%",
 };
 
@@ -213,11 +216,36 @@ const tokenStats = {
 };
 
 const topGasConsumers = [
-  { rank: 1, name: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", value: "2.4M SEL", change: 12.5 },
-  { rank: 2, name: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", value: "1.8M SEL", change: -5.2 },
-  { rank: 3, name: "0x1111111254EEB25477B68fb85Ed929f73A960582", value: "1.2M SEL", change: 8.3 },
-  { rank: 4, name: "0xE592427A0AEce92De3Edee1F18E0157C05861564", value: "890K SEL", change: 2.1 },
-  { rank: 5, name: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F", value: "654K SEL", change: -1.5 },
+  {
+    rank: 1,
+    name: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+    value: "2.4M SEL",
+    change: 12.5,
+  },
+  {
+    rank: 2,
+    name: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+    value: "1.8M SEL",
+    change: -5.2,
+  },
+  {
+    rank: 3,
+    name: "0x1111111254EEB25477B68fb85Ed929f73A960582",
+    value: "1.2M SEL",
+    change: 8.3,
+  },
+  {
+    rank: 4,
+    name: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    value: "890K SEL",
+    change: 2.1,
+  },
+  {
+    rank: 5,
+    name: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
+    value: "654K SEL",
+    change: -1.5,
+  },
 ];
 
 const topActiveContracts = [
@@ -230,15 +258,15 @@ const topActiveContracts = [
 
 export function StatisticsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Fetch real tokenomics data
-  const { 
-    totalSupply, 
-    circulatingSupply, 
-    stakedSupply, 
-    stakingRate, 
+  const {
+    totalSupply,
+    circulatingSupply,
+    stakedSupply,
+    stakingRate,
     isLoading: tokenomicsLoading,
-    refresh: refreshTokenomics 
+    refresh: refreshTokenomics,
   } = useTokenomics({
     refreshInterval: 60000,
   });
@@ -265,7 +293,9 @@ export function StatisticsPage() {
           onClick={handleRefresh}
           className="flex items-center gap-2 px-4 py-2 bg-selendra-500 hover:bg-selendra-600 text-white rounded-lg transition-colors"
         >
-          <RefreshCw className={clsx("w-4 h-4", isRefreshing && "animate-spin")} />
+          <RefreshCw
+            className={clsx("w-4 h-4", isRefreshing && "animate-spin")}
+          />
           Refresh
         </button>
       </div>
@@ -411,7 +441,10 @@ export function StatisticsPage() {
             { label: "ERC-20 Tokens", value: tokenStats.erc20 },
             { label: "ERC-721 (NFT) Collections", value: tokenStats.erc721 },
             { label: "ERC-1155 Collections", value: tokenStats.erc1155 },
-            { label: "Total Token Transfers", value: tokenStats.totalTransfers },
+            {
+              label: "Total Token Transfers",
+              value: tokenStats.totalTransfers,
+            },
           ]}
         />
         <CategoryStats
@@ -420,16 +453,29 @@ export function StatisticsPage() {
             { label: "Average Block Size", value: "45.2 KB" },
             { label: "Avg Txns per Block", value: "87.3" },
             { label: "Uncles/Ommers", value: "234" },
-            { label: "Finalized Blocks", value: "3,456,750", subValue: "99.99%" },
+            {
+              label: "Finalized Blocks",
+              value: "3,456,750",
+              subValue: "99.99%",
+            },
           ]}
         />
         <CategoryStats
           title="Network Health"
           stats={[
             { label: "Active Validators", value: "128" },
-            { label: "Total Staked", value: tokenomicsLoading ? "..." : `${stakedSupply} SEL` },
-            { label: "Staking Rate", value: tokenomicsLoading ? "..." : `${stakingRate.toFixed(1)}%` },
-            { label: "Total Supply", value: tokenomicsLoading ? "..." : `${totalSupply} SEL` },
+            {
+              label: "Total Staked",
+              value: tokenomicsLoading ? "..." : `${stakedSupply} SEL`,
+            },
+            {
+              label: "Staking Rate",
+              value: tokenomicsLoading ? "..." : `${stakingRate.toFixed(1)}%`,
+            },
+            {
+              label: "Total Supply",
+              value: tokenomicsLoading ? "..." : `${totalSupply} SEL`,
+            },
           ]}
         />
       </div>

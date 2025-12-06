@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.40.5
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - selendra-indexer-prod
+
+  grafana:
+    image: grafana/grafana:9.2.5
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - selendra-indexer-prod
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  selendra-indexer-prod:
+    external: true

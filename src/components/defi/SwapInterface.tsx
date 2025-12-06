@@ -68,20 +68,14 @@ interface SettingsModalProps {
 }
 
 // Default token list (mock - real implementation would fetch from chain/API)
+// Note: Selendra uses Unified Accounts - no WSEL needed, native SEL works on EVM
 const DEFAULT_TOKENS: Token[] = [
   {
     symbol: "SEL",
     name: "Selendra",
     address: "0x0000000000000000000000000000000000000000",
     decimals: 18,
-    priceUsd: 0.15,
-  },
-  {
-    symbol: "WSEL",
-    name: "Wrapped Selendra",
-    address: "0x0000000000000000000000000000000000000001",
-    decimals: 18,
-    priceUsd: 0.15,
+    priceUsd: 0.0025, // Initial price target
   },
   {
     symbol: "USDT",
@@ -113,6 +107,14 @@ const DEFAULT_TOKENS: Token[] = [
   },
 ];
 
+// SelendraDEX fee configuration
+const DEX_CONFIG = {
+  swapFee: 0.003, // 0.30% total
+  lpShare: 0.002, // 0.20% to LPs
+  burnShare: 0.0005, // 0.05% burned
+  treasuryShare: 0.0005, // 0.05% to treasury
+};
+
 // Settings Modal
 function SettingsModal({
   isOpen,
@@ -129,7 +131,7 @@ function SettingsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative z-10 w-full max-w-sm mx-4 bg-gray-900 rounded-xl border border-gray-800 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h2 className="text-lg font-semibold text-white">Swap Settings</h2>
@@ -256,7 +258,7 @@ function TokenSelector({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative z-10 w-full max-w-md mx-4 bg-gray-900 rounded-xl border border-gray-800 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h2 className="text-lg font-semibold text-white">Select Token</h2>
@@ -453,11 +455,12 @@ export function SwapInterface({
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Mock quote calculation
+      // Mock quote calculation using SelendraDEX fee structure
       const inputUsd = parseFloat(inputAmount) * (inputToken.priceUsd || 0);
       const outputValue = inputUsd / (outputToken.priceUsd || 1);
       const priceImpact = Math.random() * 0.5; // Random impact 0-0.5%
-      const fee = inputUsd * 0.003; // 0.3% fee
+      const totalFee = inputUsd * DEX_CONFIG.swapFee; // 0.30% fee
+      const burnedFee = inputUsd * DEX_CONFIG.burnShare; // 0.05% burned
 
       const mockQuote: SwapQuote = {
         inputAmount,
@@ -465,7 +468,7 @@ export function SwapInterface({
         priceImpact,
         minimumReceived: (outputValue * (1 - slippage / 100)).toFixed(6),
         route: [inputToken.symbol, outputToken.symbol],
-        fee: fee.toFixed(4),
+        fee: totalFee.toFixed(4),
         gasCost: "0.001",
         exchangeRate: `1 ${inputToken.symbol} = ${(
           (inputToken.priceUsd || 0) / (outputToken.priceUsd || 1)
@@ -516,7 +519,7 @@ export function SwapInterface({
 
       // Mock success
       const mockTxHash = `0x${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`;
-      
+
       toast.success(
         <div>
           <div className="font-medium">Swap Successful!</div>
@@ -559,8 +562,9 @@ export function SwapInterface({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <div className="flex items-center gap-2">
-            <ArrowDownUp className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-semibold text-white">Swap</h2>
+            <Zap className="w-5 h-5 text-purple-400" />
+            <h2 className="text-lg font-semibold text-white">SelendraDEX</h2>
+            <span className="text-xs text-gray-500 ml-1">0.30% fee</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -611,7 +615,7 @@ export function SwapInterface({
           <TokenAmountInput
             token={outputToken}
             amount={outputAmount}
-            onAmountChange={() => {}}
+            onAmountChange={() => { }}
             onTokenSelect={() => setShowOutputTokenSelector(true)}
             label="You Receive"
             disabled
@@ -634,8 +638,8 @@ export function SwapInterface({
                     quote.priceImpact > 3
                       ? "text-red-400"
                       : quote.priceImpact > 1
-                      ? "text-amber-400"
-                      : "text-emerald-400"
+                        ? "text-amber-400"
+                        : "text-emerald-400"
                   )}
                 >
                   {quote.priceImpact.toFixed(2)}%
@@ -648,8 +652,16 @@ export function SwapInterface({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Swap Fee</span>
+                <span className="text-gray-400">Swap Fee (0.30%)</span>
                 <span className="text-white">${quote.fee}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-xs">→ LP Reward (0.20%)</span>
+                <span className="text-emerald-400 text-xs">+ ${(parseFloat(quote.fee) * (DEX_CONFIG.lpShare / DEX_CONFIG.swapFee)).toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-xs">→ Burned (0.05%)</span>
+                <span className="text-orange-400 text-xs">🔥 ${(parseFloat(quote.fee) * (DEX_CONFIG.burnShare / DEX_CONFIG.swapFee)).toFixed(4)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Network Fee</span>

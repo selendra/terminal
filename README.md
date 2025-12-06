@@ -64,6 +64,97 @@ docker compose -f docker-compose.local.yml up -d
 docker compose up -d
 ```
 
+### Production Deployment (with Indexer and Reverse Proxy)
+
+This setup runs the full Selendra Terminal stack in a production-like environment, including the application, the SubQuery indexer, and a Traefik reverse proxy for SSL termination.
+
+**Prerequisites:**
+
+*   Docker and Docker Compose
+*   A registered domain name pointed to your server's IP address.
+*   An email address for Let's Encrypt SSL certificate registration.
+
+**Setup:**
+
+1.  **Create an Environment File:**
+
+    Create a `.env` file in the root of the project and add the following variables:
+
+    ```bash
+    # .env
+    # Your domain for the indexer's GraphQL API
+    INDEXER_HOSTNAME=indexer.your-domain.com
+
+    # Your email for Let's Encrypt
+    ACME_EMAIL=your-email@example.com
+    ```
+
+2.  **Create Secret Files:**
+
+    Create a `secrets` directory inside the `indexer` directory. Then, create the following files inside `indexer/secrets`:
+
+    *   `postgres_user`: This file should contain the desired username for the PostgreSQL database.
+    *   `postgres_password`: This file should contain the desired password for the PostgreSQL database.
+    *   `postgres_db`: This file should contain the desired name for the PostgreSQL database.
+
+    **Example:**
+
+    ```bash
+    mkdir -p indexer/secrets
+    echo "myuser" > indexer/secrets/postgres_user
+    echo "a-very-secure-password" > indexer/secrets/postgres_password
+    echo "mydatabase" > indexer/secrets/postgres_db
+    ```
+
+    These files will be used as Docker secrets to securely provide the database credentials to the services. A `.gitignore` file is included in the `indexer/secrets` directory to prevent you from accidentally committing these files to your repository.
+
+3.  **Create the Docker Network:**
+
+    Traefik and the indexer services run in separate Docker Compose files but need to communicate. Create an external Docker network for them to share:
+
+    ```bash
+    docker network create selendra-indexer-prod
+    ```
+
+3.  **Run the Services:**
+
+    Start the Traefik reverse proxy first, then the indexer services:
+
+    ```bash
+    # Start Traefik
+    docker compose -f docker-compose.reverse-proxy.yml up -d
+
+    # Start the indexer services
+    docker compose -f indexer/docker-compose.prod.yml up -d
+    ```
+
+    Finally, start the main application:
+
+    ```bash
+    # Start the Selendra Terminal application
+    docker compose up -d
+    ```
+
+4.  **Run the Monitoring Stack (Optional):**
+
+    To monitor the indexer services, you can run the monitoring stack which includes Prometheus and Grafana:
+
+    ```bash
+    docker compose -f docker-compose.monitoring.yml up -d
+    ```
+
+**Services:**
+
+*   **Selendra Terminal:** The main Next.js application. The domain for this service should be configured in your main `docker-compose.yml` file.
+*   **Indexer GraphQL API:** The SubQuery GraphQL API, accessible at the `INDEXER_HOSTNAME` you configured (e.g., `https://indexer.your-domain.com`). You can use this endpoint to query the indexed blockchain data.
+*   **Traefik Dashboard:** The Traefik dashboard is available at `http://localhost:8080`. It provides a web UI to see the status of your services and the routes that have been created.
+*   **Prometheus:** The Prometheus server is available at `http://localhost:9090`. You can use it to view the metrics of the indexer services.
+*   **Grafana:** The Grafana server is available at `http://localhost:3000`. You can use it to create dashboards to visualize the metrics collected by Prometheus. The default login is `admin`/`admin`.
+
+**Note on Initial Indexer Sync:**
+
+When you first start the indexer, it will need to sync the entire history of the Selendra blockchain. This process can take a significant amount of time, depending on the size of the chain. You can monitor the progress by checking the logs of the `selendra-indexer-node-prod` container. You can also use the Prometheus and Grafana dashboards to monitor the sync status.
+
 ---
 
 ## Documentation

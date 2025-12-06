@@ -68,14 +68,17 @@ export function LatestBlocks() {
     fetchBlocks();
   }, [isConnected, substrateSDK, latestSubstrateBlock?.number]);
 
-  const truncateHash = (hash: string) => `${hash.slice(0, 8)}...${hash.slice(-6)}`;
+  const truncateHash = (hash: string) =>
+    `${hash.slice(0, 8)}...${hash.slice(-6)}`;
 
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Blocks className="h-5 w-5 text-selendra-400" />
-          <h2 className="text-lg font-semibold text-foreground">Latest Blocks</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Latest Blocks
+          </h2>
         </div>
         <Link
           href="/blocks"
@@ -128,7 +131,11 @@ export function LatestBlocks() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-foreground-secondary">Just now</span>
+                <span className="text-xs text-foreground-secondary">
+                  {block.timestamp
+                    ? formatDistanceToNow(block.timestamp)
+                    : "Just now"}
+                </span>
                 <ExternalLink className="h-3 w-3 text-foreground-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </Link>

@@ -10,13 +10,16 @@ import {
   ArrowUpRight,
   Info,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useBlockchain } from "@/components/providers/BlockchainProvider";
 import { useWallet } from "@/components/providers/WalletProvider";
 import { clsx } from "clsx";
 import toast from "react-hot-toast";
 import { useTokenomics } from "@/lib/hooks/useTokenomics";
+import { useValidators, useStakingStats } from "@/lib/hooks/useStaking";
 import { SEL_TOKEN_CONFIG } from "@/lib/tokenomics";
+import { Skeleton } from "@/components/common/Skeleton";
 
 interface StakingStats {
   totalStaked: string;
@@ -47,32 +50,52 @@ export function StakingDashboard() {
     substrateBalance,
     connectSubstrateWallet,
   } = useWallet();
-  
+
   // Get real tokenomics data
-  const { stakedSupply, stakingRate: realStakingRate, isLoading: tokenomicsLoading } = useTokenomics({
+  const {
+    stakedSupply,
+    stakingRate: realStakingRate,
+    isLoading: tokenomicsLoading,
+  } = useTokenomics({
     refreshInterval: 60000,
   });
 
-  const [activeTab, setActiveTab] = useState<"stake" | "validators" | "rewards">(
-    "stake"
-  );
+  // Fetch real validator data from chain
+  const {
+    validators: chainValidators,
+    isLoading: validatorsLoading,
+    error: validatorsError,
+  } = useValidators();
+
+  // Fetch real staking stats from chain
+  const {
+    stats: chainStakingStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useStakingStats();
+
+  const [activeTab, setActiveTab] = useState<
+    "stake" | "validators" | "rewards"
+  >("stake");
   const [stakeAmount, setStakeAmount] = useState("");
-  const [selectedValidator, setSelectedValidator] = useState<string | null>(null);
+  const [selectedValidator, setSelectedValidator] = useState<string | null>(
+    null,
+  );
   const [isStaking, setIsStaking] = useState(false);
   const [stakingStats, setStakingStats] = useState<StakingStats>({
     totalStaked: "245,000,000",
     stakingRate: 72,
-    rewardRate: 12.5,
+    rewardRate: 0,
     minStake: "1000",
     unbondingPeriod: 28,
-    activeValidators: 4,
-    waitingValidators: 20,
+    activeValidators: 0,
+    waitingValidators: 0,
   });
-  
+
   // Update staking stats when tokenomics data changes
   useEffect(() => {
     if (!tokenomicsLoading && stakedSupply) {
-      setStakingStats(prev => ({
+      setStakingStats((prev) => ({
         ...prev,
         totalStaked: stakedSupply,
         stakingRate: realStakingRate,
@@ -80,49 +103,45 @@ export function StakingDashboard() {
     }
   }, [stakedSupply, realStakingRate, tokenomicsLoading]);
 
-  // Mock validator data
-  const [validators] = useState<ValidatorInfo[]>([
-    {
-      address: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-      name: "Selendra Foundation #1",
-      commission: 5,
-      totalStake: "15,234,567",
-      ownStake: "5,000,000",
-      nominators: 245,
-      isActive: true,
-      apy: 14.2,
-    },
-    {
-      address: "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-      name: "Selendra Foundation #2",
-      commission: 3,
-      totalStake: "12,345,678",
-      ownStake: "4,500,000",
-      nominators: 198,
-      isActive: true,
-      apy: 13.8,
-    },
-    {
-      address: "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
-      name: "Community Validator",
-      commission: 10,
-      totalStake: "8,765,432",
-      ownStake: "2,000,000",
-      nominators: 156,
-      isActive: true,
-      apy: 12.1,
-    },
-    {
-      address: "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
-      name: "DeFi Stakers",
-      commission: 8,
-      totalStake: "6,543,210",
-      ownStake: "1,500,000",
-      nominators: 87,
-      isActive: true,
-      apy: 11.5,
-    },
-  ]);
+  // Update with chain staking stats when available
+  useEffect(() => {
+    if (chainStakingStats && !statsLoading) {
+      setStakingStats((prev) => ({
+        ...prev,
+        minStake: chainStakingStats.minNominatorBond
+          ? String(chainStakingStats.minNominatorBond)
+          : prev.minStake,
+        unbondingPeriod:
+          chainStakingStats.bondingDuration || prev.unbondingPeriod,
+        rewardRate: chainStakingStats.inflationRate || prev.rewardRate,
+      }));
+    }
+  }, [chainStakingStats, statsLoading]);
+
+  // Update validator counts when chain data available
+  useEffect(() => {
+    if (chainValidators && chainValidators.length > 0) {
+      const activeCount = chainValidators.filter((v) => v.isActive).length;
+      const waitingCount = chainValidators.filter((v) => !v.isActive).length;
+      setStakingStats((prev) => ({
+        ...prev,
+        activeValidators: activeCount,
+        waitingValidators: waitingCount,
+      }));
+    }
+  }, [chainValidators]);
+
+  // Map chain validators to component format
+  const validators: ValidatorInfo[] = chainValidators.map((v) => ({
+    address: v.address,
+    name: v.identity?.display || undefined,
+    commission: v.commission,
+    totalStake: String(v.totalStake),
+    ownStake: String(v.ownStake),
+    nominators: v.nominators,
+    isActive: v.isActive,
+    apy: v.apy,
+  }));
 
   const handleStake = async () => {
     if (!walletConnected) {
@@ -172,7 +191,10 @@ export function StakingDashboard() {
         </div>
 
         {!walletConnected && (
-          <button onClick={() => connectSubstrateWallet()} className="btn-primary">
+          <button
+            onClick={() => connectSubstrateWallet()}
+            className="btn-primary"
+          >
             Connect Wallet to Stake
           </button>
         )}
@@ -183,7 +205,9 @@ export function StakingDashboard() {
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Wallet className="h-4 w-4 text-selendra-400" />
-            <span className="text-sm text-foreground-secondary">Total Staked</span>
+            <span className="text-sm text-foreground-secondary">
+              Total Staked
+            </span>
           </div>
           <p className="text-xl font-bold text-foreground">
             {stakingStats.totalStaked} SEL
@@ -199,33 +223,49 @@ export function StakingDashboard() {
             <span className="text-sm text-foreground-secondary">Est. APY</span>
           </div>
           <p className="text-xl font-bold text-accent-green">
-            {stakingStats.rewardRate}%
+            {stakingStats.rewardRate > 0
+              ? `${stakingStats.rewardRate}%`
+              : "N/A"}
           </p>
-          <p className="text-xs text-foreground-secondary mt-1">Annual reward rate</p>
+          <p className="text-xs text-foreground-secondary mt-1">
+            {stakingStats.rewardRate > 0
+              ? "Annual reward rate"
+              : "Requires chain data"}
+          </p>
         </div>
 
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-purple-400" />
-            <span className="text-sm text-foreground-secondary">Validators</span>
+            <span className="text-sm text-foreground-secondary">
+              Validators
+            </span>
           </div>
           <p className="text-xl font-bold text-foreground">
-            {stakingStats.activeValidators}
+            {stakingStats.activeValidators > 0
+              ? stakingStats.activeValidators
+              : "N/A"}
           </p>
           <p className="text-xs text-foreground-secondary mt-1">
-            +{stakingStats.waitingValidators} waiting
+            {stakingStats.waitingValidators > 0
+              ? `+${stakingStats.waitingValidators} waiting`
+              : "Requires chain data"}
           </p>
         </div>
 
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-4 w-4 text-yellow-400" />
-            <span className="text-sm text-foreground-secondary">Unbonding Period</span>
+            <span className="text-sm text-foreground-secondary">
+              Unbonding Period
+            </span>
           </div>
           <p className="text-xl font-bold text-foreground">
             {stakingStats.unbondingPeriod} days
           </p>
-          <p className="text-xs text-foreground-secondary mt-1">Min: {stakingStats.minStake} SEL</p>
+          <p className="text-xs text-foreground-secondary mt-1">
+            Min: {stakingStats.minStake} SEL
+          </p>
         </div>
       </div>
 
@@ -239,7 +279,7 @@ export function StakingDashboard() {
               "px-4 py-2 text-sm font-medium rounded-md transition-colors capitalize",
               activeTab === tab
                 ? "bg-selendra-500/20 text-selendra-400"
-                : "text-foreground-secondary hover:text-foreground"
+                : "text-foreground-secondary hover:text-foreground",
             )}
           >
             {tab}
@@ -261,7 +301,9 @@ export function StakingDashboard() {
                 {/* Balance */}
                 <div className="p-3 rounded-lg bg-background-hover">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-foreground-secondary">Available Balance</span>
+                    <span className="text-sm text-foreground-secondary">
+                      Available Balance
+                    </span>
                     <span className="text-sm font-medium text-foreground">
                       {substrateBalance?.formatted || "0"} SEL
                     </span>
@@ -305,8 +347,9 @@ export function StakingDashboard() {
                     <div className="p-3 rounded-lg bg-background-hover flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {validators.find((v) => v.address === selectedValidator)
-                            ?.name || "Unknown"}
+                          {validators.find(
+                            (v) => v.address === selectedValidator,
+                          )?.name || "Unknown"}
                         </p>
                         <p className="text-xs text-foreground-secondary font-mono">
                           {truncateAddress(selectedValidator)}
@@ -360,8 +403,8 @@ export function StakingDashboard() {
                   <AlertCircle className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-yellow-400">
                     Staked tokens have a {stakingStats.unbondingPeriod}-day
-                    unbonding period. During this time, you won&apos;t earn rewards
-                    and cannot transfer your tokens.
+                    unbonding period. During this time, you won&apos;t earn
+                    rewards and cannot transfer your tokens.
                   </p>
                 </div>
               </div>
@@ -436,52 +479,63 @@ export function StakingDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {validators.map((validator) => (
-                  <tr
-                    key={validator.address}
-                    className={clsx(
-                      "border-b border-border last:border-b-0 hover:bg-background-hover transition-colors",
-                      selectedValidator === validator.address &&
-                        "bg-selendra-500/10"
-                    )}
-                  >
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {validator.name}
-                        </p>
-                        <p className="text-xs text-foreground-secondary font-mono">
-                          {truncateAddress(validator.address)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      {validator.totalStake} SEL
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      {validator.commission}%
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      {validator.nominators}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-accent-green font-medium">
-                        {validator.apy}%
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedValidator(validator.address);
-                          setActiveTab("stake");
-                        }}
-                        className="btn-primary text-sm py-1.5"
-                      >
-                        Stake
-                      </button>
+                {validators.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <p className="text-foreground-secondary text-lg">N/A</p>
+                      <p className="text-foreground-secondary text-sm mt-2">
+                        Validator data integration pending
+                      </p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  validators.map((validator) => (
+                    <tr
+                      key={validator.address}
+                      className={clsx(
+                        "border-b border-border last:border-b-0 hover:bg-background-hover transition-colors",
+                        selectedValidator === validator.address &&
+                          "bg-selendra-500/10",
+                      )}
+                    >
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {validator.name}
+                          </p>
+                          <p className="text-xs text-foreground-secondary font-mono">
+                            {truncateAddress(validator.address)}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-foreground">
+                        {validator.totalStake} SEL
+                      </td>
+                      <td className="py-3 px-4 text-foreground">
+                        {validator.commission}%
+                      </td>
+                      <td className="py-3 px-4 text-foreground">
+                        {validator.nominators}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-accent-green font-medium">
+                          {validator.apy}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedValidator(validator.address);
+                            setActiveTab("stake");
+                          }}
+                          className="btn-primary text-sm py-1.5"
+                        >
+                          Stake
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -497,7 +551,9 @@ export function StakingDashboard() {
           {walletConnected ? (
             <div className="text-center py-12">
               <TrendingUp className="h-12 w-12 text-foreground-secondary mx-auto mb-4" />
-              <p className="text-foreground-secondary">No rewards to claim yet</p>
+              <p className="text-foreground-secondary">
+                No rewards to claim yet
+              </p>
               <p className="text-sm text-foreground-secondary mt-2">
                 Start staking to earn rewards
               </p>

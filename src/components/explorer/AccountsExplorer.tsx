@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Users,
   Search,
@@ -13,18 +13,26 @@ import {
   RefreshCw,
   AlertCircle,
   Wallet,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-import { AddressDisplay } from '@/components/common/AddressDisplay';
-import { VMBadge } from '@/components/common/VMBadge';
-import { SkeletonAccountsTable, SkeletonCard, ErrorState } from '@/components/common';
-import { useTopAccounts, useAccountsCount } from '@/lib/hooks/useIndexerAccount';
-import { useIndexerStatus } from '@/lib/hooks/useIndexerStatus';
-import { IndexerAccount } from '@/lib/api/graphql';
+import { AddressDisplay } from "@/components/common/AddressDisplay";
+import { VMBadge } from "@/components/common/VMBadge";
+import {
+  SkeletonAccountsTable,
+  SkeletonCard,
+  ErrorState,
+} from "@/components/common";
+import {
+  useTopAccounts,
+  useAccountsCount,
+} from "@/lib/hooks/useIndexerAccount";
+import { useIndexerStatus } from "@/lib/hooks/useIndexerStatus";
+import { IndexerAccount } from "@/lib/api/graphql";
+import { useBlockchain } from "@/components/providers/BlockchainProvider";
 
-type AccountType = 'all' | 'eoa' | 'contract';
-type SortBy = 'balance' | 'txCount';
+type AccountType = "all" | "eoa" | "contract";
+type SortBy = "balance" | "txCount";
 
 // Format balance from raw value
 function formatBalance(value: string): string {
@@ -33,10 +41,10 @@ function formatBalance(value: string): string {
     const decimals = 18;
     const whole = val / BigInt(10 ** decimals);
     const fraction = val % BigInt(10 ** decimals);
-    const fractionStr = fraction.toString().padStart(decimals, '0').slice(0, 2);
+    const fractionStr = fraction.toString().padStart(decimals, "0").slice(0, 2);
     return `${whole.toLocaleString()}.${fractionStr}`;
   } catch {
-    return '0.00';
+    return "0.00";
   }
 }
 
@@ -44,30 +52,45 @@ function formatBalance(value: string): string {
 function calculatePercentage(balance: string, totalSupply: bigint): string {
   try {
     const val = BigInt(balance);
-    if (totalSupply === BigInt(0)) return '0.00';
+    if (totalSupply === BigInt(0)) return "0.00";
     const percentage = (val * BigInt(10000)) / totalSupply;
     return (Number(percentage) / 100).toFixed(2);
   } catch {
-    return '0.00';
+    return "0.00";
   }
 }
 
-// Determine if an account is a contract (heuristic: has EVM address but no transfers indicates contract)
+// Determine if an account is a contract
 function isContract(account: IndexerAccount): boolean {
-  // Simple heuristic: if it has evmAddress and low nonce, could be a contract
-  // In a real implementation, you'd check the code at the address
-  return account.evmAddress !== null && account.evmNonce === 0 && account.transactionCount > 100;
+  // Better heuristic for contract detection:
+  // 1. Has EVM address (contracts exist on EVM side)
+  // 2. High transaction count with zero nonce (receives many calls but doesn't send)
+  // 3. OR has reserved balance (contract storage deposits)
+  const hasEvmAddress = account.evmAddress !== null;
+  const highTxLowNonce =
+    account.transactionCount > 50 && account.evmNonce === 0;
+  const hasReservedBalance = BigInt(account.reservedBalance || "0") > BigInt(0);
+
+  return hasEvmAddress && (highTxLowNonce || hasReservedBalance);
 }
 
 export function AccountsExplorer() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountType, setAccountType] = useState<AccountType>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('balance');
+  const [accountType, setAccountType] = useState<AccountType>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("balance");
   const itemsPerPage = 10;
+  const [totalSupply, setTotalSupply] = useState<bigint>(BigInt(0));
+
+  const { substrateSDK, isConnected } = useBlockchain();
 
   // Fetch top accounts from indexer
-  const { data: accounts, isLoading, error, refetch } = useTopAccounts({
+  const {
+    data: accounts,
+    isLoading,
+    error,
+    refetch,
+  } = useTopAccounts({
     first: 100, // Get more for filtering
     orderBy: sortBy,
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -79,19 +102,36 @@ export function AccountsExplorer() {
   // Get indexer sync status
   const { data: syncStatus } = useIndexerStatus();
 
-  // Calculate total supply from loaded accounts (rough estimate)
-  const totalSupply = useMemo(() => {
-    if (!accounts || accounts.length === 0) return BigInt(0);
-    // For real implementation, fetch total supply from chain
-    // For now, estimate from top accounts
-    return accounts.reduce((sum, acc) => {
+  // Fetch total issuance from chain
+  React.useEffect(() => {
+    if (!isConnected || !substrateSDK) return;
+
+    const fetchTotalIssuance = async () => {
       try {
-        return sum + BigInt(acc.freeBalance);
-      } catch {
-        return sum;
+        const api = substrateSDK.getApi();
+        if (!api) return;
+
+        const totalIssuance = await api.query.balances.totalIssuance();
+        setTotalSupply(BigInt(totalIssuance.toString()));
+      } catch (error) {
+        console.error("Failed to fetch total issuance:", error);
+        // Fallback to rough estimate from top accounts
+        if (accounts && accounts.length > 0) {
+          const estimate =
+            accounts.reduce((sum, acc) => {
+              try {
+                return sum + BigInt(acc.freeBalance);
+              } catch {
+                return sum;
+              }
+            }, BigInt(0)) * BigInt(10); // Rough multiplier
+          setTotalSupply(estimate);
+        }
       }
-    }, BigInt(0)) * BigInt(3); // Rough multiplier to estimate total
-  }, [accounts]);
+    };
+
+    fetchTotalIssuance();
+  }, [isConnected, substrateSDK, accounts]);
 
   // Filter accounts
   const filteredAccounts = useMemo(() => {
@@ -100,15 +140,19 @@ export function AccountsExplorer() {
     return accounts.filter((account) => {
       const matchesSearch =
         !searchQuery ||
-        account.substrateAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        account.substrateAddress
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         account.evmAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        account.identityDisplay?.toLowerCase().includes(searchQuery.toLowerCase());
+        account.identityDisplay
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
       const isContractAccount = isContract(account);
       const matchesType =
-        accountType === 'all' ||
-        (accountType === 'contract' && isContractAccount) ||
-        (accountType === 'eoa' && !isContractAccount);
+        accountType === "all" ||
+        (accountType === "contract" && isContractAccount) ||
+        (accountType === "eoa" && !isContractAccount);
 
       return matchesSearch && matchesType;
     });
@@ -118,7 +162,7 @@ export function AccountsExplorer() {
   const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
   const paginatedAccounts = filteredAccounts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   // Stats
@@ -162,7 +206,9 @@ export function AccountsExplorer() {
             disabled={isLoading}
             className="px-4 py-2 bg-background-secondary hover:bg-background-hover border border-border rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </button>
         </div>
@@ -174,7 +220,8 @@ export function AccountsExplorer() {
           <AlertCircle className="w-5 h-5 text-yellow-500" />
           <div>
             <p className="text-sm text-yellow-400">
-              Indexer is syncing: {syncStatus.indexerBlock.toLocaleString()} / {syncStatus.chainBlock.toLocaleString()} blocks
+              Indexer is syncing: {syncStatus.indexerBlock.toLocaleString()} /{" "}
+              {syncStatus.chainBlock.toLocaleString()} blocks
             </p>
             <p className="text-xs text-yellow-500/70">
               Account data may not be fully updated yet
@@ -205,7 +252,9 @@ export function AccountsExplorer() {
             </p>
           </div>
           <div className="bg-background-card border border-border rounded-xl p-4">
-            <p className="text-foreground-secondary text-sm">Contract Accounts</p>
+            <p className="text-foreground-secondary text-sm">
+              Contract Accounts
+            </p>
             <p className="text-2xl font-bold text-foreground mt-1">
               {stats.contractAccounts.toLocaleString()}
             </p>
@@ -224,18 +273,18 @@ export function AccountsExplorer() {
         <div className="flex items-center gap-2">
           <span className="text-foreground-secondary text-sm">Type:</span>
           <div className="flex rounded-lg overflow-hidden border border-border">
-            {(['all', 'eoa', 'contract'] as const).map((type) => (
+            {(["all", "eoa", "contract"] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setAccountType(type)}
                 className={cn(
-                  'px-4 py-2 text-sm transition-colors',
+                  "px-4 py-2 text-sm transition-colors",
                   accountType === type
-                    ? 'bg-selendra-500 text-white'
-                    : 'bg-background-secondary text-foreground-secondary hover:text-foreground'
+                    ? "bg-selendra-500 text-white"
+                    : "bg-background-secondary text-foreground-secondary hover:text-foreground",
                 )}
               >
-                {type === 'all' ? 'All' : type === 'eoa' ? 'EOA' : 'Contract'}
+                {type === "all" ? "All" : type === "eoa" ? "EOA" : "Contract"}
               </button>
             ))}
           </div>
@@ -244,11 +293,13 @@ export function AccountsExplorer() {
         <div className="flex items-center gap-2">
           <span className="text-foreground-secondary text-sm">Sort by:</span>
           <button
-            onClick={() => setSortBy(sortBy === 'balance' ? 'txCount' : 'balance')}
+            onClick={() =>
+              setSortBy(sortBy === "balance" ? "txCount" : "balance")
+            }
             className="flex items-center gap-2 px-4 py-2 bg-background-secondary border border-border rounded-lg text-foreground hover:bg-background-hover transition-colors"
           >
             <ArrowUpDown className="h-4 w-4" />
-            {sortBy === 'balance' ? 'Balance' : 'Transactions'}
+            {sortBy === "balance" ? "Balance" : "Transactions"}
           </button>
         </div>
       </div>
@@ -272,7 +323,7 @@ export function AccountsExplorer() {
             type="empty"
             title="No accounts found"
             message={
-              searchQuery || accountType !== 'all'
+              searchQuery || accountType !== "all"
                 ? "No accounts match your current filters. Try adjusting your search criteria."
                 : "The indexer is still syncing account data. Accounts will appear as they are indexed."
             }
@@ -312,8 +363,12 @@ export function AccountsExplorer() {
                 <tbody className="divide-y divide-border">
                   {paginatedAccounts.map((account, index) => {
                     const isContractAccount = isContract(account);
-                    const displayAddress = account.evmAddress || account.substrateAddress;
-                    const percentage = calculatePercentage(account.freeBalance, totalSupply);
+                    const displayAddress =
+                      account.evmAddress || account.substrateAddress;
+                    const percentage = calculatePercentage(
+                      account.freeBalance,
+                      totalSupply,
+                    );
 
                     return (
                       <tr
@@ -349,11 +404,16 @@ export function AccountsExplorer() {
                             {isContractAccount ? (
                               <>
                                 <Code className="h-4 w-4 text-purple-400" />
-                                <span className="text-foreground">Contract</span>
+                                <span className="text-foreground">
+                                  Contract
+                                </span>
                               </>
                             ) : (
                               <>
-                                <VMBadge vm={account.evmAddress ? 'evm' : 'substrate'} size="sm" />
+                                <VMBadge
+                                  vm={account.evmAddress ? "evm" : "substrate"}
+                                  size="sm"
+                                />
                                 <span className="text-foreground">EOA</span>
                               </>
                             )}
@@ -392,9 +452,9 @@ export function AccountsExplorer() {
             {/* Pagination */}
             <div className="px-6 py-4 border-t border-border flex items-center justify-between">
               <p className="text-foreground-secondary text-sm">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                {Math.min(currentPage * itemsPerPage, filteredAccounts.length)} of{' '}
-                {filteredAccounts.length} accounts
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, filteredAccounts.length)}{" "}
+                of {filteredAccounts.length} accounts
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -420,10 +480,10 @@ export function AccountsExplorer() {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        'w-10 h-10 rounded-lg transition-colors',
+                        "w-10 h-10 rounded-lg transition-colors",
                         currentPage === pageNum
-                          ? 'bg-selendra-500 text-white'
-                          : 'bg-background-secondary border border-border text-foreground-secondary hover:text-foreground'
+                          ? "bg-selendra-500 text-white"
+                          : "bg-background-secondary border border-border text-foreground-secondary hover:text-foreground",
                       )}
                     >
                       {pageNum}
@@ -431,7 +491,9 @@ export function AccountsExplorer() {
                   );
                 })}
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages || totalPages === 0}
                   className="p-2 rounded-lg bg-background-secondary border border-border text-foreground-secondary hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

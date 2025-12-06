@@ -28,124 +28,22 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { ContractVerification } from "./ContractVerification";
 
-// Contract types
-export type ContractType = "erc20" | "erc721" | "erc1155" | "defi" | "proxy" | "ink" | "other";
-export type VMType = "evm" | "wasm";
+import { Skeleton, SkeletonTableRow } from "@/components/common/Skeleton";
+import { useContracts } from "@/lib/hooks/useContracts";
+import { Contract, ContractType, VMType } from "@/types/contracts";
 
-export interface Contract {
-  address: string;
-  name: string;
-  compiler: string;
-  version: string;
-  verified: boolean;
-  createdAt: Date;
-  creator: string;
-  txCount: number;
-  balance: string;
-  type: ContractType;
-  vmType: VMType;
-  isProxy?: boolean;
-  implementationAddress?: string;
-}
-
-const mockContracts: Contract[] = [
-  {
-    address: "0x55d398326f99059ff775485246999027b3197955",
-    name: "Selendra USDT",
-    compiler: "Solidity",
-    version: "0.8.19",
-    verified: true,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    creator: "0x742d35cc6634c0532925a3b844bc454e4438f44e",
-    txCount: 125420,
-    balance: "0 SEL",
-    type: "erc20",
-    vmType: "evm",
-  },
-  {
-    address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-    name: "Selendra USDC",
-    compiler: "Solidity",
-    version: "0.8.17",
-    verified: true,
-    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-    creator: "0x123abc456def789ghi012jkl345mno678pqr",
-    txCount: 98500,
-    balance: "0 SEL",
-    type: "erc20",
-    vmType: "evm",
-  },
-  {
-    address: "0x7c3aed6b8c5f4e2a1d0b9f3e8a4c6d7b9e0f1a2b",
-    name: "SelendraSwap Router",
-    compiler: "Solidity",
-    version: "0.8.20",
-    verified: true,
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    creator: "0xabc123def456789012345678901234567890abcd",
-    txCount: 256780,
-    balance: "1,250.50 SEL",
-    type: "defi",
-    vmType: "evm",
-    isProxy: true,
-    implementationAddress: "0x8d9a0987654321098765432109876543210987654",
-  },
-  {
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    name: "Selendra NFT Collection",
-    compiler: "Solidity",
-    version: "0.8.18",
-    verified: true,
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-    creator: "0xdef456789012345678901234567890abcdef1234",
-    txCount: 45200,
-    balance: "0 SEL",
-    type: "erc721",
-    vmType: "evm",
-  },
-  {
-    address: "0xfedcba0987654321fedcba0987654321fedcba09",
-    name: "Selendra Staking",
-    compiler: "Solidity",
-    version: "0.8.19",
-    verified: true,
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-    creator: "0x567890abcdef1234567890abcdef123456789012",
-    txCount: 78900,
-    balance: "5,420,000 SEL",
-    type: "defi",
-    vmType: "evm",
-  },
-  {
-    address: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-    name: "Ink! PSP22 Token",
-    compiler: "Ink!",
-    version: "4.3.0",
-    verified: true,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    creator: "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-    txCount: 12500,
-    balance: "100 SEL",
-    type: "erc20",
-    vmType: "wasm",
-  },
-  {
-    address: "0x0123456789abcdef0123456789abcdef01234567",
-    name: "Unknown Contract",
-    compiler: "Solidity",
-    version: "0.8.15",
-    verified: false,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    creator: "0x890abcdef1234567890abcdef1234567890abcde",
-    txCount: 1250,
-    balance: "50.25 SEL",
-    type: "other",
-    vmType: "evm",
-  },
-];
+// ... (keep other imports)
 
 export const ContractsExplorer: React.FC = () => {
-  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const { contracts: fetchedContracts, isLoading } = useContracts();
+  const [contracts, setContracts] = useState<Contract[]>([]);
+
+  useEffect(() => {
+    if (fetchedContracts.length > 0) {
+      setContracts(fetchedContracts);
+    }
+  }, [fetchedContracts]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "erc20" | "erc721" | "erc1155" | "defi" | "proxy" | "ink" | "other">("all");
   const [filterVerified, setFilterVerified] = useState<"all" | "verified" | "unverified">("all");
@@ -171,11 +69,11 @@ export const ContractsExplorer: React.FC = () => {
   });
 
   // Tab content data
-  const tabContracts = activeTab === "verified" 
+  const tabContracts = activeTab === "verified"
     ? filteredContracts.filter(c => c.verified)
     : activeTab === "recent"
-    ? [...filteredContracts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    : filteredContracts;
+      ? [...filteredContracts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      : filteredContracts;
 
   const paginatedContracts = tabContracts.slice(
     (currentPage - 1) * contractsPerPage,
@@ -252,9 +150,9 @@ export const ContractsExplorer: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Contract Verification Modal */}
-      <ContractVerification 
-        isOpen={isVerificationOpen} 
-        onClose={() => setIsVerificationOpen(false)} 
+      <ContractVerification
+        isOpen={isVerificationOpen}
+        onClose={() => setIsVerificationOpen(false)}
       />
 
       {/* Header */}
@@ -275,74 +173,90 @@ export const ContractsExplorer: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <FileCode className="w-5 h-5 text-purple-400" />
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-background-card border border-border rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton variant="rectangular" className="w-10 h-10 rounded-lg" />
+                <div className="space-y-2">
+                  <Skeleton variant="text" className="h-3 w-16" />
+                  <Skeleton variant="text" className="h-6 w-12" />
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Total</p>
-              <p className="text-xl font-bold">{stats.totalContracts}</p>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <FileCode className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Total</p>
+                <p className="text-xl font-bold">{stats.totalContracts}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Verified</p>
+                <p className="text-xl font-bold">{stats.verifiedContracts}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">DeFi</p>
+                <p className="text-xl font-bold">{stats.defiContracts}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                <Code className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Tokens</p>
+                <p className="text-xl font-bold">{stats.tokenContracts}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                <Terminal className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">WASM</p>
+                <p className="text-xl font-bold">{stats.wasmContracts}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-orange-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Proxy</p>
+                <p className="text-xl font-bold">{stats.proxyContracts}</p>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Verified</p>
-              <p className="text-xl font-bold">{stats.verifiedContracts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">DeFi</p>
-              <p className="text-xl font-bold">{stats.defiContracts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Tokens</p>
-              <p className="text-xl font-bold">{stats.tokenContracts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-              <Terminal className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">WASM</p>
-              <p className="text-xl font-bold">{stats.wasmContracts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-orange-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Proxy</p>
-              <p className="text-xl font-bold">{stats.proxyContracts}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="flex items-center gap-1 p-1 bg-background-secondary rounded-xl w-fit">
@@ -354,11 +268,10 @@ export const ContractsExplorer: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === tab.id
-                ? "bg-selendra-600 text-white"
-                : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
+              ? "bg-selendra-600 text-white"
+              : "text-foreground-secondary hover:text-foreground hover:bg-background-hover"
+              }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
@@ -453,111 +366,117 @@ export const ContractsExplorer: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedContracts.map((contract) => (
-                <tr
-                  key={contract.address}
-                  className="border-b border-border hover:bg-background-hover transition-colors"
-                >
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-background-secondary rounded-lg flex items-center justify-center">
-                        <FileCode className="w-5 h-5 text-selendra-400" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/contracts/${contract.address}`}
-                            className="font-medium hover:text-selendra-400 transition-colors"
-                          >
-                            {contract.name}
-                          </Link>
-                          {contract.verified && (
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                          )}
-                          {contract.isProxy && (
-                            <span className="px-1.5 py-0.5 text-xs font-medium bg-orange-500/20 text-orange-400 rounded flex items-center gap-1">
-                              <Zap className="w-3 h-3" />
-                              Proxy
-                            </span>
-                          )}
+              {isLoading ? (
+                Array.from({ length: 10 }).map((_, i) => (
+                  <SkeletonTableRow key={i} columns={8} />
+                ))
+              ) : (
+                paginatedContracts.map((contract) => (
+                  <tr
+                    key={contract.address}
+                    className="border-b border-border hover:bg-background-hover transition-colors"
+                  >
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-background-secondary rounded-lg flex items-center justify-center">
+                          <FileCode className="w-5 h-5 text-selendra-400" />
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <button
-                            onClick={() => copyAddress(contract.address)}
-                            className="flex items-center gap-1 text-foreground-secondary hover:text-foreground font-mono"
-                          >
-                            {contract.address.slice(0, 10)}...{contract.address.slice(-6)}
-                            {copiedAddress === contract.address ? (
-                              <CheckCircle className="w-3 h-3 text-green-400" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/contracts/${contract.address}`}
+                              className="font-medium hover:text-selendra-400 transition-colors"
+                            >
+                              {contract.name}
+                            </Link>
+                            {contract.verified && (
+                              <CheckCircle className="w-4 h-4 text-green-400" />
                             )}
-                          </button>
+                            {contract.isProxy && (
+                              <span className="px-1.5 py-0.5 text-xs font-medium bg-orange-500/20 text-orange-400 rounded flex items-center gap-1">
+                                <Zap className="w-3 h-3" />
+                                Proxy
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <button
+                              onClick={() => copyAddress(contract.address)}
+                              className="flex items-center gap-1 text-foreground-secondary hover:text-foreground font-mono"
+                            >
+                              {contract.address.slice(0, 10)}...{contract.address.slice(-6)}
+                              {copiedAddress === contract.address ? (
+                                <CheckCircle className="w-3 h-3 text-green-400" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    {getVMBadge(contract.vmType)}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(contract.type)}`}>
-                      {getTypeLabel(contract.type)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="text-sm">
-                      <p>{contract.compiler}</p>
-                      <p className="text-foreground-secondary">v{contract.version}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-right text-foreground">
-                    {contract.txCount.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-4 text-right text-foreground">
-                    {contract.balance}
-                  </td>
-                  <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
-                    {Math.floor((Date.now() - contract.createdAt.getTime()) / (1000 * 60 * 60 * 24))}d ago
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-center gap-1">
-                      <Link
-                        href={`/contracts/${contract.address}`}
-                        className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
-                        title="View Contract"
-                      >
-                        <Eye className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
-                      </Link>
-                      {contract.verified && (
-                        <>
-                          <Link
-                            href={`/contracts/${contract.address}?tab=code`}
-                            className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
-                            title="View Source Code"
-                          >
-                            <Code className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
-                          </Link>
-                          <Link
-                            href={`/contracts/${contract.address}?tab=read`}
-                            className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
-                            title="Read Contract"
-                          >
-                            <FileText className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
-                          </Link>
-                          <Link
-                            href={`/contracts/${contract.address}?tab=write`}
-                            className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
-                            title="Write Contract"
-                          >
-                            <Edit3 className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-4">
+                      {getVMBadge(contract.vmType)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(contract.type)}`}>
+                        {getTypeLabel(contract.type)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="text-sm">
+                        <p>{contract.compiler}</p>
+                        <p className="text-foreground-secondary">v{contract.version}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right text-foreground">
+                      {contract.txCount.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-4 text-right text-foreground">
+                      {contract.balance}
+                    </td>
+                    <td className="px-4 py-4 text-right text-foreground-secondary text-sm">
+                      {Math.floor((Date.now() - contract.createdAt.getTime()) / (1000 * 60 * 60 * 24))}d ago
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <Link
+                          href={`/contracts/${contract.address}`}
+                          className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+                          title="View Contract"
+                        >
+                          <Eye className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                        </Link>
+                        {contract.verified && (
+                          <>
+                            <Link
+                              href={`/contracts/${contract.address}?tab=code`}
+                              className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+                              title="View Source Code"
+                            >
+                              <Code className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                            </Link>
+                            <Link
+                              href={`/contracts/${contract.address}?tab=read`}
+                              className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+                              title="Read Contract"
+                            >
+                              <FileText className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                            </Link>
+                            <Link
+                              href={`/contracts/${contract.address}?tab=write`}
+                              className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+                              title="Write Contract"
+                            >
+                              <Edit3 className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -581,11 +500,10 @@ export const ContractsExplorer: React.FC = () => {
               <button
                 key={pageNum}
                 onClick={() => setCurrentPage(pageNum)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === pageNum
-                    ? "bg-selendra-600 text-white"
-                    : "bg-background-secondary hover:bg-background-hover"
-                }`}
+                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                  ? "bg-selendra-600 text-white"
+                  : "bg-background-secondary hover:bg-background-hover"
+                  }`}
               >
                 {pageNum}
               </button>

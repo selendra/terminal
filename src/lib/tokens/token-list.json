@@ -26,21 +26,6 @@
             }
         },
         {
-            "chainId": 1961,
-            "address": "0x0000000000000000000000000000000000000001",
-            "name": "Wrapped SEL",
-            "symbol": "WSEL",
-            "decimals": 18,
-            "logoURI": "/tokens/sel.png",
-            "tags": [
-                "wrapped",
-                "verified"
-            ],
-            "extensions": {
-                "coingeckoId": "selendra"
-            }
-        },
-        {
             "chainId": 1,
             "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
             "name": "Tether USD",

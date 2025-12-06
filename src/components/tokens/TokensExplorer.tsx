@@ -26,52 +26,26 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { TokenIcon } from "./TokenIcon";
 
-// Token types
-export type TokenType = "native" | "erc20" | "erc721" | "erc1155" | "psp22" | "psp34" | "psp37" | "substrate";
-export type TokenStandard = "ERC-20" | "ERC-721" | "ERC-1155" | "PSP22" | "PSP34" | "PSP37" | "Native" | "Substrate Asset";
+import { Skeleton, SkeletonTableRow } from "@/components/common/Skeleton";
+import { useTokens } from "@/lib/hooks/useTokens";
+import { Token, TokenType, TokenStandard } from "@/types/tokens";
 
-export interface Token {
-  id: string;
-  rank: number;
-  name: string;
-  symbol: string;
-  logo: string;
-  address: string;
-  price: string;
-  priceChange24h: number;
-  priceChange7d?: number;
-  volume24h: string;
-  marketCap: string;
-  holders: number;
-  totalSupply: string;
-  circulatingSupply?: string;
-  type: TokenType;
-  standard: TokenStandard;
-  verified: boolean;
-  favorite: boolean;
-  priceHistory: number[];
-  decimals?: number;
-  website?: string;
-  twitter?: string;
-  telegram?: string;
-  contractCreated?: Date;
-  // NFT specific
-  totalItems?: number;
-  floorPrice?: string;
-}
+type TabType = "erc20" | "erc721" | "erc1155" | "substrate";
 
-const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
+const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
-  const width = 120;
-  const height = 40;
+  const height = 30;
+  const width = 100;
 
-  const points = data.map((val, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - ((val - min) / range) * height;
-    return `${x},${y}`;
-  }).join(" ");
+  const points = data
+    .map((val, i) => {
+      const x = (i / (data.length - 1)) * width;
+      const y = height - ((val - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
     <svg width={width} height={height} className="overflow-visible">
@@ -87,215 +61,6 @@ const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color })
   );
 };
 
-const mockTokens: Token[] = [
-  {
-    id: "1",
-    rank: 1,
-    name: "Selendra",
-    symbol: "SEL",
-    logo: "🔮",
-    address: "Native",
-    price: "$0.0456",
-    priceChange24h: 5.23,
-    priceChange7d: 12.45,
-    volume24h: "$1,250,000",
-    marketCap: "$45,600,000",
-    holders: 15420,
-    totalSupply: "1,000,000,000",
-    circulatingSupply: "850,000,000",
-    type: "native",
-    standard: "Native",
-    verified: true,
-    favorite: true,
-    priceHistory: [0.041, 0.042, 0.044, 0.043, 0.045, 0.046, 0.0456],
-    decimals: 18,
-  },
-  {
-    id: "2",
-    rank: 2,
-    name: "Wrapped SEL",
-    symbol: "WSEL",
-    logo: "🔮",
-    address: "0x7c3aed6b8c5f4e2a1d0b9f3e8a4c6d7b",
-    price: "$0.0455",
-    priceChange24h: 5.18,
-    volume24h: "$850,000",
-    marketCap: "$22,750,000",
-    holders: 8750,
-    totalSupply: "500,000,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: true,
-    favorite: false,
-    priceHistory: [0.040, 0.041, 0.043, 0.044, 0.045, 0.045, 0.0455],
-    decimals: 18,
-  },
-  {
-    id: "3",
-    rank: 3,
-    name: "USD Tether",
-    symbol: "USDT",
-    logo: "💵",
-    address: "0x55d398326f99059ff775485246999027b3197955",
-    price: "$1.00",
-    priceChange24h: 0.01,
-    volume24h: "$5,200,000",
-    marketCap: "$12,000,000",
-    holders: 32150,
-    totalSupply: "12,000,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: true,
-    favorite: true,
-    priceHistory: [1.00, 0.99, 1.00, 1.01, 1.00, 1.00, 1.00],
-    decimals: 6,
-  },
-  {
-    id: "4",
-    rank: 4,
-    name: "USD Coin",
-    symbol: "USDC",
-    logo: "💲",
-    address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-    price: "$1.00",
-    priceChange24h: -0.02,
-    volume24h: "$3,800,000",
-    marketCap: "$8,500,000",
-    holders: 18920,
-    totalSupply: "8,500,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: true,
-    favorite: false,
-    priceHistory: [1.00, 1.00, 1.00, 0.99, 1.00, 1.00, 1.00],
-    decimals: 6,
-  },
-  {
-    id: "5",
-    rank: 5,
-    name: "Selendra DeFi",
-    symbol: "SDEFI",
-    logo: "💎",
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    price: "$0.125",
-    priceChange24h: 12.45,
-    volume24h: "$450,000",
-    marketCap: "$6,250,000",
-    holders: 4520,
-    totalSupply: "50,000,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: true,
-    favorite: false,
-    priceHistory: [0.10, 0.11, 0.13, 0.12, 0.14, 0.12, 0.125],
-    decimals: 18,
-  },
-  {
-    id: "6",
-    rank: 6,
-    name: "Selendra NFT Collection",
-    symbol: "SNFT",
-    logo: "🎨",
-    address: "0xabcdef1234567890abcdef1234567890abcdef12",
-    price: "-",
-    priceChange24h: 0,
-    volume24h: "$125,000",
-    marketCap: "-",
-    holders: 2150,
-    totalSupply: "10,000",
-    type: "erc721",
-    standard: "ERC-721",
-    verified: true,
-    favorite: false,
-    priceHistory: [0.009, 0.008, 0.0085, 0.008, 0.007, 0.008, 0.0085],
-    totalItems: 10000,
-    floorPrice: "25 SEL",
-  },
-  {
-    id: "7",
-    rank: 7,
-    name: "Selendra Gaming",
-    symbol: "SGAME",
-    logo: "🎮",
-    address: "0xfedcba0987654321fedcba0987654321fedcba09",
-    price: "$0.0032",
-    priceChange24h: 8.76,
-    volume24h: "$85,000",
-    marketCap: "$320,000",
-    holders: 1890,
-    totalSupply: "100,000,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: false,
-    favorite: false,
-    priceHistory: [0.002, 0.0025, 0.003, 0.0028, 0.0035, 0.003, 0.0032],
-    decimals: 18,
-  },
-  {
-    id: "8",
-    rank: 8,
-    name: "Khmer Riel Token",
-    symbol: "KRT",
-    logo: "🇰🇭",
-    address: "0x0123456789abcdef0123456789abcdef01234567",
-    price: "$0.00024",
-    priceChange24h: -1.52,
-    volume24h: "$42,000",
-    marketCap: "$240,000",
-    holders: 3420,
-    totalSupply: "1,000,000,000",
-    type: "erc20",
-    standard: "ERC-20",
-    verified: true,
-    favorite: false,
-    priceHistory: [0.00025, 0.00024, 0.00024, 0.00023, 0.00024, 0.00024, 0.00024],
-    decimals: 18,
-  },
-  {
-    id: "9",
-    rank: 9,
-    name: "Ink! PSP22 Token",
-    symbol: "IPSP",
-    logo: "⚡",
-    address: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-    price: "$0.015",
-    priceChange24h: 3.25,
-    volume24h: "$28,000",
-    marketCap: "$150,000",
-    holders: 520,
-    totalSupply: "10,000,000",
-    type: "psp22",
-    standard: "PSP22",
-    verified: true,
-    favorite: false,
-    priceHistory: [0.012, 0.013, 0.014, 0.0135, 0.015, 0.0145, 0.015],
-    decimals: 12,
-  },
-  {
-    id: "10",
-    rank: 10,
-    name: "Selendra Game Items",
-    symbol: "SGI",
-    logo: "🎮",
-    address: "0x9876543210fedcba9876543210fedcba98765432",
-    price: "-",
-    priceChange24h: 0,
-    volume24h: "$45,000",
-    marketCap: "-",
-    holders: 890,
-    totalSupply: "50,000",
-    type: "erc1155",
-    standard: "ERC-1155",
-    verified: true,
-    favorite: false,
-    priceHistory: [],
-    totalItems: 50000,
-    floorPrice: "5 SEL",
-  },
-];
-
-type TabType = "erc20" | "erc721" | "erc1155" | "substrate";
-
 export const TokensExplorer: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -305,7 +70,15 @@ export const TokensExplorer: React.FC = () => {
   const validTabs: TabType[] = ["erc20", "erc721", "erc1155", "substrate"];
   const initialTab: TabType = urlTab && validTabs.includes(urlTab) ? urlTab : "erc20";
 
-  const [tokens, setTokens] = useState<Token[]>(mockTokens);
+  const { tokens: fetchedTokens, isLoading } = useTokens();
+  const [tokens, setTokens] = useState<Token[]>([]);
+
+  useEffect(() => {
+    if (fetchedTokens.length > 0) {
+      setTokens(fetchedTokens);
+    }
+  }, [fetchedTokens]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [filterType, setFilterType] = useState<"all" | "native" | "erc20" | "substrate" | "erc721" | "erc1155">("all");
@@ -492,52 +265,68 @@ export const TokensExplorer: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              {isNFTTab ? <Palette className="w-5 h-5 text-purple-400" /> : <Coins className="w-5 h-5 text-purple-400" />}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-background-card border border-border rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton variant="rectangular" className="w-10 h-10 rounded-lg" />
+                <div className="space-y-2">
+                  <Skeleton variant="text" className="h-3 w-20" />
+                  <Skeleton variant="text" className="h-6 w-24" />
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">{isNFTTab ? "Collections" : "Total Tokens"}</p>
-              <p className="text-xl font-bold">{stats.totalTokens}</p>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                {isNFTTab ? <Palette className="w-5 h-5 text-purple-400" /> : <Coins className="w-5 h-5 text-purple-400" />}
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">{isNFTTab ? "Collections" : "Total Tokens"}</p>
+                <p className="text-xl font-bold">{stats.totalTokens}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">{isNFTTab ? "Total Volume" : "24h Volume"}</p>
+                <p className="text-xl font-bold">{stats.totalVolume}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                {isNFTTab ? <Diamond className="w-5 h-5 text-blue-400" /> : <Users className="w-5 h-5 text-blue-400" />}
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">{isNFTTab ? "Total Items" : "Total Holders"}</p>
+                <p className="text-xl font-bold">{isNFTTab ? stats.totalItems : stats.totalHolders}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-background-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground-secondary">Verified</p>
+                <p className="text-xl font-bold">{stats.verifiedTokens}</p>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">{isNFTTab ? "Total Volume" : "24h Volume"}</p>
-              <p className="text-xl font-bold">{stats.totalVolume}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-              {isNFTTab ? <Diamond className="w-5 h-5 text-blue-400" /> : <Users className="w-5 h-5 text-blue-400" />}
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">{isNFTTab ? "Total Items" : "Total Holders"}</p>
-              <p className="text-xl font-bold">{isNFTTab ? stats.totalItems : stats.totalHolders}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Verified</p>
-              <p className="text-xl font-bold">{stats.verifiedTokens}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -659,132 +448,138 @@ export const TokensExplorer: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedTokens.map((token, idx) => (
-                <tr
-                  key={token.id}
-                  className="border-b border-border hover:bg-background-hover transition-colors"
-                >
-                  <td className="px-4 py-4">
-                    <button
-                      onClick={() => toggleFavorite(token.id)}
-                      className="text-foreground-secondary hover:text-yellow-400 transition-colors"
-                    >
-                      {token.favorite ? (
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ) : (
-                        <StarOff className="w-4 h-4" />
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-4 py-4">
-                    <Link
-                      href={`/tokens/${token.symbol.toLowerCase()}`}
-                      className="flex items-center gap-3 hover:text-selendra-400 transition-colors"
-                    >
-                      <TokenIcon symbol={token.symbol} size={32} />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{token.name}</span>
-                          {token.verified && (
-                            <CheckCircle className="w-4 h-4 text-blue-400" />
-                          )}
-                          {token.standard && (
-                            <span className="px-1.5 py-0.5 text-xs rounded bg-background-secondary text-foreground-secondary">
-                              {token.standard}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-foreground-secondary">{token.symbol}</span>
-                          {token.type !== "native" && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                copyAddress(token.address);
-                              }}
-                              className="flex items-center gap-1 text-foreground-secondary hover:text-foreground"
-                            >
-                              <span className="font-mono text-xs">
-                                {token.address.slice(0, 6)}...{token.address.slice(-4)}
-                              </span>
-                              {copiedAddress === token.address ? (
-                                <CheckCircle className="w-3 h-3 text-green-400" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  </td>
-                  {isNFTTab ? (
-                    <>
-                      <td className="px-4 py-4 text-right font-mono text-selendra-400">
-                        {token.floorPrice || "-"}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {(token.totalItems || 0).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {token.holders.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {token.volume24h}
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-4 py-4 text-right font-mono">
-                        {token.price}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <span
-                          className={`flex items-center justify-end gap-1 ${token.priceChange24h >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                            }`}
-                        >
-                          {token.priceChange24h >= 0 ? (
-                            <TrendingUp className="w-4 h-4" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4" />
-                          )}
-                          {Math.abs(token.priceChange24h).toFixed(2)}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {token.volume24h}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {token.marketCap}
-                      </td>
-                      <td className="px-4 py-4 text-right text-foreground-secondary">
-                        {token.holders.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex justify-end">
-                          <Sparkline
-                            data={token.priceHistory}
-                            color={token.priceChange24h >= 0 ? "#4ade80" : "#f87171"}
-                          />
-                        </div>
-                      </td>
-                    </>
-                  )}
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-center gap-2">
+              {isLoading ? (
+                Array.from({ length: 10 }).map((_, i) => (
+                  <SkeletonTableRow key={i} columns={8} />
+                ))
+              ) : (
+                paginatedTokens.map((token, idx) => (
+                  <tr
+                    key={token.id}
+                    className="border-b border-border hover:bg-background-hover transition-colors"
+                  >
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => toggleFavorite(token.id)}
+                        className="text-foreground-secondary hover:text-yellow-400 transition-colors"
+                      >
+                        {token.favorite ? (
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ) : (
+                          <StarOff className="w-4 h-4" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-4 py-4">
                       <Link
                         href={`/tokens/${token.symbol.toLowerCase()}`}
-                        className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
-                        title="View Details"
+                        className="flex items-center gap-3 hover:text-selendra-400 transition-colors"
                       >
-                        <ArrowUpRight className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                        <TokenIcon symbol={token.symbol} size={32} />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{token.name}</span>
+                            {token.verified && (
+                              <CheckCircle className="w-4 h-4 text-blue-400" />
+                            )}
+                            {token.standard && (
+                              <span className="px-1.5 py-0.5 text-xs rounded bg-background-secondary text-foreground-secondary">
+                                {token.standard}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-foreground-secondary">{token.symbol}</span>
+                            {token.type !== "native" && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  copyAddress(token.address);
+                                }}
+                                className="flex items-center gap-1 text-foreground-secondary hover:text-foreground"
+                              >
+                                <span className="font-mono text-xs">
+                                  {token.address.slice(0, 6)}...{token.address.slice(-4)}
+                                </span>
+                                {copiedAddress === token.address ? (
+                                  <CheckCircle className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    {isNFTTab ? (
+                      <>
+                        <td className="px-4 py-4 text-right font-mono text-selendra-400">
+                          {token.floorPrice || "-"}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {(token.totalItems || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {token.holders.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {token.volume24h}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-4 text-right font-mono">
+                          {token.price}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span
+                            className={`flex items-center justify-end gap-1 ${token.priceChange24h >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                              }`}
+                          >
+                            {token.priceChange24h >= 0 ? (
+                              <TrendingUp className="w-4 h-4" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4" />
+                            )}
+                            {Math.abs(token.priceChange24h).toFixed(2)}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {token.volume24h}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {token.marketCap}
+                        </td>
+                        <td className="px-4 py-4 text-right text-foreground-secondary">
+                          {token.holders.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <div className="flex justify-end">
+                            <Sparkline
+                              data={token.priceHistory}
+                              color={token.priceChange24h >= 0 ? "#4ade80" : "#f87171"}
+                            />
+                          </div>
+                        </td>
+                      </>
+                    )}
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link
+                          href={`/tokens/${token.symbol.toLowerCase()}`}
+                          className="p-2 hover:bg-background-secondary rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <ArrowUpRight className="w-4 h-4 text-foreground-secondary hover:text-foreground" />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
